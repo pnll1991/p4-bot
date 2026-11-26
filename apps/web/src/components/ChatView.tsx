@@ -4164,6 +4164,8 @@ export default function ChatView(props: ChatViewProps) {
                   environmentId={activeThread.environmentId}
                   threadId={activeThread.id}
                   projectId={activeThread.projectId}
+                  runtimeMode={runtimeMode}
+                  onRuntimeModeChange={handleRuntimeModeChangeStable}
                   worktreePath={activeThread.worktreePath}
                   isServerThread={isServerThread}
                   {...(draftId ? { draftId } : {})}

@@ -4,6 +4,7 @@ import type {
   ProjectId,
   ProjectScript,
   ResolvedKeybindingsConfig,
+  RuntimeMode,
   ThreadId,
 } from "@t3tools/contracts";
 
@@ -59,6 +60,9 @@ interface ThreadDetailsPanelProps extends Pick<
   environmentId: EnvironmentId;
   threadId: ThreadId;
   projectId: ProjectId;
+  /** The open chat's runtime mode, as the composer shows it. */
+  runtimeMode?: RuntimeMode;
+  onRuntimeModeChange?: (mode: RuntimeMode) => void;
   worktreePath: string | null;
   isServerThread: boolean;
   draftId?: DraftId;
@@ -193,6 +197,10 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
               environmentId={props.environmentId}
               projectId={props.projectId}
               threadId={props.isServerThread ? props.threadId : null}
+              {...(props.runtimeMode ? { runtimeMode: props.runtimeMode } : {})}
+              {...(props.onRuntimeModeChange
+                ? { onRuntimeModeChange: props.onRuntimeModeChange }
+                : {})}
             />
           );
         }

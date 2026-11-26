@@ -1,4 +1,10 @@
-import type { BotRoutine, EnvironmentId, ProjectId, ThreadId } from "@t3tools/contracts";
+import type {
+  BotRoutine,
+  EnvironmentId,
+  ProjectId,
+  RuntimeMode,
+  ThreadId,
+} from "@t3tools/contracts";
 import { T, useGT } from "gt-react";
 import { CalendarClockIcon, SettingsIcon } from "lucide-react";
 import type { ReactNode } from "react";
@@ -24,10 +30,15 @@ export function BotThreadDetails({
   environmentId,
   projectId,
   threadId = null,
+  runtimeMode,
+  onRuntimeModeChange,
 }: {
   readonly environmentId: EnvironmentId;
   readonly projectId: ProjectId;
   readonly threadId?: ThreadId | null;
+  /** The open chat's mode; the switch follows it so it always matches the composer. */
+  readonly runtimeMode?: RuntimeMode;
+  readonly onRuntimeModeChange?: (mode: RuntimeMode) => void;
 }) {
   const gt = useGT();
   const overview = useEnvironmentQuery(
@@ -43,13 +54,15 @@ export function BotThreadDetails({
   const usage = data.usage ?? { turns: 0, inputTokens: 0, outputTokens: 0 };
   // Some runtimes (Pi) report no token counts; a dash says "unknown", not "none".
   const tokensKnown = usage.turns === 0 || usage.inputTokens + usage.outputTokens > 0;
-  const fullAccess = data.bot.runtimeMode === "full-access";
+  const fullAccess = (runtimeMode ?? data.bot.runtimeMode) === "full-access";
 
+  // One switch for both: the open chat changes now, and the bot keeps it for later chats and routines.
   const toggleFullAccess = async (on: boolean) => {
-    const runtimeMode = on ? "full-access" : "approval-required";
-    const result = await setPermissions({ environmentId, input: { projectId, runtimeMode } });
-    if (result._tag === "Success" && threadId !== null) {
-      await setThreadMode({ environmentId, input: { threadId, runtimeMode } });
+    const mode = on ? "full-access" : "approval-required";
+    onRuntimeModeChange?.(mode);
+    const result = await setPermissions({ environmentId, input: { projectId, runtimeMode: mode } });
+    if (result._tag === "Success" && threadId !== null && onRuntimeModeChange === undefined) {
+      await setThreadMode({ environmentId, input: { threadId, runtimeMode: mode } });
     }
     overview.refresh();
   };
