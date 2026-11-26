@@ -1,4 +1,4 @@
-import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import {
   type BotProfile,
@@ -15,7 +15,7 @@ import {
   buildPendingUserInputAnswers,
   type PendingUserInputDraftAnswer,
 } from "@t3tools/client-runtime/state/pending-user-input";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useParams, useSearch } from "@tanstack/react-router";
 import * as DateTime from "effect/DateTime";
 import { T, useGT } from "gt-react";
 import {
@@ -28,7 +28,6 @@ import {
   ReplyIcon,
   LoaderIcon,
   SquareIcon,
-  ExternalLinkIcon,
   PanelRightIcon,
   PaperclipIcon,
   PlusIcon,
@@ -53,7 +52,9 @@ import { AttachmentImage } from "../media/AttachmentImage";
 import { toastManager } from "../ui/toast";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import { useNewThreadHandler } from "../../hooks/useHandleNewThread";
 import { BotAvatar } from "./BotAvatar";
+import { BotChatModeSwitch, useOpenBotChat, writeFullMode } from "./BotChatMode";
 import { BotDetails, failureMessage } from "./BotDetailPage";
 import { formatRosterTime, isToday, useBotRoster } from "./useBotRoster";
 
@@ -65,6 +66,7 @@ const WORKING_STATUSES = new Set(["preparing", "queued", "starting", "running"])
 export function BotConversationPage() {
   const gt = useGT();
   const params = useParams({ from: "/_chat/bots_/$projectId" });
+  const search = useSearch({ from: "/_chat/bots_/$projectId" });
   const projectId = ProjectId.make(params.projectId);
   const { environmentId, entries, loading } = useBotRoster();
   const entry = entries.find((candidate) => candidate.bot.projectId === projectId) ?? null;
@@ -82,7 +84,8 @@ export function BotConversationPage() {
       </div>
     );
   }
-  const choice = chosen?.projectId === projectId ? chosen.threadId : null;
+  const linked = entry.threads.find((thread) => thread.id === search.thread)?.id ?? null;
+  const choice = chosen?.projectId === projectId ? chosen.threadId : linked;
   const threadId = choice === "new" ? null : (choice ?? entry.latestThread?.id ?? null);
 
   return (
@@ -130,7 +133,8 @@ function Conversation({
   readonly onToggleDetails: () => void;
 }) {
   const gt = useGT();
-  const navigate = useNavigate();
+  const openBotChat = useOpenBotChat();
+  const newThread = useNewThreadHandler();
   const items = useThreadVisibleTurnItems(threadRef);
   const shell = useThreadShell(threadRef);
   const working = WORKING_STATUSES.has(shell?.runtime?.status ?? "idle");
@@ -216,19 +220,23 @@ function Conversation({
           <span className="text-muted-foreground text-xs">{gt("Working…")}</span>
         ) : null}
         <div className="ml-auto flex items-center gap-0.5">
-          {threadRef ? (
-            <HeaderButton
-              label={gt("Open as thread")}
-              onClick={() =>
-                void navigate({
-                  to: "/$environmentId/$threadId",
-                  params: { environmentId, threadId: threadRef.threadId },
-                })
+          <BotChatModeSwitch
+            mode="compact"
+            onChange={(mode) => {
+              if (threadRef !== null) {
+                void openBotChat({
+                  environmentId,
+                  projectId: bot.projectId,
+                  threadId: threadRef.threadId,
+                  mode,
+                });
+                return;
               }
-            >
-              <ExternalLinkIcon className="size-4" />
-            </HeaderButton>
-          ) : null}
+              // A chat that does not exist yet opens as a full draft in the bot's project.
+              writeFullMode();
+              void newThread(scopeProjectRef(environmentId, bot.projectId));
+            }}
+          />
           {chats.length > 0 ? (
             <ChatsMenu
               chats={chats}

@@ -21,6 +21,7 @@ import type { SidebarRouteReveal } from "../sidebar/routeReveal";
 import { T3Wordmark } from "../T3Wordmark";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { BotAvatar } from "./BotAvatar";
+import { useOpenBotChat } from "./BotChatMode";
 import { formatRosterTime, useBotRoster, type BotRosterEntry } from "./useBotRoster";
 
 type Place = "bots" | "threads";
@@ -144,7 +145,8 @@ function RailButton({
 function BotRoster({ pathname }: { readonly pathname: string }) {
   const gt = useGT();
   const navigate = useNavigate();
-  const { entries, loading } = useBotRoster();
+  const { environmentId, entries, loading } = useBotRoster();
+  const openBotChat = useOpenBotChat();
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const needle = query.trim().toLowerCase();
@@ -199,13 +201,18 @@ function BotRoster({ pathname }: { readonly pathname: string }) {
           <RosterRow
             key={entry.bot.projectId}
             entry={entry}
-            active={pathname === `/bots/${entry.bot.projectId}`}
-            onSelect={() =>
-              void navigate({
-                to: "/bots/$projectId",
-                params: { projectId: entry.bot.projectId },
-              })
+            active={
+              pathname === `/bots/${entry.bot.projectId}` ||
+              entry.threads.some((thread) => pathname.endsWith(`/${encodeURIComponent(thread.id)}`))
             }
+            onSelect={() => {
+              if (environmentId === null) return;
+              void openBotChat({
+                environmentId,
+                projectId: entry.bot.projectId,
+                threadId: entry.latestThread?.id ?? null,
+              });
+            }}
           />
         ))}
         {!loading && entries.length === 0 ? (
