@@ -69,6 +69,8 @@ interface ChatTerminalActionsInput {
   readonly environmentId: EnvironmentId;
   readonly composerRef: ComposerHandleRef;
   readonly terminalUiState: ReturnType<typeof selectThreadTerminalUiState>;
+  /** False where the thread has no terminal drawer: drawer shortcuts and scripts do nothing. */
+  readonly drawerAvailable: boolean;
   readonly activeThread: EnvironmentThreadShell | undefined;
   readonly activeThreadId: ThreadId | null;
   readonly activeThreadRef: ScopedThreadRef | null;
@@ -93,6 +95,7 @@ export function useChatTerminalActions(input: ChatTerminalActionsInput) {
     environmentId,
     composerRef,
     terminalUiState,
+    drawerAvailable,
     activeThread,
     activeThreadId,
     activeThreadRef,
@@ -216,7 +219,14 @@ export function useChatTerminalActions(input: ChatTerminalActionsInput) {
       shellHistory?: "preserve" | "suppress";
     },
   ) => {
-    if (!hasTerminalWriteAccess() || !activeThreadId || !activeProject || !activeThread) return;
+    if (
+      !drawerAvailable ||
+      !hasTerminalWriteAccess() ||
+      !activeThreadId ||
+      !activeProject ||
+      !activeThread
+    )
+      return;
     if (options?.rememberAsLastInvoked !== false) {
       setLastInvokedScriptByProjectId((current) => {
         if (current[activeProject.id] === script.id) return current;
@@ -419,6 +429,7 @@ export function useChatTerminalActions(input: ChatTerminalActionsInput) {
   // A focused right-panel terminal takes the split/new/close chords; otherwise they act on the drawer.
   const shortcuts = {
     "terminal.toggle": () => {
+      if (!drawerAvailable) return false;
       if (
         !terminalUiState.terminalOpen &&
         !readEnvironmentScope(environmentId, AuthTerminalReadScope) &&
@@ -438,12 +449,14 @@ export function useChatTerminalActions(input: ChatTerminalActionsInput) {
     "terminal.split": ({ terminalFocusOwner }) => {
       if (!hasTerminalWriteAccess()) return false;
       if (terminalFocusOwner === "right-panel") return void splitPanelTerminal();
+      if (!drawerAvailable) return false;
       openTerminalIfClosed();
       splitTerminal();
     },
     "terminal.splitVertical": ({ terminalFocusOwner }) => {
       if (!hasTerminalWriteAccess()) return false;
       if (terminalFocusOwner === "right-panel") return void splitPanelTerminal("vertical");
+      if (!drawerAvailable) return false;
       openTerminalIfClosed();
       splitTerminal("vertical");
     },
@@ -453,11 +466,13 @@ export function useChatTerminalActions(input: ChatTerminalActionsInput) {
         requestClosePanelTerminal(activeRightPanelSurface.activeTerminalId);
         return;
       }
+      if (!drawerAvailable) return false;
       if (terminalUiState.terminalOpen) requestCloseTerminal(terminalUiState.activeTerminalId);
     },
     "terminal.new": ({ terminalFocusOwner }) => {
       if (!hasTerminalWriteAccess()) return false;
       if (terminalFocusOwner === "right-panel") return void addTerminalSurface();
+      if (!drawerAvailable) return false;
       openTerminalIfClosed();
       createNewTerminal();
     },

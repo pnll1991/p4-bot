@@ -817,7 +817,7 @@ export default function ChatView(props: ChatViewProps) {
   const setMultipleModelSelectionsStable = useStableCallback(setMultipleModelSelections);
   const feedbackUploadsInFlightRef = useRef(new Set<string>());
 
-  const terminalUiState = useTerminalUiStateStore((state) =>
+  const storedTerminalUiState = useTerminalUiStateStore((state) =>
     selectThreadTerminalUiState(state.terminalUiStateByThreadKey, routeThreadRef),
   );
 
@@ -1929,6 +1929,10 @@ export default function ChatView(props: ChatViewProps) {
   // A bot works in its own folder; checkout and branch choices mean nothing to its owner.
   const botProfile = useBotProfile(activeThread?.projectId ?? null);
   const isBotThread = botProfile !== null;
+  // Bot chats have no terminal drawer; a drawer left open on the thread stays out of the layout.
+  const terminalUiState = isBotThread
+    ? { ...storedTerminalUiState, terminalOpen: false }
+    : storedTerminalUiState;
   const showComposerContextStrip =
     !embedded &&
     !isBotThread &&
@@ -2077,6 +2081,7 @@ export default function ChatView(props: ChatViewProps) {
     environmentId,
     composerRef,
     terminalUiState,
+    drawerAvailable: !isBotThread,
     activeThread,
     activeThreadId,
     activeThreadRef,
@@ -3532,7 +3537,7 @@ export default function ChatView(props: ChatViewProps) {
     <PanelLayoutControls
       {...panelToggleControlProps}
       showThreadPanelControl={!inlineRightPanelOwnsTitleBar}
-      showTerminalControl={!botCompact}
+      showTerminalControl={!isBotThread}
       showRightPanelControl={!botCompact}
     />
   );
@@ -3688,7 +3693,7 @@ export default function ChatView(props: ChatViewProps) {
                       citationHistory={citationHistory}
                       onCiteAssistantText={citeAssistantTextStable}
                       onReplyToResponse={replyToResponseStable}
-                      {...(activeProject && !runsOutsideHostCheckout
+                      {...(activeProject && !runsOutsideHostCheckout && !isBotThread
                         ? {
                             onRunShellCommand:
                               parentPanel?.runShellCommand ?? runShellCommandStable,
@@ -4245,7 +4250,7 @@ export default function ChatView(props: ChatViewProps) {
           </ThreadFindCanvas>
         </div>
 
-        {embedded ? null : (
+        {embedded || isBotThread ? null : (
           <ChatTerminalDrawers
             activeThreadKey={activeThreadKey}
             activeTerminalOpen={Boolean(terminalUiState.terminalOpen)}
