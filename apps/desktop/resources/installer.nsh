@@ -18,8 +18,8 @@
     System::Call 'kernel32::SetEnvironmentVariable(t "T3CODE_INSTALL_DIR", p 0)'
     ${If} $0 == 0
       ${If} $1 == "T3 Code (Alpha)"
-      ${OrIf} $1 == "T3 Code (Beta)"
-      ${OrIf} $1 == "T3 Code (Nightly)"
+      ${OrIf} $1 == "P4 Bot (Beta)"
+      ${OrIf} $1 == "P4 Bot (Nightly)"
         ${T3StrRep} $appRunningMessage $appRunningMessage "${PRODUCT_NAME}" $1
         ${T3StrRep} $appClosingMessage $appClosingMessage "${PRODUCT_NAME}" $1
         ${T3StrRep} $appCannotBeClosedMessage $appCannotBeClosedMessage "${PRODUCT_NAME}" $1

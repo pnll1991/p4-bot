@@ -41,9 +41,7 @@ const { parseXml } = requireFromUpdater("builder-util-runtime") as {
 const semver = requireFromUpdater("semver") as { parse: (version: string) => RunningVersion };
 
 const releaseTitle = (version: string) =>
-  version.includes("-nightly.")
-    ? `T3 Code Nightly ${version} (0123456789ab)`
-    : `T3 Code v${version}`;
+  version.includes("-nightly.") ? `P4 Bot Nightly ${version} (0123456789ab)` : `P4 Bot v${version}`;
 
 const releaseFeed = (...versions: ReadonlyArray<string>) =>
   parseXml(
@@ -1413,7 +1411,7 @@ describe("describeUpdateErrorCause", () => {
 });
 
 describe("DesktopUpdates under a managed policy", () => {
-  const message = "Example Corp manages T3 Code updates.";
+  const message = "Example Corp manages P4 Bot updates.";
   const managed = (
     policy: Partial<DesktopUpdatePolicy.UpdatePolicy>,
   ): DesktopUpdatePolicy.UpdatePolicy => ({

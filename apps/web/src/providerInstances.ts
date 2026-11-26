@@ -251,7 +251,9 @@ export function resolveSelectableProviderInstanceEntry(
   if (instanceId !== undefined) {
     const requested = entries.find((entry) => entry.instanceId === instanceId);
     if (requested && isSelectableProviderInstanceEntry(requested)) {
-      return requested;
+      // A saved choice that is signed out would only open a thread with an auth error.
+      if (requested.snapshot.auth.status !== "unauthenticated") return requested;
+      return entries.find(isProviderInstanceHealthy) ?? requested;
     }
   }
   return (

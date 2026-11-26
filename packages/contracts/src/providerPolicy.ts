@@ -29,7 +29,8 @@ export const RuntimeMode = Schema.Literals([
   "full-access",
 ]);
 export type RuntimeMode = typeof RuntimeMode.Type;
-export const DEFAULT_RUNTIME_MODE: RuntimeMode = "full-access";
+// Fork default: new threads and Bots start Supervised. Broader modes are an explicit opt-in.
+export const DEFAULT_RUNTIME_MODE: RuntimeMode = "approval-required";
 
 const RUNTIME_MODE_RANK: Record<RuntimeMode, number> = {
   "approval-required": 0,

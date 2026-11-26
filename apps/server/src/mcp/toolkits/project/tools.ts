@@ -1,5 +1,7 @@
 import { McpAttachmentInput } from "../attachment/input.ts";
 import {
+  BotProfile,
+  BotRuntime,
   clampedPositiveInt,
   NonNegativeInt,
   ModelSelection,
@@ -32,6 +34,7 @@ import * as Digest from "effect/crypto/Digest";
 import * as SecureRandom from "effect/crypto/SecureRandom";
 import * as Schema from "effect/Schema";
 import { Tool, Toolkit } from "effect/ai";
+import * as BotService from "../../../bot/BotService.ts";
 import * as ProjectService from "../../../project/ProjectService.ts";
 import * as ProjectCloneTracker from "../../../project/ProjectCloneTracker.ts";
 import * as ManagedProjectFolders from "../../../project/ManagedProjectFolders.ts";
@@ -88,6 +91,20 @@ const ProjectCreateTool = Tool.make("t3_project_create", {
   }),
   success: Schema.Struct({ ...Project.fields, commitError: Schema.optional(Schema.String) }),
   dependencies: [...shared.dependencies, ManagedProjectFolders.ManagedProjectFolders],
+}).annotate(Tool.Destructive, true);
+const BotCreateTool = Tool.make("p4_bot_create", {
+  ...shared,
+  description:
+    "Create a Bot: a new project with AGENTS.md from `persona`, a `memory/` folder, and its own provider sign-in (`runtime`) usable only in that project. Starts Supervised. The user signs the Bot in on its first thread.",
+  parameters: Schema.Struct({
+    environmentId: OrchestratorMcpEnvironmentTarget,
+    name: TrimmedNonEmptyString,
+    persona: TrimmedNonEmptyString,
+    runtime: BotRuntime,
+    model: TrimmedNonEmptyString,
+  }),
+  success: BotProfile,
+  dependencies: [...shared.dependencies, BotService.BotService],
 }).annotate(Tool.Destructive, true);
 const ProjectUpdateTool = Tool.make("t3_project_update", {
   ...shared,
@@ -198,6 +215,7 @@ export const ProjectToolkit = Toolkit.make(
   ProjectListTool,
   ProjectReadTool,
   ProjectCreateTool,
+  BotCreateTool,
   ProjectUpdateTool,
   ProjectDeleteTool,
   ProjectCloneTool,

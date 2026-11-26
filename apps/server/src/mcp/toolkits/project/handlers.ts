@@ -22,6 +22,7 @@ import { outputRequestProblem } from "../../../orchestration-v2/runOutput.ts";
 import * as ThreadLaunch from "../../../orchestration-v2/ThreadLaunchService.ts";
 import * as ThreadMessageIntake from "../../../orchestration-v2/ThreadMessageIntake.ts";
 import * as Claims from "../../../orchestration-v2/AttachmentClaims.ts";
+import * as BotService from "../../../bot/BotService.ts";
 import * as Project from "../../../project/ProjectService.ts";
 import * as ProjectCloneTracker from "../../../project/ProjectCloneTracker.ts";
 import { mutateProjectWithClone } from "../../../project/ProjectMutation.ts";
@@ -615,6 +616,15 @@ export const layer = McpToolAccess.toLayer(ProjectToolkit, {
     // Linked work may bring the repository it works in; an existing
     // registered workspace is still refused.
     { linkedCallers: "allowed" },
+  ),
+  p4_bot_create: McpToolAccess.writesEnvironment(({ name, persona, runtime, model }) =>
+    BotService.BotService.pipe(
+      Effect.flatMap((bots) => bots.create({ name, persona, runtime, model })),
+      Effect.mapError(
+        (error) =>
+          new OrchestratorMcpFailure({ code: "orchestration_error", message: error.message }),
+      ),
+    ),
   ),
   t3_project_update: McpToolAccess.writesEnvironment((input) =>
     Effect.gen(function* () {

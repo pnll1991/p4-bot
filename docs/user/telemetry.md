@@ -1,6 +1,6 @@
 # Product usage data and diagnostics
 
-T3 Code sends lightweight product usage events and relay connection traces to keep the app reliable and fast. Prompts, responses, file contents, and credentials are never included (unless you explicitly approve an [agent feedback](#agent-feedback) card with conversation text attached).
+P4 Bot sends lightweight product usage events and relay connection traces to keep the app reliable and fast. Prompts, responses, file contents, and credentials are never included (unless you explicitly approve an [agent feedback](#agent-feedback) card with conversation text attached).
 
 ## Product usage events
 
@@ -11,7 +11,7 @@ The server sends usage events to `ingest.t3.codes` under a hashed random install
 - **Server / CLI**: Set `T3CODE_TELEMETRY_ENABLED=false` or `DO_NOT_TRACK=1` before starting (`DO_NOT_TRACK=1` takes precedence). CI environments (`CI`, `GITHUB_ACTIONS`, `GITLAB_CI`, `JENKINS_URL`) disable telemetry by default unless `T3CODE_TELEMETRY_ENABLED=true`.
 - **Desktop app**: Export `T3CODE_TELEMETRY_ENABLED=false` or `DO_NOT_TRACK=1` in your shell profile (macOS/Linux) or user environment variables (Windows) and restart.
 - **Managed policy**: Administrators can set `"telemetry": false` in [managed policy](./managed-policy.md#other-capabilities) for servers and desktop apps.
-- **Mobile app**: Toggle **Send crash reports** and **Send connection traces** separately in **Settings → About T3 Code → Diagnostics**.
+- **Mobile app**: Toggle **Send crash reports** and **Send connection traces** separately in **Settings → About P4 Bot → Diagnostics**.
 
 ## Relay connection diagnostics
 
@@ -19,7 +19,7 @@ T3 Connect sends connection timings, request paths, environment/thread IDs, and 
 
 ## Agent feedback
 
-Optional tool for agents to report T3 Code bugs or missing capabilities. Configure in **Settings → Labs → Agent feedback**:
+Optional tool for agents to report P4 Bot bugs or missing capabilities. Configure in **Settings → Labs → Agent feedback**:
 
 - **Off** (default): Feedback tools and `t3 feedback` are disabled.
 - **When I ask**: Agents submit a report only when you ask, shown as an interactive approval card before anything leaves your machine.

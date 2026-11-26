@@ -65,7 +65,13 @@ export const descriptorOf = (
 export const layerEnvironmentAuth = (prefix: string) =>
   EnvironmentAuth.layer.pipe(
     Layer.provide(ManagedPolicy.layerTest()),
-    Layer.provideMerge(ServerSettings.layerTest({ linkedEnvironmentsEnabled: true })),
+    // Launches inherit min(caller, project default); a full-access default keeps the caller's modes.
+    Layer.provideMerge(
+      ServerSettings.layerTest({
+        linkedEnvironmentsEnabled: true,
+        defaultRuntimeMode: "full-access",
+      }),
+    ),
     Layer.provide(Sqlite.layerMemory),
     Layer.provideMerge(ServerSecretStore.layer),
     Layer.provideMerge(ServerEnvironment.layerIdentity),
@@ -186,7 +192,7 @@ export const servePeer = <E, R, E2 = never, R2 = never>(
         .listSessions()
         .pipe(
           Effect.map((sessions) =>
-            sessions.filter((session) => session.client.label?.startsWith("T3 Code · ")),
+            sessions.filter((session) => session.client.label?.startsWith("P4 Bot · ")),
           ),
         ),
     };

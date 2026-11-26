@@ -32,7 +32,7 @@ export function orchestrationProtocolCompatibilityError(
     : new ConnectionBlockedError({
         reason: "unsupported",
         ...translatableDetail(
-          msg("This client requires a newer server. Update T3 Code on {host} to connect.", {
+          msg("This client requires a newer server. Update P4 Bot on {host} to connect.", {
             host: descriptor.label,
           }),
         ),
