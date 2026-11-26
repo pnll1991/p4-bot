@@ -19,6 +19,11 @@ import { T, useGT } from "gt-react";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
+  CheckIcon,
+  ChevronRightIcon,
+  CopyIcon,
+  LoaderIcon,
+  SquareIcon,
   ExternalLinkIcon,
   PanelRightIcon,
   PaperclipIcon,
@@ -117,6 +122,21 @@ function Conversation({
   const lastError = shell?.runtime?.lastError ?? null;
   const startTurn = useOrchestrationCommand(threadEnvironment.startTurn, { reportFailure: false });
   const messages = items.filter(isShown);
+  const rows = groupRows(messages);
+  const interrupt = useOrchestrationCommand(threadEnvironment.interruptTurn, {
+    reportFailure: false,
+  });
+  const stop = async () => {
+    if (threadRef === null) return;
+    const result = await interrupt({ environmentId, input: { threadId: threadRef.threadId } });
+    if (result._tag === "Failure") {
+      toastManager.add({
+        type: "error",
+        title: gt("Could not stop"),
+        description: failureMessage(result, gt("Try again.")),
+      });
+    }
+  };
   const scrollRef = useRef<HTMLDivElement>(null);
   const [awayFromBottom, setAwayFromBottom] = useState(false);
 
@@ -213,16 +233,25 @@ function Conversation({
             ) : (
               <div className="mt-auto flex flex-col gap-1 pt-6">
                 <DayDivider at={startedAt(messages[0])} />
-                {messages.map((projected, index) => (
-                  <MessageRow
-                    key={projected.item.id}
-                    projected={projected}
-                    previous={messages[index - 1]}
-                    bot={bot}
-                    environmentId={environmentId}
-                    threadRef={threadRef}
-                  />
-                ))}
+                {rows.map((row, index) => {
+                  const previous = rows[index - 1];
+                  const startsGroup =
+                    previous === undefined || rowFromBot(previous) !== rowFromBot(row);
+                  return row.kind === "steps" ? (
+                    <BotRow key={row.key} bot={bot} startsGroup={startsGroup}>
+                      <StepsRow steps={row.steps} />
+                    </BotRow>
+                  ) : (
+                    <MessageRow
+                      key={row.projected.item.id}
+                      projected={row.projected}
+                      startsGroup={startsGroup}
+                      bot={bot}
+                      environmentId={environmentId}
+                      threadRef={threadRef}
+                    />
+                  );
+                })}
                 {working ? <TypingRow bot={bot} /> : null}
                 {lastError && !working ? (
                   <p className="mt-3 ml-10 text-destructive text-xs">{lastError}</p>
@@ -243,7 +272,12 @@ function Conversation({
         ) : null}
       </div>
 
-      <Composer botName={bot.name} onSend={send} />
+      <Composer
+        botName={bot.name}
+        onSend={send}
+        working={working && threadRef !== null}
+        onStop={() => void stop()}
+      />
     </div>
   );
 }
@@ -265,6 +299,106 @@ function isShown(projected: OrchestrationV2ProjectedTurnItem): boolean {
     default:
       return false;
   }
+}
+
+type CommandItem = Extract<OrchestrationV2ProjectedTurnItem["item"], { type: "command_execution" }>;
+
+type ConversationRow =
+  | { readonly kind: "item"; readonly projected: OrchestrationV2ProjectedTurnItem }
+  | { readonly kind: "steps"; readonly key: string; readonly steps: ReadonlyArray<CommandItem> };
+
+/** Back-to-back commands collapse into one row of steps, so tool work never buries the reply. */
+function groupRows(
+  messages: ReadonlyArray<OrchestrationV2ProjectedTurnItem>,
+): ReadonlyArray<ConversationRow> {
+  const rows: ConversationRow[] = [];
+  for (const projected of messages) {
+    const { item } = projected;
+    const last = rows.at(-1);
+    if (item.type === "command_execution") {
+      if (last?.kind === "steps") {
+        rows[rows.length - 1] = { ...last, steps: [...last.steps, item] };
+      } else {
+        rows.push({ kind: "steps", key: item.id, steps: [item] });
+      }
+    } else {
+      rows.push({ kind: "item", projected });
+    }
+  }
+  return rows;
+}
+
+function rowFromBot(row: ConversationRow): boolean {
+  return row.kind === "steps" || row.projected.item.type !== "user_message";
+}
+
+function stepFailed(step: CommandItem): boolean {
+  return (
+    step.status === "failed" ||
+    step.outputIndicatesFailure === true ||
+    (step.exitCode !== undefined && step.exitCode !== 0)
+  );
+}
+
+function StepsRow({ steps }: { readonly steps: ReadonlyArray<CommandItem> }) {
+  const gt = useGT();
+  const [open, setOpen] = useState(false);
+  const failed = steps.filter(stepFailed).length;
+  const running = steps.some((step) => step.status === "running");
+  return (
+    <div className="mt-1">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="flex items-center gap-1.5 rounded-md py-0.5 text-muted-foreground text-xs hover:text-foreground"
+      >
+        <ChevronRightIcon className={cn("size-3.5", open && "rotate-90")} />
+        {running
+          ? gt("Running a command")
+          : gt("{count, plural, =1 {Ran 1 command} other {Ran {count} commands}}", {
+              count: steps.length,
+            })}
+        {failed > 0 ? (
+          <span className="text-destructive">
+            · {gt("{count, plural, =1 {1 failed} other {{count} failed}}", { count: failed })}
+          </span>
+        ) : null}
+      </button>
+      {open ? (
+        <ul className="mt-1 flex flex-col gap-1 border-l pl-3">
+          {steps.map((step) => (
+            <li key={step.id} className="flex list-none items-start gap-2 text-xs">
+              {step.status === "running" ? (
+                <LoaderIcon className="mt-0.5 size-3 shrink-0 animate-spin text-muted-foreground" />
+              ) : stepFailed(step) ? (
+                <XIcon className="mt-0.5 size-3 shrink-0 text-destructive" />
+              ) : (
+                <CheckIcon className="mt-0.5 size-3 shrink-0 text-success" />
+              )}
+              <code className="min-w-0 whitespace-pre-wrap break-all font-mono text-muted-foreground">
+                {step.input}
+              </code>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+/** Approval prompts arrive as the tool's JSON arguments; show the command itself when there is one. */
+function readableRequest(prompt: string): string {
+  try {
+    const parsed: unknown = JSON.parse(prompt);
+    if (typeof parsed === "object" && parsed !== null && "command" in parsed) {
+      const { command } = parsed as { command: unknown };
+      if (typeof command === "string") return command;
+    }
+  } catch {
+    // Not JSON: the prompt is already prose.
+  }
+  return prompt;
 }
 
 function startedAt(projected: OrchestrationV2ProjectedTurnItem | undefined): Date | null {
@@ -292,20 +426,18 @@ function DayDivider({ at }: { readonly at: Date | null }) {
 
 function MessageRow({
   projected,
-  previous,
+  startsGroup,
   bot,
   environmentId,
   threadRef,
 }: {
   readonly projected: OrchestrationV2ProjectedTurnItem;
-  readonly previous: OrchestrationV2ProjectedTurnItem | undefined;
+  readonly startsGroup: boolean;
   readonly bot: BotProfile;
   readonly environmentId: EnvironmentId;
   readonly threadRef: ScopedThreadRef | null;
 }) {
   const { item } = projected;
-  const fromBot = item.type !== "user_message";
-  const startsGroup = previous === undefined || (previous.item.type !== "user_message") !== fromBot;
 
   if (item.type === "user_message") {
     return (
@@ -347,8 +479,6 @@ function MessageRow({
         />
       ) : item.type === "user_input_request" ? (
         <QuestionCard environmentId={environmentId} threadRef={threadRef} item={item} />
-      ) : item.type === "command_execution" ? (
-        <p className="truncate font-mono text-muted-foreground text-xs">$ {item.input}</p>
       ) : null}
     </BotRow>
   );
@@ -389,16 +519,36 @@ function AssistantText({
   readonly text: string;
   readonly streaming: boolean;
 }) {
+  const gt = useGT();
   const live = useAssistantMessageText(streaming ? threadRef : null, itemId);
+  const [copied, setCopied] = useState(false);
+  const shown = live ?? text;
+  const copy = async () => {
+    await navigator.clipboard.writeText(shown);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  };
   return (
-    <ChatMarkdown
-      className="mt-1 text-sm"
-      text={live ?? text}
-      cwd={undefined}
-      isStreaming={streaming}
-      streamingId={itemId}
-      {...(threadRef ? { threadRef } : {})}
-    />
+    <div className="group/reply">
+      <ChatMarkdown
+        className="mt-1 text-sm"
+        text={shown}
+        cwd={undefined}
+        isStreaming={streaming}
+        streamingId={itemId}
+        {...(threadRef ? { threadRef } : {})}
+      />
+      {streaming ? null : (
+        <button
+          type="button"
+          aria-label={copied ? gt("Copied") : gt("Copy reply")}
+          onClick={() => void copy()}
+          className="mt-0.5 -mb-3 flex size-5 items-center justify-center rounded-md text-muted-foreground opacity-0 hover:bg-accent hover:text-foreground focus-visible:opacity-100 group-hover/reply:opacity-100 pointer-coarse:opacity-100"
+        >
+          {copied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -442,8 +592,8 @@ function ApprovalCard({
   return (
     <div className="mt-2 rounded-xl border bg-card p-3">
       <p className="font-medium text-xs text-muted-foreground">{gt("Wants to run")}</p>
-      <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words font-mono text-xs">
-        {prompt}
+      <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted px-2.5 py-2 font-mono text-xs">
+        {readableRequest(prompt)}
       </pre>
       <div className="mt-3 flex gap-2">
         <button
@@ -639,8 +789,12 @@ function readAsDataUrl(file: File): Promise<string> {
 function Composer({
   botName,
   onSend,
+  working,
+  onStop,
 }: {
   readonly botName: string;
+  readonly working: boolean;
+  readonly onStop: () => void;
   readonly onSend: (
     text: string,
     attachments: ReadonlyArray<UploadChatImageAttachment>,
@@ -758,15 +912,26 @@ function Composer({
             aria-label={gt("Message {name}", { name: botName })}
             className="field-sizing-content max-h-48 min-h-9 flex-1 resize-none bg-transparent px-1 py-1.5 text-sm outline-none placeholder:text-muted-foreground"
           />
-          <button
-            type="button"
-            aria-label={gt("Send")}
-            disabled={!canSend}
-            onClick={() => void submit()}
-            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background disabled:opacity-30"
-          >
-            <ArrowUpIcon className="size-5" />
-          </button>
+          {working && !canSend ? (
+            <button
+              type="button"
+              aria-label={gt("Stop")}
+              onClick={onStop}
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background"
+            >
+              <SquareIcon className="size-3.5 fill-current" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              aria-label={gt("Send")}
+              disabled={!canSend}
+              onClick={() => void submit()}
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background disabled:opacity-30"
+            >
+              <ArrowUpIcon className="size-5" />
+            </button>
+          )}
         </div>
       </div>
     </div>
