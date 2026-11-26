@@ -136,6 +136,13 @@ it.effect("creates a Bot with its own files, home and project-only provider inst
 
       assert.deepEqual(yield* bots.list, [profile, local]);
 
+      // Deleting a bot removes its instance before its files; it leaves the list right then.
+      yield* settingsService.updateProviderInstance({
+        operation: "remove",
+        instanceId: local.providerInstanceId,
+      });
+      assert.deepEqual(yield* bots.list, [profile]);
+
       const overrides = settings.projectSettingsOverrides[profile.projectId];
       assert.equal(overrides?.defaultRuntimeMode, "approval-required");
       assert.deepEqual(overrides?.defaultModelSelection, { instanceId, model: "gpt-5.5" });

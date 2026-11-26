@@ -184,7 +184,16 @@ const make = Effect.gen(function* () {
         Effect.orElseSucceed((): ReadonlyArray<BotProfile> => []),
       ),
     );
-    return profiles.flat().toSorted((a, b) => a.name.localeCompare(b.name));
+    // Clients refresh this list when provider instances change, and delete removes the instance
+    // before the bot's files, so a bot counts only while its instance exists.
+    const instances = yield* serverSettings.getSettings.pipe(
+      Effect.map((settings) => settings.providerInstances),
+      Effect.orElseSucceed(() => undefined),
+    );
+    return profiles
+      .flat()
+      .filter((profile) => instances === undefined || profile.providerInstanceId in instances)
+      .toSorted((a, b) => a.name.localeCompare(b.name));
   }).pipe(Effect.withSpan("BotService.list"));
 
   return BotService.of({ create, list });

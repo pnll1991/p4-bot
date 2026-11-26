@@ -1,16 +1,31 @@
-import { WS_METHODS } from "@t3tools/contracts";
-import type { Atom } from "effect/reactivity";
+import { WS_METHODS, type EnvironmentId, type ServerSettings } from "@t3tools/contracts";
+import { Atom } from "effect/reactivity";
 
 import type { EnvironmentRegistry } from "../connection/registry.ts";
 import { createEnvironmentRpcCommand, createEnvironmentRpcQueryAtomFamily } from "./runtime.ts";
 
 export function createBotEnvironmentAtoms<R, E>(
   runtime: Atom.AtomRuntime<EnvironmentRegistry | R, E>,
+  options: {
+    readonly settings?: (environmentId: EnvironmentId) => Atom.Atom<ServerSettings | null>;
+  } = {},
 ) {
+  const settings = options.settings;
   return {
     list: createEnvironmentRpcQueryAtomFamily(runtime, {
       label: "environment-data:bots:list",
       tag: WS_METHODS.botsList,
+      // Each bot owns a provider instance, added last on create and removed first on delete, so a
+      // bot made or deleted elsewhere (an agent's MCP tool, another device) shows up here too.
+      refreshTrigger: ({ environmentId }) => {
+        if (settings === undefined) return undefined;
+        const value = settings(environmentId);
+        return Atom.make((get) =>
+          Object.keys(get(value)?.providerInstances ?? {})
+            .sort()
+            .join("\n"),
+        );
+      },
     }),
     create: createEnvironmentRpcCommand(runtime, {
       label: "environment-command:bots:create",
