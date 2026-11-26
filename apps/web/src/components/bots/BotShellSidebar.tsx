@@ -20,8 +20,9 @@ import ThreadSidebar from "../Sidebar";
 import type { SidebarRouteReveal } from "../sidebar/routeReveal";
 import { T3Wordmark } from "../T3Wordmark";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
+
 import { BotAvatar } from "./BotAvatar";
-import { useOpenBotChat } from "./BotChatMode";
 import { formatRosterTime, useBotRoster, type BotRosterEntry } from "./useBotRoster";
 
 type Place = "bots" | "threads";
@@ -145,8 +146,7 @@ function RailButton({
 function BotRoster({ pathname }: { readonly pathname: string }) {
   const gt = useGT();
   const navigate = useNavigate();
-  const { environmentId, entries, loading } = useBotRoster();
-  const openBotChat = useOpenBotChat();
+  const { entries, loading } = useBotRoster();
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const needle = query.trim().toLowerCase();
@@ -201,18 +201,19 @@ function BotRoster({ pathname }: { readonly pathname: string }) {
           <RosterRow
             key={entry.bot.projectId}
             entry={entry}
-            active={
-              pathname === `/bots/${entry.bot.projectId}` ||
-              entry.threads.some((thread) => pathname.endsWith(`/${encodeURIComponent(thread.id)}`))
+            pathname={pathname}
+            onOpenThread={(thread) =>
+              void navigate({
+                to: "/$environmentId/$threadId",
+                params: { environmentId: thread.environmentId, threadId: thread.id },
+              })
             }
-            onSelect={() => {
-              if (environmentId === null) return;
-              void openBotChat({
-                environmentId,
-                projectId: entry.bot.projectId,
-                threadId: entry.latestThread?.id ?? null,
-              });
-            }}
+            onSelect={() =>
+              void navigate({
+                to: "/bots/$projectId",
+                params: { projectId: entry.bot.projectId },
+              })
+            }
           />
         ))}
         {!loading && entries.length === 0 ? (
@@ -260,20 +261,38 @@ function PanelIconButton({
   );
 }
 
+const THREADS_SHOWN = 3;
+
+function threadPath(thread: EnvironmentThreadShell): string {
+  return `/${encodeURIComponent(thread.environmentId)}/${encodeURIComponent(thread.id)}`;
+}
+
+/** A bot with its chats stacked under it, newest first; the row itself opens the latest. */
 function RosterRow({
   entry,
-  active,
+  pathname,
   onSelect,
+  onOpenThread,
 }: {
   readonly entry: BotRosterEntry;
-  readonly active: boolean;
+  readonly pathname: string;
   readonly onSelect: () => void;
+  readonly onOpenThread: (thread: EnvironmentThreadShell) => void;
 }) {
+  const gt = useGT();
+  const [showAll, setShowAll] = useState(false);
+  const openThread = entry.threads.find((thread) => pathname === threadPath(thread)) ?? null;
+  const active = pathname === `/bots/${entry.bot.projectId}` || openThread !== null;
+  const shown = showAll ? entry.threads : entry.threads.slice(0, THREADS_SHOWN);
+  // The open chat stays listed even when it is older than the ones shown.
+  const listed =
+    openThread !== null && !shown.includes(openThread) ? [...shown, openThread] : shown;
+  const hidden = entry.threads.length - listed.length;
   return (
     <li className="list-none">
       <button
         type="button"
-        aria-current={active || undefined}
+        aria-current={active && openThread === null ? true : undefined}
         onClick={onSelect}
         className={cn(
           "flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
@@ -306,6 +325,49 @@ function RosterRow({
           </span>
         </span>
       </button>
+      {listed.length > 0 ? (
+        <ul className="mt-0.5 mb-1 ml-7 flex flex-col gap-px border-l border-sidebar-border pl-2">
+          {listed.map((thread) => {
+            const current = thread === openThread;
+            const waiting = thread.hasPendingApprovals || thread.hasPendingUserInput;
+            return (
+              <li key={thread.id} className="list-none">
+                <button
+                  type="button"
+                  aria-current={current || undefined}
+                  onClick={() => onOpenThread(thread)}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                    current
+                      ? "bg-sidebar-row-active text-sidebar-foreground"
+                      : "text-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground",
+                  )}
+                >
+                  {waiting ? <span className="size-1.5 shrink-0 rounded-full bg-warning" /> : null}
+                  <span className="min-w-0 flex-1 truncate">{thread.title}</span>
+                  <time
+                    dateTime={thread.updatedAt}
+                    className="shrink-0 text-muted-foreground text-xs tabular-nums"
+                  >
+                    {formatRosterTime(thread.updatedAt)}
+                  </time>
+                </button>
+              </li>
+            );
+          })}
+          {hidden > 0 || showAll ? (
+            <li className="list-none">
+              <button
+                type="button"
+                onClick={() => setShowAll((value) => !value)}
+                className="rounded-lg px-2 py-1 text-muted-foreground text-xs hover:text-sidebar-foreground"
+              >
+                {showAll ? gt("Show less") : gt("Show {count} more", { count: hidden })}
+              </button>
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
     </li>
   );
 }

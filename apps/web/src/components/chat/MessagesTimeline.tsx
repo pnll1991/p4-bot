@@ -50,6 +50,7 @@ import {
   type ReactNode,
   type SyntheticEvent,
 } from "react";
+import { BotCompactContext } from "../bots/BotChatMode";
 import {
   LegendList,
   type LegendListRef,
@@ -662,8 +663,11 @@ const ConversationTimeline = memo(function ConversationTimeline({
   const screenReaderAnnouncements = useClientSettings(
     (settings) => settings.screenReaderAnnouncements,
   );
+  // The compact bot chat reads as a conversation: zen keeps the replies and drops tool steps.
+  const botCompact = use(BotCompactContext);
+  const effectiveToolCallVisibility = botCompact ? "zen" : preferredToolCallVisibility;
   const toolCallVisibility =
-    findActive && preferredToolCallVisibility === "zen" ? "hideAll" : preferredToolCallVisibility;
+    findActive && effectiveToolCallVisibility === "zen" ? "hideAll" : effectiveToolCallVisibility;
   const revealedMessageId = citationRequest?.citation.messageId ?? null;
   // Imported turns and post-steer work fold under synthetic keys, not the entries' run ids.
   const findFoldRunIds = findActive

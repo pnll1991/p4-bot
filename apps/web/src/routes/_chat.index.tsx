@@ -1,6 +1,5 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 
-import { readBotChatMode } from "../components/bots/BotChatMode";
 import { useBotRoster } from "../components/bots/useBotRoster";
 import { HostedEmptyState } from "../components/HostedEmptyState";
 import { useEnvironments } from "../state/environments";
@@ -22,13 +21,8 @@ function BotHome() {
   const { environmentId, entries, ready } = useBotRoster();
   if (environmentId === null || !ready) return null;
   const latest = entries[0];
-  if (latest === undefined) return <Navigate to="/bots" replace />;
-  return readBotChatMode() === "full" && latest.latestThread !== null ? (
-    <Navigate
-      to="/$environmentId/$threadId"
-      params={{ environmentId, threadId: latest.latestThread.id }}
-      replace
-    />
+  return latest === undefined ? (
+    <Navigate to="/bots" replace />
   ) : (
     <Navigate to="/bots/$projectId" params={{ projectId: latest.bot.projectId }} replace />
   );

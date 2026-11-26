@@ -65,7 +65,7 @@ function runsPerDay(frequency: Frequency, hours: number): number | null {
   }
 }
 
-export function failureMessage(result: unknown, fallback: string): string {
+function failureMessage(result: unknown, fallback: string): string {
   const error = squashAtomCommandFailure(result as never);
   return error instanceof Error && error.message.trim() ? error.message : fallback;
 }

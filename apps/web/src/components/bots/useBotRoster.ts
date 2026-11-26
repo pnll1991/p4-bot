@@ -87,7 +87,3 @@ export function formatRosterTime(iso: string, now = Date.now()): string {
   if (ageDays < 7) return date.toLocaleDateString(undefined, { weekday: "short" });
   return date.toLocaleDateString(undefined, { month: "numeric", day: "numeric" });
 }
-
-export function isToday(date: Date): boolean {
-  return new Date().toDateString() === date.toDateString();
-}

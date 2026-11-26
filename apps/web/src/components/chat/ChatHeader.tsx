@@ -12,7 +12,7 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import { T, useGT, Var } from "gt-react";
-import { BotThreadModeSwitch } from "../bots/BotChatMode";
+import { BotThreadHeaderControls } from "../bots/BotChatMode";
 import { ChevronDownIcon } from "lucide-react";
 import {
   memo,
@@ -411,10 +411,9 @@ export const ChatHeader = memo(function ChatHeader({
         </WorkspaceBreadcrumbItem>
       </WorkspaceBreadcrumb>
       {isServerThread ? (
-        <BotThreadModeSwitch
+        <BotThreadHeaderControls
           environmentId={activeThreadEnvironmentId}
           projectId={activeProject?.id ?? null}
-          threadId={activeThreadId}
         />
       ) : null}
       {isServerThread ? <GuestShareIndicator threadRef={activeThreadRef} /> : null}
