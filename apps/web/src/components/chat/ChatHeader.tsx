@@ -12,7 +12,7 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import { T, useGT, Var } from "gt-react";
-import { BotThreadHeaderControls, useIsBotProject } from "../bots/BotChatMode";
+import { BotThreadHeaderControls, useBotCompactView, useIsBotProject } from "../bots/BotChatMode";
 import { ChevronDownIcon } from "lucide-react";
 import {
   memo,
@@ -90,6 +90,7 @@ export const ChatHeader = memo(function ChatHeader({
   const activeProjectName = activeProject?.isScratch ? gt("No project") : activeProject?.title;
   const activeProjectCwd = activeProject?.workspaceRoot ?? null;
   const isBotThread = useIsBotProject(activeProject?.id ?? null);
+  const botCompact = useBotCompactView(activeProject?.id ?? null);
   const interfaceFont = useClientSettings((settings) => settings.fontFamilySans);
   const breadcrumbContainerRef = useRef<HTMLDivElement>(null);
   const [collapseParentTitle, setCollapseParentTitle] = useState(false);
@@ -257,7 +258,8 @@ export const ChatHeader = memo(function ChatHeader({
       ref={breadcrumbContainerRef}
       className={cn(
         "flex min-w-0 flex-1 items-center gap-2 sm:gap-3",
-        rightPanelOpen ? "pr-10" : "pr-24",
+        // A compact bot chat keeps one panel control, so its own toggle sits right beside it.
+        botCompact ? "pr-6" : rightPanelOpen ? "pr-10" : "pr-24",
       )}
       onContextMenu={handleHeaderContextMenu}
     >
@@ -265,47 +267,35 @@ export const ChatHeader = memo(function ChatHeader({
         ariaLabel={gt("Thread breadcrumb")}
         className="flex-1 overflow-clip [overflow-clip-margin:2px]"
       >
-        {activeProject ? (
+        {/* A bot's chat is named in its side card and the bot list; the header stays clear. */}
+        {activeProject && !isBotThread ? (
           <>
             <WorkspaceBreadcrumbItem className="shrink">
-              {isBotThread ? (
-                // A bot is one conversation, so its name is a label, not a "new thread" button.
-                <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-muted-foreground">
-                  <ProjectFavicon project={activeProject} className="size-3.5" />
-                  <MiddleTruncate
-                    data-slot="workspace-breadcrumb-text"
-                    value={activeProjectName ?? ""}
-                    showTitle={false}
-                    variant="cap-aligned"
+              <SharedTooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    aria-label={gt("New thread in {project}", { project: activeProjectName })}
+                    onClick={onNewThreadInProject}
+                    className="inline-flex min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                   />
-                </span>
-              ) : (
-                <SharedTooltipTrigger
-                  render={
-                    <button
-                      type="button"
-                      aria-label={gt("New thread in {project}", { project: activeProjectName })}
-                      onClick={onNewThreadInProject}
-                      className="inline-flex min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                    />
-                  }
-                  label={
-                    <>
-                      <T>
-                        New thread in <Var>{activeProjectName}</Var>
-                      </T>
-                    </>
-                  }
-                >
-                  <ProjectFavicon project={activeProject} className="size-3.5" />
-                  <MiddleTruncate
-                    data-slot="workspace-breadcrumb-text"
-                    value={activeProjectName ?? ""}
-                    showTitle={false}
-                    variant="cap-aligned"
-                  />
-                </SharedTooltipTrigger>
-              )}
+                }
+                label={
+                  <>
+                    <T>
+                      New thread in <Var>{activeProjectName}</Var>
+                    </T>
+                  </>
+                }
+              >
+                <ProjectFavicon project={activeProject} className="size-3.5" />
+                <MiddleTruncate
+                  data-slot="workspace-breadcrumb-text"
+                  value={activeProjectName ?? ""}
+                  showTitle={false}
+                  variant="cap-aligned"
+                />
+              </SharedTooltipTrigger>
             </WorkspaceBreadcrumbItem>
             {isBotThread ? null : (
               <WorkspaceBreadcrumbSeparator>
@@ -431,12 +421,7 @@ export const ChatHeader = memo(function ChatHeader({
           </>
         )}
       </WorkspaceBreadcrumb>
-      {/* Also on a bot's draft, so a bot with no conversation yet can still be managed. */}
-      <BotThreadHeaderControls
-        environmentId={activeThreadEnvironmentId}
-        projectId={activeProject?.id ?? null}
-        threadId={isServerThread ? activeThreadId : null}
-      />
+      <BotThreadHeaderControls projectId={activeProject?.id ?? null} />
       {isServerThread ? <GuestShareIndicator threadRef={activeThreadRef} /> : null}
     </div>
   );

@@ -1,23 +1,17 @@
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
-import {
-  type BotProfile,
-  type EnvironmentId,
-  type ProjectId,
-  ProjectId as ProjectIdSchema,
-  type ThreadId,
-} from "@t3tools/contracts";
+import { type BotProfile, type ProjectId, ProjectId as ProjectIdSchema } from "@t3tools/contracts";
 import { Navigate, useParams, useSearch } from "@tanstack/react-router";
 import { useGT } from "gt-react";
-import { BotIcon } from "lucide-react";
+import { ListTreeIcon } from "lucide-react";
 import { createContext, useEffect, useSyncExternalStore } from "react";
 
 import { useNewThreadHandler } from "../../hooks/useHandleNewThread";
-import { cn } from "../../lib/utils";
 import { botEnvironment } from "../../state/bots";
 import { waitForProject } from "../../state/entities";
 import { usePrimaryEnvironmentId } from "../../state/environments";
 import { useEnvironmentQuery } from "../../state/query";
-import { openBotSettings } from "./BotDialogs";
+import { SharedTooltipTrigger } from "../ui/shared-tooltip";
+import { Toggle } from "../ui/toggle";
 import { useBotRoster } from "./useBotRoster";
 
 /**
@@ -84,58 +78,26 @@ export const BotCompactContext = createContext(false);
 export const BotThreadContext = createContext<BotProfile | null>(null);
 
 /** The thread header's controls for a bot thread: the density switch and the bot's details. */
-export function BotThreadHeaderControls({
-  environmentId,
-  projectId,
-  threadId,
-}: {
-  readonly environmentId: EnvironmentId;
-  readonly projectId: ProjectId | null;
-  /** Null on a draft: there is no chat yet to apply a permission change to. */
-  readonly threadId: ThreadId | null;
-}) {
+export function BotThreadHeaderControls({ projectId }: { readonly projectId: ProjectId | null }) {
   const gt = useGT();
   const isBot = useIsBotProject(projectId);
   const mode = useBotChatMode();
-  if (!isBot || projectId === null) return null;
-  const options: ReadonlyArray<{ readonly value: BotChatMode; readonly label: string }> = [
-    { value: "compact", label: gt("Compact") },
-    { value: "full", label: gt("Full") },
-  ];
+  if (!isBot) return null;
+  const label = mode === "full" ? gt("Hide work steps") : gt("Show work steps");
+  // One icon like the panel toggle beside it: pressed shows every step, released reads as chat.
   return (
-    <div className="flex shrink-0 items-center gap-1">
-      <div
-        role="radiogroup"
-        aria-label={gt("Chat view")}
-        className="flex items-center rounded-lg bg-foreground/6 p-0.5"
+    <SharedTooltipTrigger render={<span className="flex shrink-0" />} label={label} side="bottom">
+      <Toggle
+        className="shrink-0 [-webkit-app-region:no-drag]"
+        pressed={mode === "full"}
+        onPressedChange={(pressed) => setMode(pressed ? "full" : "compact")}
+        aria-label={label}
+        variant="ghost"
+        size="sm"
       >
-        {options.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={mode === option.value}
-            onClick={() => setMode(option.value)}
-            className={cn(
-              "rounded-md px-2 py-0.5 font-medium text-xs outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-              mode === option.value
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-      <button
-        type="button"
-        aria-label={gt("Bot details")}
-        onClick={() => openBotSettings({ environmentId, projectId, threadId })}
-        className="flex size-7 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-      >
-        <BotIcon className="size-4" />
-      </button>
-    </div>
+        <ListTreeIcon className="size-4" />
+      </Toggle>
+    </SharedTooltipTrigger>
   );
 }
 
