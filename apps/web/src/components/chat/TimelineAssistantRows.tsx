@@ -24,10 +24,12 @@ import { useV2ItemSupport } from "../../state/v2ItemSupport";
 import { TimelineRowCtx, TimelineRowActivityCtx, type TimelineRow } from "./timelineRowContext";
 import { MESSAGE_HEADING_LEVEL, MessageAuthorHeading } from "./TimelineRowParts";
 import { SharedTooltipTrigger } from "../ui/shared-tooltip";
+import { BotAvatar } from "../bots/BotAvatar";
 import { BotThreadContext } from "../bots/BotChatMode";
 
 export function AssistantTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" }> }) {
   const ctx = use(TimelineRowCtx);
+  const bot = use(BotThreadContext);
   const gt = useGT();
   // The timeline holds a streaming message's row while only its text grows.
   const liveText = useAssistantMessageText(
@@ -41,7 +43,15 @@ export function AssistantTimelineRow({ row }: { row: Extract<TimelineRow, { kind
   return (
     <>
       <div className="relative min-w-0 px-1 py-0.5">
-        <MessageAuthorHeading>P4 Bot</MessageAuthorHeading>
+        {bot ? (
+          // In a bot chat the reply speaks as the bot, like a message from a contact.
+          <div className="mb-1 flex items-center gap-2">
+            <BotAvatar seed={bot.providerInstanceId} name={bot.name} className="size-5" />
+            <h3 className="select-none font-medium text-sm">{bot.name}</h3>
+          </div>
+        ) : (
+          <MessageAuthorHeading>P4 Bot</MessageAuthorHeading>
+        )}
         <div data-thread-find-text="true">
           <AssistantCitationSource
             messageId={row.message.id}
@@ -131,7 +141,7 @@ function AssistantForkButton({
   readonly projectedItem: NonNullable<Extract<TimelineRow, { kind: "message" }>["projectedItem"]>;
 }) {
   const ctx = use(TimelineRowCtx);
-  const isBotThread = use(BotThreadContext);
+  const isBotThread = use(BotThreadContext) !== null;
   const gt = useGT();
   const [busy, setBusy] = useState(false);
   const support = useV2ItemSupport({

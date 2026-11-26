@@ -1,5 +1,6 @@
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import {
+  type BotProfile,
   type EnvironmentId,
   type ProjectId,
   ProjectId as ProjectIdSchema,
@@ -51,15 +52,20 @@ function useBotChatMode(): BotChatMode {
   return useSyncExternalStore(subscribeMode, readMode);
 }
 
-/** Whether this project belongs to a bot. Reads only the bot list, never the thread shells. */
-export function useIsBotProject(projectId: ProjectId | null): boolean {
+/** The bot that owns this project, if any. Reads only the bot list, never the thread shells. */
+export function useBotProfile(projectId: ProjectId | null): BotProfile | null {
   const environmentId = usePrimaryEnvironmentId();
   const bots = useEnvironmentQuery(
     environmentId === null || projectId === null
       ? null
       : botEnvironment.list({ environmentId, input: {} }),
   );
-  return (bots.data?.bots ?? []).some((bot) => bot.projectId === projectId);
+  return (bots.data?.bots ?? []).find((bot) => bot.projectId === projectId) ?? null;
+}
+
+/** Whether this project belongs to a bot. */
+export function useIsBotProject(projectId: ProjectId | null): boolean {
+  return useBotProfile(projectId) !== null;
 }
 
 /** True when the thread view should show the compact bot chat. */
@@ -72,8 +78,11 @@ export function useBotCompactView(projectId: ProjectId | null): boolean {
 /** Set by the thread view so the timeline can drop tool steps in the compact bot chat. */
 export const BotCompactContext = createContext(false);
 
-/** Set by the thread view for any bot chat; branching actions hide, a bot is one conversation. */
-export const BotThreadContext = createContext(false);
+/**
+ * The bot whose chat the thread view shows, or null. Replies carry its face and name, and
+ * branching actions hide, since a bot is one conversation.
+ */
+export const BotThreadContext = createContext<BotProfile | null>(null);
 
 /** The thread header's controls for a bot thread: the density switch and the bot's details. */
 export function BotThreadHeaderControls({

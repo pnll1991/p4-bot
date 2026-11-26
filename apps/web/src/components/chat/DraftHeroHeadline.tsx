@@ -1,4 +1,6 @@
 import type { DraftId } from "~/composerDraftStore";
+import { BotAvatar } from "../bots/BotAvatar";
+import { useBotProfile } from "../bots/BotChatMode";
 import { useComposerDraftStore } from "~/composerDraftStore";
 import { resolveEnvironmentMachineKind, type ScopedProjectRef } from "@t3tools/contracts";
 import { scopedProjectKey, scopeProjectRef } from "@t3tools/client-runtime/environment";
@@ -64,6 +66,7 @@ export function DraftHeroHeadline({
   activeProjectTitle,
 }: DraftHeroHeadlineProps) {
   const gt = useGT();
+  const bot = useBotProfile(activeProjectRef?.projectId ?? null);
   const projects = useProjects();
   const { environments } = useEnvironments();
   const primaryEnvironmentId = usePrimaryEnvironmentId();
@@ -334,6 +337,19 @@ export function DraftHeroHeadline({
         {noProjectShortcut ? <TooltipPopup side="bottom">{noProjectShortcut}</TooltipPopup> : null}
       </Tooltip>
     ) : null;
+
+  // A bot's empty chat greets the bot, not a project to build in.
+  if (bot) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-3 text-center">
+        <BotAvatar seed={bot.providerInstanceId} name={bot.name} className="size-14" />
+        <h1 className="font-normal text-2xl text-foreground tracking-tight sm:text-3xl">
+          {gt("Message {name}", { name: bot.name })}
+        </h1>
+        <p className="line-clamp-3 text-muted-foreground text-sm">{bot.persona}</p>
+      </div>
+    );
+  }
 
   if (isScratchDraft && isTriageDraftPrompt) {
     const environment = environments.find(

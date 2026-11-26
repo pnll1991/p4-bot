@@ -343,7 +343,7 @@ import {
   BotCompactContext,
   BotThreadContext,
   useBotCompactView,
-  useIsBotProject,
+  useBotProfile,
 } from "./bots/BotChatMode";
 import { NoActiveThreadState } from "./NoActiveThreadState";
 import {
@@ -1927,7 +1927,8 @@ export default function ChatView(props: ChatViewProps) {
           reportedModelSelection,
         );
   // A bot works in its own folder; checkout and branch choices mean nothing to its owner.
-  const isBotThread = useIsBotProject(activeThread?.projectId ?? null);
+  const botProfile = useBotProfile(activeThread?.projectId ?? null);
+  const isBotThread = botProfile !== null;
   const showComposerContextStrip =
     !embedded &&
     !isBotThread &&
@@ -3669,7 +3670,7 @@ export default function ChatView(props: ChatViewProps) {
               className="relative flex min-h-0 flex-1 flex-col bg-background"
             >
               <WorkspaceMutationIdContext value={workspaceMutationId}>
-                <BotThreadContext value={isBotThread}>
+                <BotThreadContext value={botProfile}>
                   <BotCompactContext value={botCompact}>
                     <ThreadTimeline
                       pendingApprovals={pendingApprovals}
