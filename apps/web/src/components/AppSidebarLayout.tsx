@@ -44,7 +44,6 @@ import { HistorySwipeNavigation } from "./HistorySwipeNavigation";
 import { BotShellSidebar } from "./bots/BotShellSidebar";
 import { SidebarBrandWidthProbe } from "./sidebar/SidebarChrome";
 import { isAppModalPage } from "./sidebar/mainAppLocation";
-import type { SidebarRouteReveal } from "./sidebar/routeReveal";
 import { useSidebarStageBackdropVariant } from "./SidebarStageBackdrop";
 import {
   clampThreadSidebarWidth,
@@ -426,10 +425,6 @@ export function AppSidebarLayout({
 }) {
   const gt = useGT();
   const sidebarArea = workspaceAreaProps("sidebar", 0, gt("Threads"));
-  const [sidebarRouteReveal] = useState<SidebarRouteReveal>(() => ({
-    observedKey: null,
-    pendingKey: null,
-  }));
   const { active: panelAnimationsActive, durationMs: panelAnimationDurationMs } =
     usePanelAnimationSettings();
   const pathname = useLocation({ select: (location) => location.pathname });
@@ -495,7 +490,7 @@ export function AppSidebarLayout({
               }}
               style={windowControlsInsetStyle}
             >
-              <BotShellSidebar routeReveal={sidebarRouteReveal} />
+              <BotShellSidebar />
               <SidebarRail onDoubleClick={resetSidebarWidth} />
             </Sidebar>
           </>

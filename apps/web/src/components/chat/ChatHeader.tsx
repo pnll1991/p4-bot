@@ -414,6 +414,7 @@ export const ChatHeader = memo(function ChatHeader({
         <BotThreadHeaderControls
           environmentId={activeThreadEnvironmentId}
           projectId={activeProject?.id ?? null}
+          threadId={activeThreadId}
         />
       ) : null}
       {isServerThread ? <GuestShareIndicator threadRef={activeThreadRef} /> : null}

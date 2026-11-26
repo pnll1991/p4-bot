@@ -7,6 +7,8 @@ import type {
   ThreadId,
 } from "@t3tools/contracts";
 
+import { useIsBotProject } from "../bots/BotChatMode";
+import { BotThreadDetails } from "../bots/BotThreadDetails";
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import { isScratchProject } from "@t3tools/client-runtime/state/projects";
 
@@ -99,6 +101,8 @@ interface ThreadDetailsPanelProps extends Pick<
 
 export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
   const visible = useClientSettings(resolveThreadDetailsVisibility);
+  // A bot's chat has no folder or git worth showing; its card shows the bot's own state.
+  const isBotThread = useIsBotProject(props.projectId);
   const gt = useGT();
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const t3File = useT3ProjectFileState(
@@ -183,6 +187,11 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
       }}
     >
       {(density) => {
+        if (isBotThread) {
+          return (
+            <BotThreadDetails environmentId={props.environmentId} projectId={props.projectId} />
+          );
+        }
         // Section flags follow the rows that will render, so no empty section steals the divider rule.
         const show = {
           environment: density === "full" && visible.environment,

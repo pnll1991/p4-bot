@@ -34,6 +34,10 @@ export function createBotEnvironmentAtoms<R, E>(
       label: "environment-command:bots:rules-set",
       tag: WS_METHODS.botsRulesSet,
     }),
+    setPermissions: createEnvironmentRpcCommand(runtime, {
+      label: "environment-command:bots:permissions-set",
+      tag: WS_METHODS.botsPermissionsSet,
+    }),
     createRoutine: createEnvironmentRpcCommand(runtime, {
       label: "environment-command:bots:routine-create",
       tag: WS_METHODS.botsRoutineCreate,

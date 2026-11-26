@@ -22,6 +22,7 @@ import {
   createChildThreadApprovalsAtom,
   type PendingThreadRequests,
   derivePendingThreadRequests,
+  readableApprovalPrompt,
   APPROVAL_TEXT_LIMIT,
   approvalTextParts,
   declinePendingApprovals,
@@ -945,4 +946,26 @@ it("splits a megabyte of approval text the same way as a short one", () => {
   // Every other character named: one run each.
   expect(count(fill("a\r"))).toEqual([size, size / 2]);
   expect(count(fill("a"))).toEqual([1, 0]);
+});
+
+describe("readableApprovalPrompt", () => {
+  it("shows the command a provider sent as JSON tool arguments", () => {
+    expect(
+      readableApprovalPrompt('{\n  "command": "sleep 30 && echo waited",\n  "timeout": 45\n}'),
+    ).toBe("sleep 30 && echo waited");
+  });
+
+  it("shows the file for file tools and lists other arguments one per line", () => {
+    expect(readableApprovalPrompt('{"path": "notes/todo.md", "content": "x"}')).toBe(
+      "notes/todo.md",
+    );
+    expect(readableApprovalPrompt('{"query": "precio", "limit": 5}')).toBe(
+      "query: precio\nlimit: 5",
+    );
+  });
+
+  it("leaves prose and malformed JSON as they are", () => {
+    expect(readableApprovalPrompt("Allow bash?")).toBe("Allow bash?");
+    expect(readableApprovalPrompt("{ not json")).toBe("{ not json");
+  });
 });

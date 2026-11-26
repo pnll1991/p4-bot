@@ -3113,6 +3113,8 @@ export const layerWsRpc = (
           botDesk.createRoutine(input).pipe(Effect.mapError(botDeskError)),
         [WS_METHODS.botsRulesSet]: (input) =>
           botDesk.setRules(input).pipe(Effect.mapError(botDeskError)),
+        [WS_METHODS.botsPermissionsSet]: (input) =>
+          botDesk.setPermissions(input).pipe(Effect.mapError(botDeskError)),
         [WS_METHODS.projectsCreateFromThread]: (input) =>
           scratchThreadPromotion
             .promote(input)

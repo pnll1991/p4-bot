@@ -8,6 +8,8 @@ import {
   type BotPresence,
   type BotRoutine,
   type BotRoutineCreateInput,
+  type BotPermissionsSetInput,
+  type ThreadId,
   type BotRulesSetInput,
   BotMemoryName,
   MAX_BOT_ROUTINE_RUNS_PER_DAY,
@@ -18,6 +20,7 @@ import {
   type ScheduledTaskUpsertSchedule,
 } from "@t3tools/contracts";
 import * as Context from "effect/Context";
+import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
@@ -25,6 +28,7 @@ import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 
 import * as ServerConfig from "../config.ts";
+import * as ServerSettingsService from "../serverSettings.ts";
 import * as ProjectionStore from "../orchestration-v2/ProjectionStore.ts";
 import * as ScheduledTasks from "../scheduledTasks/ScheduledTaskService.ts";
 import { BUILT_IN_BOT_RULES } from "./botRules.ts";
@@ -47,6 +51,7 @@ export class BotOperationError extends Schema.TaggedError<BotOperationError>()(
       "write-memory",
       "routines",
       "rules",
+      "permissions",
     ]),
     cause: Schema.Defect(),
   },
@@ -81,6 +86,8 @@ export class BotDesk extends Context.Service<
     ) => Effect.Effect<BotRoutine, BotError | BotRoutineTooFrequentError>;
     /** Replaces the owner's block rules; built-in rules always apply. */
     readonly setRules: (input: BotRulesSetInput) => Effect.Effect<void, BotError>;
+    /** Sets how much the bot may do without asking, for new chats and routines. */
+    readonly setPermissions: (input: BotPermissionsSetInput) => Effect.Effect<void, BotError>;
   }
 >()("t3/bot/BotDesk") {}
 
@@ -134,6 +141,7 @@ const make = Effect.gen(function* () {
   const bots = yield* BotService.BotService;
   const projections = yield* ProjectionStore.ProjectionStoreV2;
   const scheduledTasks = yield* ScheduledTasks.ScheduledTaskService;
+  const serverSettings = yield* ServerSettingsService.ServerSettingsService;
   const list = bots.list;
   const botsRoot = path.resolve((yield* ServerConfig.ServerConfig).baseDir, "bots");
   const decodeDecision = Schema.decodeUnknownOption(Schema.fromJsonString(BotDecision));
@@ -181,6 +189,26 @@ const make = Effect.gen(function* () {
     return files;
   });
 
+  // Usage is best effort: a thread whose turns cannot be read counts as idle.
+  const usageSince = Effect.fnUntraced(function* (
+    threadIds: ReadonlyArray<ThreadId>,
+    since: DateTime.Utc,
+  ) {
+    const usage = { turns: 0, inputTokens: 0, outputTokens: 0 };
+    for (const threadId of threadIds) {
+      const records = yield* projections
+        .getThreadRecords(threadId, ["providerTurns"])
+        .pipe(Effect.orElseSucceed(() => ({ providerTurns: [] })));
+      for (const turn of records.providerTurns) {
+        if (turn.startedAt === null || DateTime.isLessThan(turn.startedAt, since)) continue;
+        usage.turns += 1;
+        usage.inputTokens += turn.turnTokenUsage?.inputTokens ?? 0;
+        usage.outputTokens += turn.turnTokenUsage?.outputTokens ?? 0;
+      }
+    }
+    return usage;
+  });
+
   const get: BotDesk["Service"]["get"] = Effect.fn("BotDesk.get")(function* (projectId) {
     const bot = yield* findBot(projectId);
     const threads = yield* projections.listActiveThreads(projectId).pipe(
@@ -208,8 +236,13 @@ const make = Effect.gen(function* () {
         PRESENCE_RANK[thread.presence] > PRESENCE_RANK[current] ? thread.presence : current,
       "idle",
     );
+    const usage = yield* usageSince(
+      summaries.map((summary) => summary.threadId),
+      DateTime.subtract(yield* DateTime.now, { hours: 24 }),
+    );
     return {
       bot,
+      usage,
       builtInRules: BUILT_IN_BOT_RULES,
       rules: bot.rules ?? [],
       decisions: yield* readDecisions(bot),
@@ -258,8 +291,8 @@ const make = Effect.gen(function* () {
           threadId: null,
           workspaceStrategy: { type: "root" },
           modelSelection: { instanceId: bot.providerInstanceId, model: bot.model },
-          // Unattended work never runs above Supervised.
-          runtimeMode: "approval-required",
+          // Routines run with the bot's own permissions, Supervised unless the owner chose otherwise.
+          runtimeMode: bot.runtimeMode ?? "approval-required",
           interactionMode: "default",
         })
         .pipe(Effect.mapError((cause) => new BotOperationError({ operation: "routines", cause })));
@@ -280,7 +313,35 @@ const make = Effect.gen(function* () {
     );
   });
 
-  return BotDesk.of({ get, writeMemory, deleteMemory, createRoutine, setRules });
+  const setPermissions: BotDesk["Service"]["setPermissions"] = Effect.fn("BotDesk.setPermissions")(
+    function* (input) {
+      const bot = yield* findBot(input.projectId);
+      yield* encodeProfile({ ...bot, runtimeMode: input.runtimeMode }).pipe(
+        Effect.flatMap((json) =>
+          fileSystem.writeFileString(
+            path.join(botsRoot, bot.providerInstanceId, "bot.json"),
+            `${json}\n`,
+          ),
+        ),
+        Effect.mapError((cause) => new BotOperationError({ operation: "permissions", cause })),
+      );
+      // New chats in the bot's project start from the project's default permissions.
+      yield* serverSettings.getSettings.pipe(
+        Effect.flatMap((settings) => {
+          const { providerInstances: _kept, ...override } =
+            settings.projectSettingsOverrides[bot.projectId] ?? {};
+          return serverSettings.updateSettings({
+            projectSettingsOverrides: {
+              [bot.projectId]: { ...override, defaultRuntimeMode: input.runtimeMode },
+            },
+          });
+        }),
+        Effect.mapError((cause) => new BotOperationError({ operation: "permissions", cause })),
+      );
+    },
+  );
+
+  return BotDesk.of({ get, writeMemory, deleteMemory, createRoutine, setRules, setPermissions });
 });
 
 export const layer = Layer.effect(BotDesk, make);

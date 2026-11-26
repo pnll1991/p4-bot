@@ -3,7 +3,6 @@ import { T, useGT } from "gt-react";
 import {
   BarChart3Icon,
   CalendarClockIcon,
-  CodeXmlIcon,
   MessageCircleIcon,
   MoonIcon,
   SearchIcon,
@@ -16,8 +15,6 @@ import { useState } from "react";
 
 import { setAppearanceMode, useTheme } from "../../hooks/useTheme";
 import { cn } from "../../lib/utils";
-import ThreadSidebar from "../Sidebar";
-import type { SidebarRouteReveal } from "../sidebar/routeReveal";
 import { T3Wordmark } from "../T3Wordmark";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
@@ -25,27 +22,14 @@ import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/model
 import { BotAvatar } from "./BotAvatar";
 import { formatRosterTime, useBotRoster, type BotRosterEntry } from "./useBotRoster";
 
-type Place = "bots" | "threads";
-
-const PLACE_STORAGE_KEY = "p4:sidebar-place";
-
-function readPlace(): Place {
-  return window.localStorage.getItem(PLACE_STORAGE_KEY) === "threads" ? "threads" : "bots";
-}
-
-/** A rail of places beside the panel: bots by default, the classic thread list on demand. */
-export function BotShellSidebar({ routeReveal }: { readonly routeReveal: SidebarRouteReveal }) {
+/** A rail of places beside the bot roster; each bot lists its own chats. */
+export function BotShellSidebar() {
   const gt = useGT();
   const navigate = useNavigate();
   const pathname = useLocation({ select: (location) => location.pathname });
-  const [place, setPlaceState] = useState<Place>(readPlace);
   const { resolvedTheme } = useTheme();
   const nextAppearance = resolvedTheme === "dark" ? "light" : "dark";
 
-  const setPlace = (next: Place) => {
-    window.localStorage.setItem(PLACE_STORAGE_KEY, next);
-    setPlaceState(next);
-  };
   const isUnder = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
 
   return (
@@ -57,20 +41,14 @@ export function BotShellSidebar({ routeReveal }: { readonly routeReveal: Sidebar
         <RailButton
           label={gt("Bots")}
           icon={MessageCircleIcon}
-          active={place === "bots"}
-          onClick={() => setPlace("bots")}
+          active={pathname.startsWith("/bots") || !pathname.startsWith("/settings")}
+          onClick={() => void navigate({ to: "/" })}
         />
         <RailButton
           label={gt("Routines")}
           icon={CalendarClockIcon}
           active={isUnder("/settings/scheduled-tasks")}
           onClick={() => void navigate({ to: "/settings/scheduled-tasks" })}
-        />
-        <RailButton
-          label={gt("Threads")}
-          icon={CodeXmlIcon}
-          active={place === "threads"}
-          onClick={() => setPlace("threads")}
         />
         <RailButton
           label={gt("Usage")}
@@ -96,11 +74,7 @@ export function BotShellSidebar({ routeReveal }: { readonly routeReveal: Sidebar
       </nav>
       <div className="flex min-w-0 flex-1 py-2 pr-2">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-sidebar-border/70 bg-sidebar">
-          {place === "bots" ? (
-            <BotRoster pathname={pathname} />
-          ) : (
-            <ThreadSidebar routeReveal={routeReveal} />
-          )}
+          <BotRoster pathname={pathname} />
         </div>
       </div>
     </div>

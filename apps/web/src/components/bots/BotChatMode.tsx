@@ -3,6 +3,7 @@ import {
   type EnvironmentId,
   type ProjectId,
   ProjectId as ProjectIdSchema,
+  type ThreadId,
 } from "@t3tools/contracts";
 import { Navigate, useParams, useSearch } from "@tanstack/react-router";
 import { useGT } from "gt-react";
@@ -51,7 +52,7 @@ function useBotChatMode(): BotChatMode {
 }
 
 /** Whether this project belongs to a bot. Reads only the bot list, never the thread shells. */
-function useIsBotProject(projectId: ProjectId | null): boolean {
+export function useIsBotProject(projectId: ProjectId | null): boolean {
   const environmentId = usePrimaryEnvironmentId();
   const bots = useEnvironmentQuery(
     environmentId === null || projectId === null
@@ -75,9 +76,11 @@ export const BotCompactContext = createContext(false);
 export function BotThreadHeaderControls({
   environmentId,
   projectId,
+  threadId,
 }: {
   readonly environmentId: EnvironmentId;
   readonly projectId: ProjectId | null;
+  readonly threadId: ThreadId;
 }) {
   const gt = useGT();
   const isBot = useIsBotProject(projectId);
@@ -128,7 +131,7 @@ export function BotThreadHeaderControls({
           </SheetHeader>
           <div className="min-h-0 flex-1 overflow-y-auto p-5">
             {detailsOpen ? (
-              <BotDetails environmentId={environmentId} projectId={projectId} />
+              <BotDetails environmentId={environmentId} projectId={projectId} threadId={threadId} />
             ) : null}
           </div>
         </SheetPopup>

@@ -27,6 +27,9 @@ export const BotRule = Schema.Struct({
 });
 export type BotRule = typeof BotRule.Type;
 
+export const BotRuntimeMode = Schema.Literals(["approval-required", "full-access"]);
+export type BotRuntimeMode = typeof BotRuntimeMode.Type;
+
 export const BotProfile = Schema.Struct({
   version: Schema.Literal(1),
   name: Schema.String,
@@ -38,6 +41,8 @@ export const BotProfile = Schema.Struct({
   providerInstanceId: ProviderInstanceId,
   /** The owner's own block rules, on top of the built-in ones. */
   rules: Schema.optionalKey(Schema.Array(BotRule)),
+  /** Supervised asks before acting; full access never asks. Absent means Supervised. */
+  runtimeMode: Schema.optionalKey(BotRuntimeMode),
 });
 export type BotProfile = typeof BotProfile.Type;
 
@@ -109,6 +114,13 @@ export const BotDecision = Schema.Struct({
 });
 export type BotDecision = typeof BotDecision.Type;
 
+export const BotUsage = Schema.Struct({
+  turns: Schema.Int,
+  inputTokens: Schema.Int,
+  outputTokens: Schema.Int,
+});
+export type BotUsage = typeof BotUsage.Type;
+
 export const BotOverview = Schema.Struct({
   bot: BotProfile,
   presence: BotPresence,
@@ -119,6 +131,8 @@ export const BotOverview = Schema.Struct({
   rules: ForwardCompatibleArray(BotRule),
   /** Newest first. */
   decisions: ForwardCompatibleArray(BotDecision),
+  /** What the bot used over the last 24 hours, across its chats and routines. */
+  usage: Schema.optionalKey(BotUsage),
 });
 export type BotOverview = typeof BotOverview.Type;
 
@@ -148,3 +162,9 @@ export const BotRulesSetInput = Schema.Struct({
   rules: Schema.Array(BotRule).check(Schema.isMaxLength(100)),
 });
 export type BotRulesSetInput = typeof BotRulesSetInput.Type;
+
+export const BotPermissionsSetInput = Schema.Struct({
+  projectId: ProjectId,
+  runtimeMode: BotRuntimeMode,
+});
+export type BotPermissionsSetInput = typeof BotPermissionsSetInput.Type;

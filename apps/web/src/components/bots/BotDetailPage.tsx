@@ -8,14 +8,20 @@ import {
   type BotPresence,
   type BotRoutine,
   type BotRule,
+  type BotRuntimeMode,
   type EnvironmentId,
   MAX_BOT_ROUTINE_RUNS_PER_DAY,
   type ProjectId,
   type ScheduledTaskUpsertSchedule,
+  type ThreadId,
 } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { T, useGT, Var } from "gt-react";
+import { ShieldIcon, ShieldOffIcon } from "lucide-react";
 import { useState } from "react";
+
+import { cn } from "../../lib/utils";
+import { threadEnvironment } from "../../state/threads";
 
 import { botEnvironment } from "../../state/bots";
 import { useEnvironmentQuery } from "../../state/query";
@@ -88,9 +94,12 @@ function PresenceBadge({ presence }: { readonly presence: BotPresence }) {
 export function BotDetails({
   environmentId,
   projectId,
+  threadId = null,
 }: {
   readonly environmentId: EnvironmentId;
   readonly projectId: ProjectId;
+  /** The chat the details were opened from; a permission change applies to it right away. */
+  readonly threadId?: ThreadId | null;
 }) {
   const gt = useGT();
   const overview = useEnvironmentQuery(
@@ -116,9 +125,18 @@ export function BotDetails({
           <PresenceBadge presence={data.presence} />
         </div>
         <p className="text-muted-foreground text-sm">
-          {data.bot.runtime} · {data.bot.model} · <T>Supervised</T>
+          {data.bot.runtime} · {data.bot.model} ·{" "}
+          {data.bot.runtimeMode === "full-access" ? <T>Full access</T> : <T>Supervised</T>}
         </p>
       </header>
+
+      <PermissionsSection
+        environmentId={environmentId}
+        projectId={projectId}
+        threadId={threadId}
+        runtimeMode={data.bot.runtimeMode ?? "approval-required"}
+        onChange={overview.refresh}
+      />
 
       <section className="flex flex-col gap-2">
         <h2 className="font-medium text-base">
@@ -182,6 +200,99 @@ export function BotDetails({
         })}
       </p>
     </div>
+  );
+}
+
+const PERMISSION_OPTIONS: ReadonlyArray<{
+  readonly value: BotRuntimeMode;
+  readonly icon: typeof ShieldIcon;
+}> = [
+  { value: "approval-required", icon: ShieldIcon },
+  { value: "full-access", icon: ShieldOffIcon },
+];
+
+function PermissionsSection(props: {
+  readonly environmentId: EnvironmentId;
+  readonly projectId: ProjectId;
+  readonly threadId: ThreadId | null;
+  readonly runtimeMode: BotRuntimeMode;
+  readonly onChange: () => void;
+}) {
+  const gt = useGT();
+  const setPermissions = useAtomCommand(botEnvironment.setPermissions, { reportFailure: false });
+  const setThreadMode = useAtomCommand(threadEnvironment.setRuntimeMode, { reportFailure: false });
+  const [saving, setSaving] = useState(false);
+  const label = (mode: BotRuntimeMode) =>
+    mode === "full-access" ? gt("Full access") : gt("Supervised");
+
+  const choose = async (runtimeMode: BotRuntimeMode) => {
+    if (runtimeMode === props.runtimeMode) return;
+    setSaving(true);
+    const result = await setPermissions({
+      environmentId: props.environmentId,
+      input: { projectId: props.projectId, runtimeMode },
+    });
+    if (result._tag === "Success" && props.threadId !== null) {
+      await setThreadMode({
+        environmentId: props.environmentId,
+        input: { threadId: props.threadId, runtimeMode },
+      });
+    }
+    setSaving(false);
+    if (result._tag === "Failure") {
+      toastManager.add({
+        type: "error",
+        title: gt("Could not change permissions"),
+        description: failureMessage(result, gt("Try again.")),
+      });
+      return;
+    }
+    props.onChange();
+  };
+
+  return (
+    <section className="flex flex-col gap-2">
+      <h2 className="font-medium text-base">
+        <T>Permissions</T>
+      </h2>
+      <div className="grid grid-cols-2 gap-1 rounded-xl bg-foreground/6 p-1">
+        {PERMISSION_OPTIONS.map((option) => {
+          const Icon = option.icon;
+          const chosen = props.runtimeMode === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={chosen}
+              disabled={saving}
+              onClick={() => void choose(option.value)}
+              className={cn(
+                "flex items-center justify-center gap-2 rounded-lg px-3 py-2 font-medium text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:opacity-60",
+                chosen
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon className="size-4" />
+              {label(option.value)}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-muted-foreground text-sm">
+        {props.runtimeMode === "full-access" ? (
+          <T>
+            The bot runs commands and edits without asking, in new chats, this chat and its
+            routines. Action rules only screen requests, so with full access nothing reaches them.
+          </T>
+        ) : (
+          <T>
+            The bot asks before running commands or editing files. Action rules decline the risky
+            ones before they reach you.
+          </T>
+        )}
+      </p>
+    </section>
   );
 }
 
