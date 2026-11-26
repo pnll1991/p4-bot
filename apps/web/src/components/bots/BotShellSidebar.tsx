@@ -243,6 +243,7 @@ function RosterRow({
   readonly pathname: string;
   readonly onSelect: () => void;
 }) {
+  const gt = useGT();
   const active =
     pathname === `/bots/${entry.bot.projectId}` ||
     entry.threads.some((thread) => pathname === threadPath(thread));
@@ -269,6 +270,13 @@ function RosterRow({
               {entry.bot.name}
             </span>
             <span className="flex-1" />
+            {entry.unread && !active ? (
+              <span
+                role="img"
+                aria-label={gt("Unread")}
+                className="size-2 shrink-0 rounded-full bg-primary"
+              />
+            ) : null}
             {entry.lastActivityAt ? (
               <time
                 dateTime={entry.lastActivityAt}
@@ -278,8 +286,20 @@ function RosterRow({
               </time>
             ) : null}
           </span>
-          <span className="truncate text-muted-foreground text-sm">
-            {entry.preview ?? entry.bot.persona}
+          <span
+            className={cn(
+              "truncate text-sm",
+              entry.unread && !active ? "text-sidebar-foreground" : "text-muted-foreground",
+            )}
+          >
+            {entry.working ? (
+              <span className="italic">{gt("Working…")}</span>
+            ) : (
+              <>
+                {entry.previewIsYours && entry.preview ? `${gt("You")}: ` : ""}
+                {entry.preview ?? entry.bot.persona}
+              </>
+            )}
           </span>
         </span>
       </button>

@@ -3,6 +3,7 @@ import type { BotProfile, EnvironmentId, ProjectId } from "@t3tools/contracts";
 import * as DateTime from "effect/DateTime";
 
 import { botEnvironment } from "../../state/bots";
+import { hasUnseenCompletion } from "../Sidebar.logic";
 import { useVisibleThreadShells } from "../../state/entities";
 import { usePrimaryEnvironmentId } from "../../state/environments";
 import { useEnvironmentQuery } from "../../state/query";
@@ -16,7 +17,15 @@ export interface BotRosterEntry {
   readonly preview: string | null;
   readonly lastActivityAt: string | null;
   readonly needsYou: boolean;
+  /** The bot finished a reply since its chat was last opened. */
+  readonly unread: boolean;
+  /** The bot is running a turn right now. */
+  readonly working: boolean;
+  /** The preview is the owner's own last message. */
+  readonly previewIsYours: boolean;
 }
+
+const WORKING_STATUSES = new Set(["preparing", "queued", "starting", "running"]);
 
 function newestFirst(left: EnvironmentThreadShell, right: EnvironmentThreadShell): number {
   return right.updatedAt.localeCompare(left.updatedAt);
@@ -61,6 +70,9 @@ export function useBotRoster(): {
           needsYou: threads.some(
             (thread) => thread.hasPendingApprovals || thread.hasPendingUserInput,
           ),
+          unread: latestThread !== null && hasUnseenCompletion(latestThread),
+          working: threads.some((thread) => WORKING_STATUSES.has(thread.runtime?.status ?? "idle")),
+          previewIsYours: latestMessage?.role === "user",
         };
       })
       .toSorted((left, right) =>
