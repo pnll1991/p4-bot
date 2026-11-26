@@ -59,6 +59,7 @@ export class BotOperationError extends Schema.TaggedError<BotOperationError>()(
       "rules",
       "permissions",
       "runtime",
+      "start-over",
       "delete",
       "arrange",
     ]),
@@ -95,7 +96,7 @@ export class BotDesk extends Context.Service<
     ) => Effect.Effect<BotRoutine, BotError | BotRoutineTooFrequentError>;
     /** Replaces the owner's block rules; built-in rules always apply. */
     readonly setRules: (input: BotRulesSetInput) => Effect.Effect<void, BotError>;
-    /** Sets how much the bot may do without asking, for new chats and routines. */
+    /** Sets how much the bot may do without asking, for its open chat, new chats and routines. */
     readonly setPermissions: (input: BotPermissionsSetInput) => Effect.Effect<void, BotError>;
     /**
      * Swaps the agent behind the bot's own provider instance, keeping its id, so the bot keeps its
@@ -103,8 +104,8 @@ export class BotDesk extends Context.Service<
      */
     readonly setRuntime: (input: BotRuntimeSetInput) => Effect.Effect<void, BotError>;
     /**
-     * Unbinds the bot's routines from its conversation; the client archives that conversation, and
-     * the next message, the owner's or a routine's, starts the fresh one they all share.
+     * Archives the bot's conversation and unbinds its routines from it, so the next message, the
+     * owner's or a routine's, starts the fresh one they all share.
      */
     readonly startOver: (projectId: ProjectId) => Effect.Effect<void, BotError>;
     /**
@@ -389,6 +390,25 @@ const make = Effect.gen(function* () {
         }),
         Effect.mapError((cause) => new BotOperationError({ operation: "permissions", cause })),
       );
+      // The open chat follows too, so the switch never disagrees with the composer.
+      const changedAt = DateTime.toEpochMillis(yield* DateTime.now);
+      const threads = yield* projections
+        .listActiveThreads(bot.projectId)
+        .pipe(
+          Effect.mapError((cause) => new BotOperationError({ operation: "permissions", cause })),
+        );
+      yield* Effect.forEach(threads, (thread) =>
+        engine
+          .dispatch({
+            type: "thread.runtime-mode.set",
+            commandId: CommandId.make(`server:bot-permissions:${thread.id}:${changedAt}`),
+            threadId: thread.id,
+            runtimeMode: input.runtimeMode,
+          })
+          .pipe(
+            Effect.mapError((cause) => new BotOperationError({ operation: "permissions", cause })),
+          ),
+      );
     },
   );
 
@@ -466,6 +486,23 @@ const make = Effect.gen(function* () {
   const startOver: BotDesk["Service"]["startOver"] = Effect.fn("BotDesk.startOver")(
     function* (projectId) {
       const bot = yield* findBot(projectId);
+      const archivedAt = DateTime.toEpochMillis(yield* DateTime.now);
+      const threads = yield* projections
+        .listActiveThreads(bot.projectId)
+        .pipe(
+          Effect.mapError((cause) => new BotOperationError({ operation: "start-over", cause })),
+        );
+      yield* Effect.forEach(threads, (thread) =>
+        engine
+          .dispatch({
+            type: "thread.archive",
+            commandId: CommandId.make(`server:bot-start-over:${thread.id}:${archivedAt}`),
+            threadId: thread.id,
+          })
+          .pipe(
+            Effect.mapError((cause) => new BotOperationError({ operation: "start-over", cause })),
+          ),
+      );
       const { tasks } = yield* scheduledTasks
         .list()
         .pipe(Effect.mapError((cause) => new BotOperationError({ operation: "routines", cause })));

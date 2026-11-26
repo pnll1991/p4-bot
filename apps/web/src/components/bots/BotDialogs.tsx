@@ -1,14 +1,12 @@
-import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
-import type { EnvironmentId, ProjectId, ThreadId } from "@t3tools/contracts";
+import type { EnvironmentId, ProjectId } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { T, useGT, Var } from "gt-react";
 import { useState, useSyncExternalStore } from "react";
 
-import { useThreadActions } from "../../hooks/useThreadActions";
 import { botEnvironment } from "../../state/bots";
 import { useEnvironmentQuery } from "../../state/query";
 import { useAtomCommand } from "../../state/use-atom-command";
@@ -40,7 +38,7 @@ function failureText(result: unknown, fallback: string): string {
 }
 
 // One settings sheet for the whole app, so the header and the sidebar open the same one.
-let openSettings: (BotTarget & { readonly threadId: ThreadId | null }) | null = null;
+let openSettings: BotTarget | null = null;
 const listeners = new Set<() => void>();
 function setOpenSettings(next: typeof openSettings) {
   openSettings = next;
@@ -51,8 +49,8 @@ function subscribeSettings(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-export function openBotSettings(target: BotTarget & { readonly threadId?: ThreadId | null }) {
-  setOpenSettings({ ...target, threadId: target.threadId ?? null });
+export function openBotSettings(target: BotTarget) {
+  setOpenSettings(target);
 }
 
 /** Mounted once in the app shell; shows the settings of whichever bot asked last. */
@@ -76,7 +74,6 @@ export function BotSettingsHost() {
               key={target.projectId}
               environmentId={target.environmentId}
               projectId={target.projectId}
-              threadId={target.threadId}
             />
           ) : null}
         </div>
@@ -89,27 +86,21 @@ export function BotSettingsHost() {
 export function BotStartOverDialog({
   target,
   botName,
-  threadIds,
   open,
   onOpenChange,
 }: {
   readonly target: BotTarget;
   readonly botName: string;
-  readonly threadIds: ReadonlyArray<ThreadId>;
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
 }) {
   const gt = useGT();
   const navigate = useNavigate();
-  const actions = useThreadActions();
   const startOver = useAtomCommand(botEnvironment.startOver, { reportFailure: false });
   const [working, setWorking] = useState(false);
 
   const run = async () => {
     setWorking(true);
-    for (const threadId of threadIds) {
-      await actions.archiveThread(scopeThreadRef(target.environmentId, threadId));
-    }
     const result = await startOver({
       environmentId: target.environmentId,
       input: { projectId: target.projectId },

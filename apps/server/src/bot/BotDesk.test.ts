@@ -80,7 +80,11 @@ const harness = (
             calls.push(
               command.type === "thread.model-selection.set"
                 ? `thread.model:${command.threadId}:${command.modelSelection.model}`
-                : command.type,
+                : command.type === "thread.runtime-mode.set"
+                  ? `thread.mode:${command.threadId}:${command.runtimeMode}`
+                  : command.type === "thread.archive"
+                    ? `thread.archive:${command.threadId}`
+                    : command.type,
             );
             return Effect.succeed({} as never);
           },
@@ -223,27 +227,35 @@ it.layer(NodeServices.layer)("BotDesk", (it) => {
     }).pipe(Effect.scoped),
   );
 
-  it.effect("full access applies to new chats and routines, keeping the provider override", () =>
-    Effect.gen(function* () {
-      const fileSystem = yield* FileSystem.FileSystem;
-      const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({ prefix: "p4-bot-perm-" });
-      yield* fileSystem.makeDirectory(`${workspaceRoot}/bots/bot-test`, { recursive: true });
-      const upserts: Array<ScheduledTaskUpsertInput> = [];
-      const patches: Array<ServerSettingsPatch> = [];
+  it.effect(
+    "full access applies to open chats, new chats and routines, keeping the provider override",
+    () =>
+      Effect.gen(function* () {
+        const fileSystem = yield* FileSystem.FileSystem;
+        const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({ prefix: "p4-bot-perm-" });
+        yield* fileSystem.makeDirectory(`${workspaceRoot}/bots/bot-test`, { recursive: true });
+        const upserts: Array<ScheduledTaskUpsertInput> = [];
+        const patches: Array<ServerSettingsPatch> = [];
+        const calls: Array<string> = [];
 
-      yield* Effect.gen(function* () {
-        const desk = yield* BotDesk.BotDesk;
-        yield* desk.setPermissions({ projectId, runtimeMode: "full-access" });
-      }).pipe(Effect.provide(harness(workspaceRoot, upserts, patches)));
+        yield* Effect.gen(function* () {
+          const desk = yield* BotDesk.BotDesk;
+          yield* desk.setPermissions({ projectId, runtimeMode: "full-access" });
+        }).pipe(Effect.provide(harness(workspaceRoot, upserts, patches, calls)));
 
-      assert.deepEqual(patches, [
-        { projectSettingsOverrides: { [projectId]: { defaultRuntimeMode: "full-access" } } },
-      ]);
-      const saved = JSON.parse(
-        yield* fileSystem.readFileString(`${workspaceRoot}/bots/bot-test/bot.json`),
-      ) as { runtimeMode?: string };
-      assert.equal(saved.runtimeMode, "full-access");
-    }).pipe(Effect.scoped),
+        assert.deepEqual(calls, [
+          `thread.mode:${waiting}:full-access`,
+          `thread.mode:${quiet}:full-access`,
+        ]);
+
+        assert.deepEqual(patches, [
+          { projectSettingsOverrides: { [projectId]: { defaultRuntimeMode: "full-access" } } },
+        ]);
+        const saved = JSON.parse(
+          yield* fileSystem.readFileString(`${workspaceRoot}/bots/bot-test/bot.json`),
+        ) as { runtimeMode?: string };
+        assert.equal(saved.runtimeMode, "full-access");
+      }).pipe(Effect.scoped),
   );
 
   it.effect("changing the agent keeps the bot's instance and moves its chats and routines", () =>
@@ -298,6 +310,26 @@ it.layer(NodeServices.layer)("BotDesk", (it) => {
       assert.equal(saved.runtime, "claudeAgent");
       assert.equal(saved.model, "claude-sonnet-5-5");
       assert.equal(saved.providerInstanceId, "bot-test");
+    }).pipe(Effect.scoped),
+  );
+
+  it.effect("starting over archives the bot's chats and moves its routines to the next one", () =>
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({ prefix: "p4-bot-over-" });
+      const upserts: Array<ScheduledTaskUpsertInput> = [];
+      const calls: Array<string> = [];
+
+      yield* Effect.gen(function* () {
+        const desk = yield* BotDesk.BotDesk;
+        yield* desk.startOver(projectId);
+      }).pipe(Effect.provide(harness(workspaceRoot, upserts, [], calls)));
+
+      assert.deepEqual(calls, [`thread.archive:${waiting}`, `thread.archive:${quiet}`]);
+      assert.deepEqual(
+        upserts.map((upsert) => ({ id: upsert.id, unbind: upsert.unbindThread })),
+        [{ id: ScheduledTaskId.make("task-bot"), unbind: true }],
+      );
     }).pipe(Effect.scoped),
   );
 

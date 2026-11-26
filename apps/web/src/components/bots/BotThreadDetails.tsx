@@ -1,10 +1,4 @@
-import type {
-  BotRoutine,
-  EnvironmentId,
-  ProjectId,
-  RuntimeMode,
-  ThreadId,
-} from "@t3tools/contracts";
+import type { BotRoutine, EnvironmentId, ProjectId, RuntimeMode } from "@t3tools/contracts";
 import { T, useGT } from "gt-react";
 import { CalendarClockIcon, SettingsIcon } from "lucide-react";
 import type { ReactNode } from "react";
@@ -12,10 +6,10 @@ import type { ReactNode } from "react";
 import { botEnvironment } from "../../state/bots";
 import { useEnvironmentQuery } from "../../state/query";
 import { serverEnvironment } from "../../state/server";
-import { threadEnvironment } from "../../state/threads";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
+import { toastManager } from "../ui/toast";
 import { BotAvatar } from "./BotAvatar";
 import { openBotSettings } from "./BotDialogs";
 import { formatRosterTime } from "./useBotRoster";
@@ -29,13 +23,11 @@ const compactNumber = new Intl.NumberFormat(undefined, { notation: "compact" });
 export function BotThreadDetails({
   environmentId,
   projectId,
-  threadId = null,
   runtimeMode,
   onRuntimeModeChange,
 }: {
   readonly environmentId: EnvironmentId;
   readonly projectId: ProjectId;
-  readonly threadId?: ThreadId | null;
   /** The open chat's mode; the switch follows it so it always matches the composer. */
   readonly runtimeMode?: RuntimeMode;
   readonly onRuntimeModeChange?: (mode: RuntimeMode) => void;
@@ -48,7 +40,6 @@ export function BotThreadDetails({
     reportFailure: false,
   });
   const setPermissions = useAtomCommand(botEnvironment.setPermissions, { reportFailure: false });
-  const setThreadMode = useAtomCommand(threadEnvironment.setRuntimeMode, { reportFailure: false });
   const data = overview.data;
   if (data === null) return null;
   const usage = data.usage ?? { turns: 0, inputTokens: 0, outputTokens: 0 };
@@ -61,8 +52,8 @@ export function BotThreadDetails({
     const mode = on ? "full-access" : "approval-required";
     onRuntimeModeChange?.(mode);
     const result = await setPermissions({ environmentId, input: { projectId, runtimeMode: mode } });
-    if (result._tag === "Success" && threadId !== null && onRuntimeModeChange === undefined) {
-      await setThreadMode({ environmentId, input: { threadId, runtimeMode: mode } });
+    if (result._tag === "Failure") {
+      toastManager.add({ type: "error", title: gt("Could not change permissions") });
     }
     overview.refresh();
   };
@@ -124,7 +115,7 @@ export function BotThreadDetails({
       <Button
         variant="outline"
         size="sm"
-        onClick={() => openBotSettings({ environmentId, projectId, threadId })}
+        onClick={() => openBotSettings({ environmentId, projectId })}
       >
         <SettingsIcon />
         <T>Bot settings</T>

@@ -196,7 +196,6 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
             <BotThreadDetails
               environmentId={props.environmentId}
               projectId={props.projectId}
-              threadId={props.isServerThread ? props.threadId : null}
               {...(props.runtimeMode ? { runtimeMode: props.runtimeMode } : {})}
               {...(props.onRuntimeModeChange
                 ? { onRuntimeModeChange: props.onRuntimeModeChange }

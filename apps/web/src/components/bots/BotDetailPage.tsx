@@ -14,7 +14,6 @@ import {
   MAX_BOT_ROUTINE_RUNS_PER_DAY,
   type ProjectId,
   type ScheduledTaskUpsertSchedule,
-  type ThreadId,
 } from "@t3tools/contracts";
 import { useNavigate } from "@tanstack/react-router";
 import { T, useGT, Var } from "gt-react";
@@ -27,7 +26,6 @@ import { cn } from "../../lib/utils";
 import { BotAvatar } from "./BotAvatar";
 import { BotDeleteDialog, BotStartOverDialog } from "./BotDialogs";
 import { DEFAULT_MODEL, RUNTIME_LABEL } from "./BotsPage";
-import { threadEnvironment } from "../../state/threads";
 
 import { botEnvironment } from "../../state/bots";
 import { useEnvironmentQuery } from "../../state/query";
@@ -102,12 +100,9 @@ type DetailsTab = "general" | "rules" | "memory" | "routines";
 export function BotDetails({
   environmentId,
   projectId,
-  threadId = null,
 }: {
   readonly environmentId: EnvironmentId;
   readonly projectId: ProjectId;
-  /** The chat the details were opened from; a permission change applies to it right away. */
-  readonly threadId?: ThreadId | null;
 }) {
   const gt = useGT();
   const overview = useEnvironmentQuery(
@@ -179,7 +174,6 @@ export function BotDetails({
           <PermissionsSection
             environmentId={environmentId}
             projectId={projectId}
-            threadId={threadId}
             runtimeMode={data.bot.runtimeMode ?? "approval-required"}
             onChange={overview.refresh}
           />
@@ -270,7 +264,6 @@ export function BotDetails({
       <BotStartOverDialog
         target={target}
         botName={data.bot.name}
-        threadIds={data.threads.map((thread) => thread.threadId)}
         open={dialog === "start-over"}
         onOpenChange={(open) => setDialog(open ? "start-over" : null)}
       />
@@ -295,13 +288,11 @@ const PERMISSION_OPTIONS: ReadonlyArray<{
 function PermissionsSection(props: {
   readonly environmentId: EnvironmentId;
   readonly projectId: ProjectId;
-  readonly threadId: ThreadId | null;
   readonly runtimeMode: BotRuntimeMode;
   readonly onChange: () => void;
 }) {
   const gt = useGT();
   const setPermissions = useAtomCommand(botEnvironment.setPermissions, { reportFailure: false });
-  const setThreadMode = useAtomCommand(threadEnvironment.setRuntimeMode, { reportFailure: false });
   const [saving, setSaving] = useState(false);
   const label = (mode: BotRuntimeMode) =>
     mode === "full-access" ? gt("Full access") : gt("Supervised");
@@ -313,12 +304,6 @@ function PermissionsSection(props: {
       environmentId: props.environmentId,
       input: { projectId: props.projectId, runtimeMode },
     });
-    if (result._tag === "Success" && props.threadId !== null) {
-      await setThreadMode({
-        environmentId: props.environmentId,
-        input: { threadId: props.threadId, runtimeMode },
-      });
-    }
     setSaving(false);
     if (result._tag === "Failure") {
       toastManager.add({

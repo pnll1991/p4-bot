@@ -524,7 +524,6 @@ function RosterRow({
       <BotStartOverDialog
         target={target}
         botName={entry.bot.name}
-        threadIds={entry.threads.map((thread) => thread.id)}
         open={dialog === "start-over"}
         onOpenChange={(open) => setDialog(open ? "start-over" : null)}
       />
