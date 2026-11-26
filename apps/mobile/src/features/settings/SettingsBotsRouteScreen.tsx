@@ -1,5 +1,6 @@
 import type { BotProfile, BotRuntime, EnvironmentId } from "@t3tools/contracts";
 import { squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
+import { StackActions, useNavigation } from "@react-navigation/native";
 import { T, useGT } from "gt-react-native";
 import { useState } from "react";
 import { View } from "react-native";
@@ -15,7 +16,6 @@ import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { botEnvironment } from "../../state/bots";
 import { useEnvironmentQuery } from "../../state/query";
 import { useAtomCommand } from "../../state/use-atom-command";
-import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspaceDetail";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { SettingsSection } from "./components/SettingsSection";
 import { useSettingsEnvironmentFilter } from "./settings-environment-filter";
@@ -75,7 +75,7 @@ function EnvironmentBots({ environmentId }: { readonly environmentId: Environmen
   const gt = useGT();
   const bots = useEnvironmentQuery(botEnvironment.list({ environmentId, input: {} }));
   const createBot = useAtomCommand(botEnvironment.create, { reportFailure: false });
-  const selectDetail = useSelectWorkspaceDetail();
+  const navigation = useNavigation();
   const [name, setName] = useState("");
   const [persona, setPersona] = useState("");
   const [runtime, setRuntime] = useState<BotRuntime>("pi");
@@ -84,10 +84,12 @@ function EnvironmentBots({ environmentId }: { readonly environmentId: Environmen
   const list = bots.data?.bots ?? [];
 
   const openBot = (bot: BotProfile) =>
-    selectDetail({
-      name: "Thread",
-      params: { draft: { environmentId, projectId: bot.projectId, title: bot.name } },
-    });
+    navigation.dispatch(
+      StackActions.push("BotChat", {
+        environmentId: String(environmentId),
+        projectId: String(bot.projectId),
+      }),
+    );
 
   const submit = async () => {
     if (name.trim() === "" || persona.trim() === "" || model.trim() === "") return;

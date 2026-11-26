@@ -1,4 +1,3 @@
-import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
@@ -11,17 +10,14 @@ import {
   type BotRule,
   type EnvironmentId,
   MAX_BOT_ROUTINE_RUNS_PER_DAY,
-  ProjectId,
+  type ProjectId,
   type ScheduledTaskUpsertSchedule,
 } from "@t3tools/contracts";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { T, useGT, Var } from "gt-react";
 import { useState } from "react";
 
-import { useNewThreadHandler } from "../../hooks/useHandleNewThread";
 import { botEnvironment } from "../../state/bots";
-import { waitForProject } from "../../state/entities";
-import { usePrimaryEnvironmentId } from "../../state/environments";
 import { useEnvironmentQuery } from "../../state/query";
 import { serverEnvironment } from "../../state/server";
 import { useAtomCommand } from "../../state/use-atom-command";
@@ -33,7 +29,6 @@ import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../
 import { Switch } from "../ui/switch";
 import { Textarea } from "../ui/textarea";
 import { stackedThreadToast, toastManager } from "../ui/toast";
-import { WorkspacePageContainer } from "../WorkspacePageContainer";
 
 type Frequency = "daily" | "weekdays" | "hours" | "webhook";
 
@@ -70,7 +65,7 @@ function runsPerDay(frequency: Frequency, hours: number): number | null {
   }
 }
 
-function failureMessage(result: unknown, fallback: string): string {
+export function failureMessage(result: unknown, fallback: string): string {
   const error = squashAtomCommandFailure(result as never);
   return error instanceof Error && error.message.trim() ? error.message : fallback;
 }
@@ -89,54 +84,40 @@ function PresenceBadge({ presence }: { readonly presence: BotPresence }) {
   }
 }
 
-export function BotDetailPage() {
+/** Everything the owner manages about a bot, shown beside its chat. */
+export function BotDetails({
+  environmentId,
+  projectId,
+}: {
+  readonly environmentId: EnvironmentId;
+  readonly projectId: ProjectId;
+}) {
   const gt = useGT();
-  const params = useParams({ from: "/_chat/bots_/$projectId" });
-  const projectId = ProjectId.make(params.projectId);
-  const environmentId = usePrimaryEnvironmentId();
   const overview = useEnvironmentQuery(
-    environmentId === null
-      ? null
-      : botEnvironment.overview({ environmentId, input: { projectId } }),
+    botEnvironment.overview({ environmentId, input: { projectId } }),
   );
   const navigate = useNavigate();
-  const newThread = useNewThreadHandler();
   const data = overview.data;
 
-  if (environmentId === null) return null;
   if (overview.error !== null) {
-    return (
-      <WorkspacePageContainer>
-        <p className="text-destructive text-sm">{overview.error}</p>
-      </WorkspacePageContainer>
-    );
+    return <p className="text-destructive text-sm">{overview.error}</p>;
   }
-  if (data === null) return <WorkspacePageContainer />;
+  if (data === null) return null;
 
-  const startChat = async () => {
-    const projectRef = scopeProjectRef(environmentId, projectId);
-    await waitForProject(projectRef).catch(() => null);
-    await newThread(projectRef);
-  };
   const waitingOnYou = data.threads.filter(
     (thread) => thread.presence === "needs_you" || thread.presence === "blocked",
   );
 
   return (
-    <WorkspacePageContainer>
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <h1 className="truncate font-semibold text-xl">{data.bot.name}</h1>
-            <PresenceBadge presence={data.presence} />
-          </div>
-          <p className="text-muted-foreground text-sm">
-            {data.bot.runtime} · {data.bot.model} · <T>Supervised</T>
-          </p>
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <h2 className="truncate font-semibold text-base">{data.bot.name}</h2>
+          <PresenceBadge presence={data.presence} />
         </div>
-        <Button onClick={() => void startChat()}>
-          <T>New chat</T>
-        </Button>
+        <p className="text-muted-foreground text-sm">
+          {data.bot.runtime} · {data.bot.model} · <T>Supervised</T>
+        </p>
       </header>
 
       <section className="flex flex-col gap-2">
@@ -200,7 +181,7 @@ export function BotDetailPage() {
           count: data.threads.length,
         })}
       </p>
-    </WorkspacePageContainer>
+    </div>
   );
 }
 

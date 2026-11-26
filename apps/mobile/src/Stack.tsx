@@ -100,6 +100,8 @@ import { NewTaskRouteScreen } from "./features/threads/NewTaskRouteScreen";
 import { SettingsNavigationRouteScreen } from "./features/settings/SettingsNavigationRouteScreen";
 import { SettingsAppearanceRouteScreen } from "./features/settings/SettingsAppearanceRouteScreen";
 import { SettingsBotsRouteScreen } from "./features/settings/SettingsBotsRouteScreen";
+import { BotChatScreen } from "./features/bots/BotChatScreen";
+import { BotRosterScreen } from "./features/bots/BotRosterScreen";
 import { SettingsClientStorageRouteScreen } from "./features/settings/SettingsClientStorageRouteScreen";
 import { SettingsDiagnosticsRouteScreen } from "./features/diagnostics/SettingsDiagnosticsRouteScreen";
 import { SettingsProviderAccountsRouteScreen } from "./features/settings/SettingsProviderAccountsRouteScreen";
@@ -215,6 +217,8 @@ const ROUTE_TITLES: Readonly<Record<string, string>> = {
   AddProject: msg("Add project"),
   ThreadFiles: msg("Files"),
   WorkflowRun: msg("Run", { $context: "noun, page title for one workflow run" }),
+  Bots: msg("Bots"),
+  BotChat: msg("Bot"),
   SettingsLegal: msg("Legal"),
   ConnectOnboarding: msg("Set up {product}", { product: "T3 Connect" }),
   Connections: msg("Environments"),
@@ -793,6 +797,16 @@ const RootStackConfig = createWorkspaceStackNavigator({
     ThreadQueue: createNativeStackScreen({
       screen: ThreadQueueSheet,
       options: sheetRoute({ detent: 0.65, androidMaxDetent: 0.95 }),
+    }),
+    Bots: createNativeStackScreen({
+      screen: BotRosterScreen,
+      linking: "bots",
+      options: pageRoute(),
+    }),
+    BotChat: createNativeStackScreen({
+      screen: BotChatScreen,
+      linking: "bots/:environmentId/:projectId",
+      options: pageRoute(),
     }),
     WorkflowRun: createNativeStackScreen({
       screen: WorkflowRunRouteScreen,
