@@ -1,6 +1,7 @@
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import {
   type BotProfile,
+  type ChatAttachment,
   type EnvironmentId,
   type OrchestrationV2ProjectedTurnItem,
   PROVIDER_SEND_TURN_MAX_IMAGE_BYTES,
@@ -42,7 +43,10 @@ import {
 import { threadEnvironment } from "../../state/threads";
 import { useOrchestrationCommand } from "../../state/use-orchestration-command";
 import { DEFAULT_INTERACTION_MODE } from "../../types";
+import { useAssetUrls } from "../../assets/assetUrls";
+import { selectMessageImageResources } from "../../session-logic";
 import ChatMarkdown from "../ChatMarkdown";
+import { AttachmentImage } from "../media/AttachmentImage";
 import { toastManager } from "../ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { BotAvatar } from "./BotAvatar";
@@ -192,6 +196,13 @@ function Conversation({
       <header className="flex h-14 shrink-0 items-center gap-2 px-5">
         <BotAvatar seed={bot.providerInstanceId} name={bot.name} className="size-6" />
         <span className="truncate font-medium text-sm">{bot.name}</span>
+        {shell?.hasPendingApprovals || shell?.hasPendingUserInput ? (
+          <span className="rounded-full bg-warning/15 px-2 py-0.5 font-medium text-warning text-xs">
+            {gt("Needs you")}
+          </span>
+        ) : working ? (
+          <span className="text-muted-foreground text-xs">{gt("Working…")}</span>
+        ) : null}
         <div className="ml-auto flex items-center gap-0.5">
           {threadRef ? (
             <HeaderButton
@@ -441,28 +452,28 @@ function MessageRow({
 
   if (item.type === "user_message") {
     return (
-      <div className={cn("flex justify-end", startsGroup ? "mt-5" : "mt-1")}>
-        <div className="max-w-[78%] whitespace-pre-wrap rounded-2xl bg-foreground/10 px-3.5 py-2 text-sm leading-6">
+      <div
+        className={cn(
+          "group/message flex items-end justify-end gap-2",
+          startsGroup ? "mt-5" : "mt-1",
+        )}
+      >
+        <MessageTime item={item} />
+        <div className="flex max-w-[78%] flex-col items-end gap-1.5">
           {item.attachments.length > 0 ? (
-            <span className="flex flex-wrap gap-1.5 pb-1">
-              {item.attachments.map((attachment) => (
-                <span
-                  key={attachment.id}
-                  className="inline-flex items-center gap-1 rounded-md bg-background/60 px-2 py-0.5 text-xs"
-                >
-                  <PaperclipIcon className="size-3" />
-                  {attachment.name}
-                </span>
-              ))}
-            </span>
+            <UserAttachments environmentId={environmentId} attachments={item.attachments} />
           ) : null}
-          {item.text}
+          {item.text.trim() !== "" ? (
+            <div className="whitespace-pre-wrap rounded-2xl bg-foreground/10 px-3.5 py-2 text-sm leading-6">
+              {item.text}
+            </div>
+          ) : null}
         </div>
       </div>
     );
   }
   return (
-    <BotRow bot={bot} startsGroup={startsGroup}>
+    <BotRow bot={bot} startsGroup={startsGroup} time={<MessageTime item={item} />}>
       {item.type === "assistant_message" ? (
         <AssistantText
           threadRef={threadRef}
@@ -484,24 +495,88 @@ function MessageRow({
   );
 }
 
+/** The message's time, shown while the pointer is over its row. */
+function MessageTime({ item }: { readonly item: OrchestrationV2ProjectedTurnItem["item"] }) {
+  const at = new Date(DateTime.toEpochMillis(item.startedAt ?? item.updatedAt));
+  return (
+    <time
+      dateTime={at.toISOString()}
+      className="shrink-0 text-muted-foreground text-xs tabular-nums opacity-0 group-hover/message:opacity-100 pointer-coarse:hidden"
+    >
+      {at.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+    </time>
+  );
+}
+
+function UserAttachments({
+  environmentId,
+  attachments,
+}: {
+  readonly environmentId: EnvironmentId;
+  readonly attachments: ReadonlyArray<ChatAttachment>;
+}) {
+  const resources = selectMessageImageResources(attachments);
+  const urls = useAssetUrls(environmentId, resources);
+  const urlById = new Map(
+    resources.flatMap((resource, index) => {
+      const url = urls[index];
+      return url ? [[resource.attachmentId, url] as const] : [];
+    }),
+  );
+  return (
+    <div className="flex flex-wrap justify-end gap-1.5">
+      {attachments.map((attachment) => {
+        const url = attachment.type === "image" ? urlById.get(attachment.id) : undefined;
+        return url ? (
+          <a key={attachment.id} href={url} target="_blank" rel="noreferrer">
+            <AttachmentImage
+              name={attachment.name}
+              mimeType={attachment.mimeType}
+              src={url}
+              alt={attachment.name}
+              loading="lazy"
+              className="max-h-48 max-w-64 rounded-2xl border object-cover"
+            />
+          </a>
+        ) : (
+          <span
+            key={attachment.id}
+            className="inline-flex items-center gap-1 rounded-lg bg-foreground/10 px-2.5 py-1 text-xs"
+          >
+            <PaperclipIcon className="size-3" />
+            {attachment.name}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function BotRow({
   bot,
   startsGroup,
+  time,
   children,
 }: {
   readonly bot: BotProfile;
   readonly startsGroup: boolean;
+  readonly time?: ReactNode;
   readonly children: ReactNode;
 }) {
   return (
-    <div className={cn("flex items-start gap-3", startsGroup ? "mt-5" : "mt-1")}>
+    <div className={cn("group/message flex items-start gap-3", startsGroup ? "mt-5" : "mt-1")}>
       {startsGroup ? (
         <BotAvatar seed={bot.providerInstanceId} name={bot.name} className="mt-0.5 size-7" />
       ) : (
         <div aria-hidden="true" className="size-7 shrink-0" />
       )}
       <div className="min-w-0 flex-1">
-        {startsGroup ? <div className="font-medium text-sm">{bot.name}</div> : null}
+        {startsGroup ? (
+          <div className="flex items-baseline gap-2">
+            <span className="font-medium text-sm">{bot.name}</span>
+            {time}
+          </div>
+        ) : null}
         {children}
       </div>
     </div>
@@ -899,6 +974,8 @@ function Composer({
             />
           </label>
           <textarea
+            // Opening a bot or a new chat is an invitation to type.
+            autoFocus
             value={text}
             rows={1}
             onChange={(event) => setText(event.target.value)}
