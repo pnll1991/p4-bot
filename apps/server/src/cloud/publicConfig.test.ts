@@ -20,6 +20,26 @@ it.effect("rejects an insecure runtime relay URL override", () =>
   ),
 );
 
+it.effect("refuses T3 Tools' Connect relay, at runtime or baked in", () =>
+  Effect.gen(function* () {
+    const runtime = yield* makeRelayUrlConfig().pipe(
+      provideEnv({ T3CODE_RELAY_URL: "https://relay.t3.codes" }),
+      Effect.result,
+    );
+    assert.isTrue(Result.isFailure(runtime));
+    const embedded = yield* makeRelayUrlConfig("https://relay.t3.codes").pipe(
+      provideEnv({}),
+      Effect.result,
+    );
+    assert.isTrue(Result.isFailure(embedded));
+    const own = yield* makeRelayUrlConfig().pipe(
+      provideEnv({ T3CODE_RELAY_URL: "https://relay.example.test" }),
+      Effect.result,
+    );
+    assert.isTrue(Result.isSuccess(own));
+  }),
+);
+
 it.effect("rejects malformed or insecure hosted app URLs", () =>
   Effect.gen(function* () {
     for (const value of [

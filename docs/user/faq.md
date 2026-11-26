@@ -27,7 +27,7 @@ Yes, for the source code. The [MIT License](../../LICENSE) covers source code on
 
 ## Can I connect more than 3 machines with T3 Connect?
 
-Yes. Link a paid T3 Chat account from your account menu → **T3 Chat → Link T3 Chat**: T3 Chat Pro raises the limit to 10 machines, and Premier raises it to 100. See [More machines with T3 Chat](./remote-access.md#more-machines-with-t3-chat).
+Each T3 Connect account can link up to 3 host machines (phones and browsers don't count). Deregister a host you no longer use, or connect extra machines over [a LAN or Tailscale](./remote-access.md#pair-over-a-lan-or-private-network) instead.
 
 ## Why is my Claude 5-hour limit draining so fast?
 

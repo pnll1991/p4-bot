@@ -263,7 +263,7 @@ describe.skipIf(HostProcess.Platform.defaultValue() !== "linux")("install.sh t3 
         NodePath.join(home, "runtime/versions/1.0.0/helper"),
       );
 
-      // An upgrade over an older version's link, written through a symlinked T3 home.
+      // An upgrade over an older version's link, written through a symlinked P4 Bot home.
       await NodeFSP.rm(link);
       await NodeFSP.symlink(NodePath.join(home, "runtime/versions/1.0.0/t3"), link);
       await NodeFSP.symlink(home, NodePath.join(root, "alias"));

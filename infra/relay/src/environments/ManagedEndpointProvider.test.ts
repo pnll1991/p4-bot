@@ -395,7 +395,7 @@ function makeTunnelLimits(
         }
         return yield* reserve;
       }),
-    getOverride: () => Effect.die("unused"),
+    getMaxTunnels: () => Effect.die("unused"),
   });
 }
 

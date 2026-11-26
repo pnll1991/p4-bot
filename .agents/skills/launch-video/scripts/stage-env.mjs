@@ -47,7 +47,7 @@ const identityEnv = (home) => {
 };
 
 /**
- * A fresh T3 home whose server calls itself `label` on a `machine`. `settings` merge into
+ * A fresh P4 Bot home whose server calls itself `label` on a `machine`. `settings` merge into
  * settings.json. With `claude` (scripted turns) the real Claude provider runs fake-claude.mjs
  * and `model` is a Claude model id; without it `model` is a replay-agent scenario.
  */

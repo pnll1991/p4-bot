@@ -52,13 +52,6 @@ Deployment and Clerk configuration live in the [Connect setup runbook](../operat
 - Idle tunnel reclamation deletes only tunnels whose host has registered recovery (and never
   unallocated orphans) so hosts that cannot self-heal are left alone.
 
-## T3 Chat plan cap link
-
-T3 Chat uses WorkOS rather than Clerk, so accounts link by user consent via a shared secret. T3 Chat
-owns the link and plan state; the relay stores no copy and queries T3 Chat only when an account hits
-its default cap for a new environment, failing closed to the default cap without disrupting existing
-slots.
-
 ## OAuth traps
 
 - Interactive clients use Clerk session-template JWTs; the headless CLI uses a public PKCE OAuth

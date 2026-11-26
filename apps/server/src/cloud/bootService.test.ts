@@ -61,7 +61,7 @@ const windowsTaskOptions = {
   conhostPath: "C:\\Windows\\System32\\conhost.exe",
 };
 
-it("reads the served T3 home and log back out of a rendered unit, plist, or task", () => {
+it("reads the served P4 Bot home and log back out of a rendered unit, plist, or task", () => {
   const plan = (baseDir: string) => ({
     program: [`${baseDir}/runtime/versions/1.2.3/t3`, "__service-launcher"],
     baseDir,
@@ -152,7 +152,7 @@ it.each([
   ["a single quote", "/home/theo/Theo's T3"],
   ["a backslash", "/home/theo/T3\\Data"],
   ["a newline", "/home/theo/T3\nData"],
-])("renders a loadable unit, or refuses, for a T3 home with %s", (_, baseDir) => {
+])("renders a loadable unit, or refuses, for a P4 Bot home with %s", (_, baseDir) => {
   let unit: string;
   try {
     unit = BootService.renderBootServiceUnit({
@@ -1302,7 +1302,7 @@ process.disconnect();
     }),
   );
 
-  it.effect("restart and install leave a service that serves another T3 home alone", () =>
+  it.effect("restart and install leave a service that serves another P4 Bot home alone", () =>
     Effect.gen(function* () {
       const { service, fs, baseDir, commands, makeService } = yield* makeHarness();
       const plan = yield* service.install();
@@ -1331,7 +1331,7 @@ process.disconnect();
     }),
   );
 
-  it.effect("treats a symlinked T3 home path as the same home", () =>
+  it.effect("treats a symlinked P4 Bot home path as the same home", () =>
     Effect.gen(function* () {
       const { service, fs, baseDir, commands, makeService } = yield* makeHarness();
       yield* service.install();

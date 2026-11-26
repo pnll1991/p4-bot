@@ -707,14 +707,18 @@ describe("withMessageSenderNote", () => {
     senderThreadId: ThreadId.make("t"),
   } as const;
   it.each([
-    [thread, "Hi", '[P4 Bot: the agent in T3 thread "t" sent this message, not the user.]\n\nHi'],
-    [thread, "", '[P4 Bot: the agent in T3 thread "t" sent this message, not the user.]'],
+    [
+      thread,
+      "Hi",
+      '[P4 Bot: the agent in P4 Bot thread "t" sent this message, not the user.]\n\nHi',
+    ],
+    [thread, "", '[P4 Bot: the agent in P4 Bot thread "t" sent this message, not the user.]'],
     [thread, " /git/review staged", " /git/review staged"],
     [thread, "$deploy ship it", "$deploy ship it"],
     [
       thread,
       "$25 left",
-      '[P4 Bot: the agent in T3 thread "t" sent this message, not the user.]\n\n$25 left',
+      '[P4 Bot: the agent in P4 Bot thread "t" sent this message, not the user.]\n\n$25 left',
     ],
     [
       {
@@ -727,7 +731,7 @@ describe("withMessageSenderNote", () => {
         },
       },
       "Hi",
-      '[P4 Bot: the agent in T3 thread "r" on linked environment "e" sent this message, not the user.]\n\nHi',
+      '[P4 Bot: the agent in P4 Bot thread "r" on linked environment "e" sent this message, not the user.]\n\nHi',
     ],
     [
       { createdBy: "user", creationSource: "web", scheduledTaskId: ScheduledTaskId.make("s") },

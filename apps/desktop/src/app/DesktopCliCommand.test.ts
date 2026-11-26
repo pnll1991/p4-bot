@@ -205,7 +205,7 @@ it.layer(NodeServices.layer)("DesktopCliCommand", (it) => {
     }),
   );
 
-  it.effect("finds and removes a link left by a previous T3 home", () =>
+  it.effect("finds and removes a link left by a previous P4 Bot home", () =>
     Effect.gen(function* () {
       const env: NodeJS.ProcessEnv = { PATH: "", SHELL: "/bin/zsh" };
       const fs = yield* FileSystem.FileSystem;

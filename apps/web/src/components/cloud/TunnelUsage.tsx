@@ -1,10 +1,7 @@
-import { T3CHAT_PLAN_TUNNEL_LIMITS } from "@t3tools/contracts/relay";
 import { TriangleAlertIcon } from "lucide-react";
-import { msg, T, useGT } from "gt-react";
+import { T, useGT } from "gt-react";
 import type { ReactNode } from "react";
 
-import type { ManagedTunnelUpgrade } from "../../cloud/managedRelayState";
-import { m, type MessageResolver } from "../../i18n/messages";
 import { cn } from "../../lib/utils";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "../ui/alert";
 import { Button } from "../ui/button";
@@ -12,34 +9,6 @@ import { Skeleton } from "../ui/skeleton";
 
 // Above this, one slot per tunnel is too thin to read, so the bar fills instead.
 const MAX_SEGMENTS = 10;
-
-export const T3CHAT_SUBSCRIPTION_URL = "https://t3.chat/settings/subscription";
-
-/** Components pass `useMessages()` so the copy follows a language switch. */
-export function tunnelUpgradeCopy(
-  upgrade: Exclude<ManagedTunnelUpgrade, null>,
-  resolve: MessageResolver = m,
-): string {
-  const { pro, premier } = T3CHAT_PLAN_TUNNEL_LIMITS;
-  switch (upgrade) {
-    case "link":
-      return resolve(
-        msg("Link T3 Chat Pro for up to {pro} tunnels, or Premier for up to {premier}.", {
-          pro,
-          premier,
-        }),
-      );
-    case "pro":
-      return resolve(
-        msg("Upgrade to T3 Chat Pro for up to {pro} tunnels, or Premier for up to {premier}.", {
-          pro,
-          premier,
-        }),
-      );
-    case "premier":
-      return resolve(msg("Upgrade to T3 Chat Premier for up to {premier} tunnels.", { premier }));
-  }
-}
 
 /** Holds the meter's height while usage loads, so the rows below it stay put. */
 export function TunnelUsageMeterSkeleton() {
@@ -106,32 +75,11 @@ export function TunnelUsageMeter({
 
 /** Shown when the relay refuses a new tunnel because the account is at its cap. */
 export function TunnelLimitAlert({
-  upgrade,
-  onLinkT3Chat,
   onManageTunnels,
 }: {
-  readonly upgrade: ManagedTunnelUpgrade;
-  readonly onLinkT3Chat: (() => void) | null;
   readonly onManageTunnels: (() => void) | null;
 }) {
   const gt = useGT();
-  const action =
-    upgrade === "link" && onLinkT3Chat ? (
-      <Button size="sm" onClick={onLinkT3Chat}>
-        <T>Link T3 Chat</T>
-      </Button>
-    ) : upgrade === "pro" || upgrade === "premier" ? (
-      <Button
-        size="sm"
-        render={<a href={T3CHAT_SUBSCRIPTION_URL} target="_blank" rel="noopener noreferrer" />}
-      >
-        <T>Upgrade on T3 Chat</T>
-      </Button>
-    ) : onManageTunnels ? (
-      <Button size="sm" variant="outline" onClick={onManageTunnels}>
-        <T>Manage tunnels</T>
-      </Button>
-    ) : null;
   return (
     <Alert variant="warning">
       <TriangleAlertIcon />
@@ -139,13 +87,15 @@ export function TunnelLimitAlert({
         <T>You&apos;re out of tunnels (they cost us money).</T>
       </AlertTitle>
       <AlertDescription>
-        {upgrade === "link"
-          ? gt("Switch to Tailscale or get more tunnels by linking your T3 Chat sub (sorry!)")
-          : upgrade
-            ? gt("Switch to Tailscale or get more tunnels by upgrading your T3 Chat sub (sorry!)")
-            : gt("Switch to Tailscale or deregister an environment you no longer use (sorry!)")}
+        {gt("Switch to Tailscale or deregister an environment you no longer use (sorry!)")}
       </AlertDescription>
-      {action ? <AlertAction>{action}</AlertAction> : null}
+      {onManageTunnels ? (
+        <AlertAction>
+          <Button size="sm" variant="outline" onClick={onManageTunnels}>
+            <T>Manage tunnels</T>
+          </Button>
+        </AlertAction>
+      ) : null}
     </Alert>
   );
 }

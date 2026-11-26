@@ -195,7 +195,7 @@ it.layer(NodeServices.layer)("cli config resolution", (it) => {
       Effect.result,
     );
 
-  it.effect("refuses a manual web launch while a lock-aware server owns the T3 home", () =>
+  it.effect("refuses a manual web launch while a lock-aware server owns the P4 Bot home", () =>
     Effect.gen(function* () {
       const fs = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;

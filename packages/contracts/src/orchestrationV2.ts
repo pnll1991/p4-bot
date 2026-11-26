@@ -661,9 +661,9 @@ export function withMessageSenderNote(
   const agent = message.createdBy === "agent";
   const note =
     agent && message.linkedSender !== undefined
-      ? `[P4 Bot: the agent in T3 thread ${JSON.stringify(message.linkedSender.threadId)} on linked environment ${JSON.stringify(message.linkedSender.environmentId)} sent this message, not the user.]`
+      ? `[P4 Bot: the agent in P4 Bot thread ${JSON.stringify(message.linkedSender.threadId)} on linked environment ${JSON.stringify(message.linkedSender.environmentId)} sent this message, not the user.]`
       : agent && message.senderThreadId !== undefined
-        ? `[P4 Bot: the agent in T3 thread ${JSON.stringify(message.senderThreadId)} sent this message, not the user.]`
+        ? `[P4 Bot: the agent in P4 Bot thread ${JSON.stringify(message.senderThreadId)} sent this message, not the user.]`
         : message.scheduledTaskId !== undefined
           ? `[P4 Bot: scheduled task ${JSON.stringify(message.scheduledTaskId)} sent this prompt, not the user typing in this chat.]`
           : agent && message.creationSource === "mcp"

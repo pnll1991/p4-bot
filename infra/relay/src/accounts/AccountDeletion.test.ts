@@ -16,7 +16,6 @@ import * as EnvironmentCredentials from "../environments/EnvironmentCredentials.
 import * as EnvironmentLinks from "../environments/EnvironmentLinks.ts";
 import * as ManagedEndpointProvider from "../environments/ManagedEndpointProvider.ts";
 import * as HookInbox from "../hooks/HookInbox.ts";
-import * as T3ChatAccounts from "../t3chat/T3ChatAccounts.ts";
 import * as AccountDeletion from "./AccountDeletion.ts";
 
 const signingKey = new TextEncoder().encode("clerk-webhook-test-signing-key");
@@ -97,19 +96,6 @@ const layerAccountDeletionTest = (fakeDb: RelayDb.RelayDb["Service"], calls: Arr
         Layer.succeed(RelayDb.RelayDb, fakeDb),
         Layer.succeed(RelayDb.RelayTransactions, { withTransaction: (effect) => effect }),
         Layer.succeed(RelayConfiguration.RelayConfiguration, config),
-        Layer.mock(T3ChatAccounts.T3ChatAccounts, {
-          available: true,
-          getLink: () => Effect.succeed({} as never),
-          unlink: ({ userId }) =>
-            userId === "user_broken"
-              ? Effect.fail(
-                  new T3ChatAccounts.T3ChatRequestFailed({
-                    operation: "unlink",
-                    cause: new Error("unavailable"),
-                  }),
-                )
-              : Effect.sync(() => void calls.push(`unlink-t3chat ${userId}`)),
-        }),
         Layer.mock(EnvironmentLinks.EnvironmentLinks, {
           getForUser: () => Effect.succeed(null),
         }),
@@ -203,7 +189,6 @@ describe("AccountDeletion", () => {
           "delete relay_mobile_devices user_1",
           "delete relay_delivery_attempts user_1",
           "delete relay_managed_tunnel_limits user_1",
-          "unlink-t3chat user_1",
         ]);
 
         // A link with a new key committed after the identities were read: the pass rolls back
@@ -249,9 +234,17 @@ describe("AccountDeletion", () => {
       }),
       delete: (table: Table) => ({
         where: (condition: SQL | undefined) => {
-          const done = Effect.sync(() => {
-            calls.push(`delete ${getTableName(table)} ${params(condition).join(",")}`);
-          });
+          const done = params(condition).includes("user_broken")
+            ? Effect.fail(
+                new AccountDeletion.AccountDeletionFailed({
+                  userId: "user_broken",
+                  stage: "delete-rows",
+                  cause: new Error("unavailable"),
+                }),
+              )
+            : Effect.sync(() => {
+                calls.push(`delete ${getTableName(table)} ${params(condition).join(",")}`);
+              });
           return Object.assign(done, { returning: () => Effect.as(done, []) });
         },
       }),

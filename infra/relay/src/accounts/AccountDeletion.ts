@@ -32,7 +32,6 @@ import {
   relayManagedTunnelLimits,
   relayMobileDevices,
 } from "../persistence/schema.ts";
-import * as T3ChatAccounts from "../t3chat/T3ChatAccounts.ts";
 
 export class AccountDeletionFailed extends Schema.TaggedError<AccountDeletionFailed>()(
   "AccountDeletionFailed",
@@ -44,7 +43,6 @@ export class AccountDeletionFailed extends Schema.TaggedError<AccountDeletionFai
       "clear-held-webhooks",
       "deprovision",
       "delete-rows",
-      "unlink-t3chat",
     ]),
     cause: Schema.Defect(),
   },
@@ -97,7 +95,6 @@ const make = Effect.gen(function* () {
   const db = yield* RelayDb.RelayDb;
   const transactions = yield* RelayDb.RelayTransactions;
   const config = yield* RelayConfiguration.RelayConfiguration;
-  const t3Chat = yield* T3ChatAccounts.T3ChatAccounts;
   const inbox = yield* HookInbox.HookInbox;
   // unlinkEnvironmentRecord reads these from context; capture them once for the service.
   const unlinkContext =
@@ -239,14 +236,6 @@ const make = Effect.gen(function* () {
           isAccountDeletionFailed(cause) ? cause : fail("delete-rows")(cause),
         ),
       );
-
-    if (t3Chat.available) {
-      // T3 Chat owns the link; only ask it to drop one that exists.
-      yield* t3Chat.getLink({ userId }).pipe(
-        Effect.flatMap((link) => (link === null ? Effect.void : t3Chat.unlink({ userId }))),
-        Effect.mapError(fail("unlink-t3chat")),
-      );
-    }
   });
 
   const request = Effect.fn("relay.account_deletion.request")(function* (input: {

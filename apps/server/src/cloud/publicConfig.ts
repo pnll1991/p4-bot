@@ -23,8 +23,25 @@ declare const __T3CODE_BUILD_RELAY_CLIENT_OTLP_TRACES_TOKEN__: string | undefine
 const CLOUD_CLI_OAUTH_LOOPBACK_PORT = 34338;
 const CLOUD_CLI_OAUTH_SCOPES = CONNECT_OAUTH_SCOPES;
 
+// P4 Bot is an unofficial fork and never links to T3 Tools' Connect relay.
+const isT3ConnectRelay = (relayUrl: string) => {
+  const { hostname } = new URL(relayUrl);
+  return hostname === "t3.codes" || hostname.endsWith(".t3.codes");
+};
+
 function validateRelayUrl(value: string) {
   const relayUrl = normalizeSecureRelayUrl(value);
+  if (relayUrl !== null && isT3ConnectRelay(relayUrl)) {
+    return Effect.fail(
+      new Config.ConfigError(
+        new Schema.SchemaError(
+          new SchemaIssue.InvalidValue({
+            message: "P4 Bot does not use T3 Connect. Point T3CODE_RELAY_URL at your own relay.",
+          }),
+        ),
+      ),
+    );
+  }
   return relayUrl === null
     ? Effect.fail(
         new Config.ConfigError(

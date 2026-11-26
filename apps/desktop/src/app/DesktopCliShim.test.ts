@@ -168,7 +168,7 @@ describe("renderCliShim", () => {
     expect(closedStdin.status).toBe(3);
   });
 
-  it("keeps the install's T3 home under sudo, unless one is set", () => {
+  it("keeps the install's P4 Bot home under sudo, unless one is set", () => {
     const root = tempRoot();
     writeExecutable(NodePath.join(root, "app"), REPORTER);
     const shim = writeShim(root, {

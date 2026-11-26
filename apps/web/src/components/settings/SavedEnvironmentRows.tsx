@@ -503,7 +503,7 @@ function CloudLinkSwitch({
   );
 }
 
-/** Tunnel meter, plus the upgrade prompt after the relay refuses a tunnel at the cap. */
+/** Tunnel meter, plus the limit alert after the relay refuses a tunnel at the cap. */
 function T3ConnectTunnelUsage({ tunnelLimit }: { readonly tunnelLimit: number | null }) {
   const usage = useManagedTunnelUsage();
   const accountPage = useT3ConnectAccountPage();
@@ -527,11 +527,7 @@ function T3ConnectTunnelUsage({ tunnelLimit }: { readonly tunnelLimit: number | 
         limit={usage.limit}
         action={
           // At the cap the alert below carries the same actions.
-          !openAccountPage || showLimitAlert ? null : usage.upgrade ? (
-            <InlineButton onClick={() => openAccountPage("t3-chat")}>
-              <T>Get more tunnels</T>
-            </InlineButton>
-          ) : usage.used >= usage.limit ? (
+          !openAccountPage || showLimitAlert ? null : usage.used >= usage.limit ? (
             <InlineButton onClick={() => openAccountPage("t3-connect")}>
               <T>Manage tunnels</T>
             </InlineButton>
@@ -548,8 +544,6 @@ function T3ConnectTunnelUsage({ tunnelLimit }: { readonly tunnelLimit: number | 
           {meter}
           {showLimitAlert ? (
             <TunnelLimitAlert
-              upgrade={usage.upgrade}
-              onLinkT3Chat={openAccountPage ? () => openAccountPage("t3-chat") : null}
               onManageTunnels={openAccountPage ? () => openAccountPage("t3-connect") : null}
             />
           ) : null}

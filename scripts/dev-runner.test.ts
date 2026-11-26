@@ -521,7 +521,7 @@ it.layer(NodeServices.layer)("dev-runner", (it) => {
       }),
     );
 
-    it.effect("expands a home-relative T3 home the way the server does", () =>
+    it.effect("expands a home-relative P4 Bot home the way the server does", () =>
       Effect.gen(function* () {
         const path = yield* Path.Path;
         const homeFor = (t3Home: string) =>

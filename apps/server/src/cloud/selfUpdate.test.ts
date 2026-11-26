@@ -512,7 +512,7 @@ it.layer(NodeServices.layer)("pruning runtimes on start", (it) => {
     }),
   );
 
-  it.effect("recognizes its runtime through a symlinked T3 home", () =>
+  it.effect("recognizes its runtime through a symlinked P4 Bot home", () =>
     Effect.gen(function* () {
       const { removed } = yield* pruneOnStart({ executable: "own runtime", symlinkedHome: true });
       expect(removed).toEqual([staleVersion]);
@@ -529,7 +529,7 @@ it.layer(NodeServices.layer)("pruning runtimes on start", (it) => {
   // In-place updates move the active version but leave the launch agent on the launcher's runtime.
   it.effect.each([
     { name: "", throughLink: false },
-    { name: " through a symlinked T3 home", throughLink: true },
+    { name: " through a symlinked P4 Bot home", throughLink: true },
   ])("keeps the runtime a stopped service's launch agent starts$name", ({ throughLink }) =>
     Effect.gen(function* () {
       const { removed, remaining } = yield* pruneOnStart({

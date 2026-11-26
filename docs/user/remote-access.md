@@ -14,9 +14,9 @@ T3 Connect links your host to your other devices without router port-forwarding.
 
 By default, any device signed into your T3 Connect account can connect. Turn on **Require approval for new devices** in **Settings → Sharing & access** on the host so new devices must present a short code (valid 10 minutes) that you approve from an existing device or via `t3 auth connect-device approve <code>`. Revoke devices anytime in **Settings → Sharing & access** or `t3 auth connect-device revoke <code>`.
 
-### More machines with T3 Chat
+### Machine limit
 
-Free T3 Connect accounts can link up to **3 host machines** (phones and browsers don't count). Link a paid T3 Chat account from your account menu → **T3 Chat → Link T3 Chat** to raise the limit to **10** (Pro) or **100** (Premier).
+T3 Connect accounts can link up to **3 host machines** (phones and browsers don't count). Deregister a host you no longer use to free a slot.
 
 ## Pair over a LAN or private network
 
@@ -94,7 +94,7 @@ Manage pairing links and active client sessions in **Settings → Sharing & acce
 
 ## Desktop app as a remote only
 
-Switch off **Settings → Environments → Local environment** in the desktop app to run with no local server, WSL backend, or incoming connections while continuing to drive remote hosts (if a local background service uses the same T3 home, **Open in** still works locally).
+Switch off **Settings → Environments → Local environment** in the desktop app to run with no local server, WSL backend, or incoming connections while continuing to drive remote hosts (if a local background service uses the same P4 Bot home, **Open in** still works locally).
 
 ## Troubleshooting
 

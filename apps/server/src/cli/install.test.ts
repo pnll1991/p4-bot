@@ -14,7 +14,7 @@ import { installCli, isForegroundProcStat, isForegroundPs, offerCliInstall } fro
 
 const VERSION = packageJson.version;
 
-/** A standalone runtime in a temp T3 home, started by the npm launcher from an npx cache. */
+/** A standalone runtime in a temp P4 Bot home, started by the npm launcher from an npx cache. */
 const setup = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
@@ -62,7 +62,7 @@ it.layer(NodeServices.layer)("t3 install", (it) => {
       assert.isFalse(installed.onPath);
       assert.include(installed.pathCommand, "$HOME/bin");
 
-      // A link written through a symlinked T3 home is still ours.
+      // A link written through a symlinked P4 Bot home is still ours.
       const alias = path.join(root, "alias");
       yield* fs.symlink(path.join(root, ".p4"), alias);
       yield* fs.remove(link);

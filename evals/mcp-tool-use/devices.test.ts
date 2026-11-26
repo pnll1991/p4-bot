@@ -741,7 +741,7 @@ it.effect("refuses an open on a device another thread's agent-device session hol
     const told = JSON.stringify(shellRequest(sample, { tool: "Bash", input: {} }, model).messages);
     assert.include(
       told,
-      `${owner} (Acme iPhone, ${IPHONE}, on build-mac) belongs to another T3 thread (acme-design-review)`,
+      `${owner} (Acme iPhone, ${IPHONE}, on build-mac) belongs to another P4 Bot thread (acme-design-review)`,
     );
     // Closing the owner's session frees the device.
     history.push({ tool: "Bash", input: { command: line("close", owner) }, output: "Closed" });
@@ -830,7 +830,7 @@ it.effect(
       );
       assert.include(
         free,
-        `${session(held)} (Acme iPhone, ${IPHONE}, on build-mac) has not started; ${session(spare)} (Acme Spare iPhone, ${SPARE_PHONE}, on spare-mac) has not started; ${owner} (Acme iPhone, ${IPHONE}, on build-mac) belongs to another T3 thread (acme-design-review) and holds its device with an app open.`,
+        `${session(held)} (Acme iPhone, ${IPHONE}, on build-mac) has not started; ${session(spare)} (Acme Spare iPhone, ${SPARE_PHONE}, on spare-mac) has not started; ${owner} (Acme iPhone, ${IPHONE}, on build-mac) belongs to another P4 Bot thread (acme-design-review) and holds its device with an app open.`,
       );
       assert.include(
         free,

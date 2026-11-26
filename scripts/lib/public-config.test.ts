@@ -51,6 +51,25 @@ describe("loadRepoEnv", () => {
       VITE_T3CODE_RELAY_URL: "https://ci.example.test",
     });
   });
+
+  it("drops every cloud setting that points at T3 Tools' Connect deployment", () => {
+    const repoRoot = makeTemporaryDirectory();
+    // The public identifiers T3 Code's .env.example ships: Clerk at clerk.t3.codes, relay.t3.codes.
+    NodeFS.writeFileSync(
+      NodePath.join(repoRoot, ".env"),
+      "T3CODE_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsudDMuY29kZXMk\nT3CODE_CLERK_JWT_TEMPLATE=t3-relay\nT3CODE_RELAY_URL=https://relay.example.test\n",
+    );
+    const env = loadRepoEnv({ baseEnv: {}, repoRoot });
+    expect(env.VITE_CLERK_PUBLISHABLE_KEY).toBeUndefined();
+    expect(env.T3CODE_RELAY_URL).toBeUndefined();
+
+    const relayOnly = loadRepoEnv({
+      baseEnv: { T3CODE_RELAY_URL: "https://relay.t3.codes" },
+      repoRoot: makeTemporaryDirectory(),
+    });
+    expect(relayOnly.T3CODE_RELAY_URL).toBeUndefined();
+    expect(relayOnly.VITE_T3CODE_RELAY_URL).toBeUndefined();
+  });
 });
 
 function makeTemporaryDirectory() {

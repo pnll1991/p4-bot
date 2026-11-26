@@ -69,7 +69,6 @@ import * as EnvironmentPublishSignatures from "./environments/EnvironmentPublish
 import * as ManagedEndpointProvider from "./environments/ManagedEndpointProvider.ts";
 import * as ManagedEndpointReaper from "./environments/ManagedEndpointReaper.ts";
 import * as ManagedTunnelLimits from "./environments/ManagedTunnelLimits.ts";
-import * as T3ChatAccounts from "./t3chat/T3ChatAccounts.ts";
 import * as MobileRegistrations from "./agentActivity/MobileRegistrations.ts";
 import * as HookForwarder from "./hooks/HookForwarder.ts";
 import * as ManagedTunnelBinding from "./environments/ManagedTunnelBinding.ts";
@@ -174,15 +173,6 @@ export const layer = Api.make(
         (value) => Redacted.value(value).trim().length > 0,
       ),
     );
-    const t3ChatLinkSecret = Option.getOrUndefined(
-      Option.filter(
-        yield* Config.option(Config.Redacted("T3CHAT_LINK_SECRET")),
-        (value) => Redacted.value(value).trim().length > 0,
-      ),
-    );
-    const t3ChatBaseUrl = yield* Config.String("T3CHAT_URL").pipe(
-      Config.withDefault("https://t3.chat"),
-    );
 
     const cloudMintPrivateKey = yield* cloudMintKeyPair.privateKey;
     const cloudMintPublicKey = yield* cloudMintKeyPair.publicKey;
@@ -254,9 +244,6 @@ export const layer = Api.make(
         managedEndpointCleanupMode,
         legacyManagedEndpointCleanupMode,
         ...(legacyTunnelGraceMinutes === undefined ? {} : { legacyTunnelGraceMinutes }),
-        ...(t3ChatLinkSecret
-          ? { t3Chat: { baseUrl: t3ChatBaseUrl, linkSecret: t3ChatLinkSecret } }
-          : {}),
       });
     });
 
@@ -351,7 +338,7 @@ export const layer = Api.make(
           ManagedTunnelLimits.layer,
         ),
       ),
-      Layer.provideMerge(Layer.mergeAll(LiveActivities.layer, T3ChatAccounts.layer)),
+      Layer.provideMerge(LiveActivities.layer),
       Layer.provideMerge(DeliveryAttempts.layer),
       Layer.provideMerge(RelayTokens.layer.pipe(Layer.provideMerge(CloudMintSigner.layer))),
       Layer.provideMerge(

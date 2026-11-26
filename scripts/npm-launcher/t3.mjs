@@ -192,7 +192,7 @@ async function main() {
     process.argv.slice(2),
     {
       stdio: ipc ? ["inherit", "inherit", "inherit", "ipc"] : "inherit",
-      // The executable lives in the T3 home, so this is how it knows npm launched it.
+      // The executable lives in the P4 Bot home, so this is how it knows npm launched it.
       env: { ...process.env, T3CODE_NPM_LAUNCHER_PATH: import.meta.filename },
     },
   );

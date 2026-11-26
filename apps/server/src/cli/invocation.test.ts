@@ -58,7 +58,7 @@ it.layer(NodeServices.layer)("root CLI commands", (it) => {
     }),
   );
 
-  it.effect("keeps the arguments, so root runs setup on the same T3 home", () =>
+  it.effect("keeps the arguments, so root runs setup on the same P4 Bot home", () =>
     Effect.gen(function* () {
       const args = ["--base-dir", "/srv/t3 home"];
       expect(

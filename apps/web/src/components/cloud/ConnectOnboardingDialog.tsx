@@ -17,7 +17,6 @@ import {
   ConnectOnboardingOptOutSchema,
   EMPTY_CONNECT_ONBOARDING_OPT_OUT_STATE,
 } from "~/cloud/connectOnboarding";
-import { useManagedTunnelUsage } from "~/cloud/managedRelayState";
 import { hasCloudPublicConfig } from "~/cloud/publicConfig";
 import { useCloudLinkController } from "~/cloud/useCloudLinkController";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
@@ -400,24 +399,11 @@ function PublishStep({
       </div>
       {operationError ? <p className="text-xs text-destructive">{operationError}</p> : null}
       {tunnelLimit !== null ? (
-        <OnboardingTunnelLimitAlert onOpenAccountPage={onOpenAccountPage} />
+        <TunnelLimitAlert
+          onManageTunnels={onOpenAccountPage ? () => onOpenAccountPage("t3-connect") : null}
+        />
       ) : null}
     </div>
-  );
-}
-
-function OnboardingTunnelLimitAlert({
-  onOpenAccountPage,
-}: {
-  readonly onOpenAccountPage: ((page: T3ConnectAccountPageUrl) => void) | null;
-}) {
-  const { upgrade } = useManagedTunnelUsage();
-  return (
-    <TunnelLimitAlert
-      upgrade={upgrade}
-      onLinkT3Chat={onOpenAccountPage ? () => onOpenAccountPage("t3-chat") : null}
-      onManageTunnels={onOpenAccountPage ? () => onOpenAccountPage("t3-connect") : null}
-    />
   );
 }
 

@@ -31,7 +31,7 @@ P4 Bot devcontainer
 
   vp run dev            start server + web, then open the pairing URL it
                         prints (the bare forwarded port will not authenticate)
-  cp .env.example .env  optional: enable T3 Connect cloud features
+  cp .env.example .env  optional: cloud features with your own relay
                         (public identifiers, not secrets)
 
 Details: docs/operations/01_devcontainer.md

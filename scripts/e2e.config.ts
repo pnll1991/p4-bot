@@ -47,7 +47,7 @@ const resolved = await Effect.gen(function* () {
 }).pipe(Effect.provide(NodeServices.layer), Effect.runPromise);
 
 export const APP_DIR = resolved.appDir;
-/** T3 homes only scenarios use, recreated on every run. `.t3` is gitignored. */
+/** P4 Bot homes only scenarios use, recreated on every run. `.t3` is gitignored. */
 export const T3_HOME = resolved.home;
 export const MOBILE_T3_HOME = `${T3_HOME}-mobile`;
 export const MOBILE = resolved.mobile;

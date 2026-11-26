@@ -21,6 +21,62 @@ type Environment = Readonly<Record<string, string | undefined>>;
 
 const REPO_ROOT = NodePath.resolve(NodeURL.fileURLToPath(import.meta.url), "../../..");
 
+// P4 Bot is an unofficial fork: it never talks to T3 Tools' Connect deployment (relay, Clerk).
+const T3_CLOUD_DOMAIN = "t3.codes";
+const CLOUD_ENV_KEYS = [
+  "T3CODE_CLERK_PUBLISHABLE_KEY",
+  "VITE_CLERK_PUBLISHABLE_KEY",
+  "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  "T3CODE_CLERK_JWT_TEMPLATE",
+  "VITE_CLERK_JWT_TEMPLATE",
+  "EXPO_PUBLIC_CLERK_JWT_TEMPLATE",
+  "T3CODE_CLERK_CLI_OAUTH_CLIENT_ID",
+  "VITE_CLERK_CLI_OAUTH_CLIENT_ID",
+  "T3CODE_RELAY_URL",
+  "VITE_T3CODE_RELAY_URL",
+] as const;
+
+const isT3CloudHost = (hostname: string) =>
+  hostname === T3_CLOUD_DOMAIN || hostname.endsWith(`.${T3_CLOUD_DOMAIN}`);
+
+function clerkKeyHost(publishableKey: string): string | null {
+  const encoded = publishableKey.replace(/^pk_(?:live|test)_/u, "");
+  try {
+    return Buffer.from(encoded, "base64").toString("utf8").replace(/\$$/u, "");
+  } catch {
+    return null;
+  }
+}
+
+function relayHost(relayUrl: string): string | null {
+  try {
+    return new URL(relayUrl).hostname;
+  } catch {
+    return null;
+  }
+}
+
+/** Drops every cloud setting when any of them points at T3 Tools' own deployment. */
+export function withoutT3Cloud(env: Record<string, string | undefined>) {
+  const clerkHost = [
+    env.T3CODE_CLERK_PUBLISHABLE_KEY,
+    env.VITE_CLERK_PUBLISHABLE_KEY,
+    env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+  ]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map((value) => clerkKeyHost(value.trim()));
+  const relayHosts = [env.T3CODE_RELAY_URL, env.VITE_T3CODE_RELAY_URL]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map((value) => relayHost(value.trim()));
+  const pointsAtT3 = [...clerkHost, ...relayHosts].some(
+    (host) => host !== null && isT3CloudHost(host),
+  );
+  if (!pointsAtT3) return env;
+  const stripped = { ...env };
+  for (const key of CLOUD_ENV_KEYS) delete stripped[key];
+  return stripped;
+}
+
 export function loadRepoEnv({
   baseEnv = process.env,
   repoRoot = REPO_ROOT,
@@ -32,7 +88,7 @@ export function loadRepoEnv({
   const localEnv = readEnvFile(NodePath.join(repoRoot, ".env.local"));
   const config = resolvePublicConfig(baseEnv, localEnv, rootEnv);
 
-  return {
+  return withoutT3Cloud({
     ...rootEnv,
     ...localEnv,
     ...baseEnv,
@@ -98,7 +154,7 @@ export function loadRepoEnv({
           VITE_RELAY_OTLP_TRACES_TOKEN: config.relayClientOtlpTracesToken,
         }
       : {}),
-  };
+  });
 }
 
 function resolvePublicConfig(...sources: readonly Environment[]): T3CodePublicConfig {

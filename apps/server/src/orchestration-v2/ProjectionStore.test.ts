@@ -1658,7 +1658,7 @@ it.effect("SQL queue readiness skips held runs without bypassing active work", (
   }).pipe(Effect.provide(layerTest)),
 );
 
-it.effect("SQL shells flag only an active turn blocked solely on T3 thread waits", () =>
+it.effect("SQL shells flag only an active turn blocked solely on P4 Bot thread waits", () =>
   Effect.gen(function* () {
     const store = yield* ProjectionStore.ProjectionStoreV2;
     const threadId = yield* addRolledBackRecoveryCandidate("thread-wait");

@@ -8,7 +8,7 @@
 #   T3CODE_CHANNEL           release train to follow: stable, nightly, or preview
 #                            (default: stable; preview is a maintainers' test train)
 #   T3CODE_VERSION           exact version to install (overrides T3CODE_CHANNEL)
-#   T3CODE_HOME              T3 home directory (default: ~/.p4)
+#   T3CODE_HOME              P4 Bot home directory (default: ~/.p4)
 #   T3CODE_INSTALL_BIN_DIR   where the `t3` command goes (default: ~/.local/bin)
 #   T3CODE_RELEASE_BASE_URL  mirror for releases/download (default: GitHub)
 #
@@ -311,7 +311,7 @@ if [ -e "${bin_dir}/t3" ] || [ -L "${bin_dir}/t3" ]; then
     existing="$(script_t3 "${bin_dir}/t3")"
   fi
   if [ -n "$existing" ]; then
-    # Through a symlinked T3 home the path names the alias; resolve its folder to compare.
+    # Through a symlinked P4 Bot home the path names the alias; resolve its folder to compare.
     existing_dir="$(CDPATH='' cd -P -- "$(dirname -- "$existing")" 2>/dev/null && pwd || true)"
     # The text alone counts only without . or .. segments (a pruned version leaves a dangling path).
     case "$existing" in

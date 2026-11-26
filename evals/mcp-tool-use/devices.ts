@@ -410,8 +410,8 @@ export const describeSessions = (
       const owner = owners.find((candidate) => candidate.session === name);
       if (owner !== undefined)
         return session === undefined
-          ? `${named} belonged to another T3 thread (${owner.threadId}) and was closed, which freed its device`
-          : `${named} belongs to another T3 thread (${owner.threadId}) and holds its device with an app open`;
+          ? `${named} belonged to another P4 Bot thread (${owner.threadId}) and was closed, which freed its device`
+          : `${named} belongs to another P4 Bot thread (${owner.threadId}) and holds its device with an app open`;
       return session === undefined
         ? `${named} has not started`
         : session.recordingOnly

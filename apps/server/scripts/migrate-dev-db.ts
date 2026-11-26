@@ -69,7 +69,7 @@ export class MigrateDevDbLegacySourceError extends Schema.TaggedError<MigrateDev
   },
 ) {
   override get message(): string {
-    return `Source database '${this.sourcePath}' holds ${this.legacyThreads} legacy threads the server has not imported into V2 yet, which this command cannot carry over. Start a server once on a T3 home holding a copy of it so it imports them, then pass the userdata/statev2.sqlite that server leaves behind as --source.`;
+    return `Source database '${this.sourcePath}' holds ${this.legacyThreads} legacy threads the server has not imported into V2 yet, which this command cannot carry over. Start a server once on a P4 Bot home holding a copy of it so it imports them, then pass the userdata/statev2.sqlite that server leaves behind as --source.`;
   }
 }
 

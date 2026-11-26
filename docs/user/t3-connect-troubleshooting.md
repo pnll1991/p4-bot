@@ -53,7 +53,7 @@ The issue is on the client device's network:
 - **Link not yet applied**: Restart P4 Bot on the host (`t3 service restart` or restart desktop app).
 - **Expired session**: Sign out of T3 Connect and sign back in.
 - **Waiting for device approval**: Approve the displayed code from an existing device or run `t3 auth connect-device approve <code>` on the host ([Approve new devices](./remote-access.md#approve-new-devices)).
-- **Machine limit reached**: Deregister an unused host or [link a paid T3 Chat account](./remote-access.md#more-machines-with-t3-chat), then restart the host.
+- **Machine limit reached**: Deregister an unused host ([Machine limit](./remote-access.md#machine-limit)), then restart the host.
 
 ## The clock is off
 
@@ -67,7 +67,7 @@ Update P4 Bot on the host machine ([Updating P4 Bot](./updating.md)).
 
 | Error                                            | Fix                                                                                                                           |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `environment_link_limit_exceeded` / tunnel limit | Deregister an unused host or link a paid T3 Chat account, then restart the host.                                              |
+| `environment_link_limit_exceeded` / tunnel limit | Deregister an unused host, then restart the host.                                                                             |
 | `auth_invalid` / `invalid_bearer`                | Run `t3 connect login` (or `t3 connect logout && t3 connect`), then restart the server.                                       |
 | Expired or invalid link proof                    | Sync system clock, update P4 Bot, and restart.                                                                                |
 | HTTP 403 (unrecognized)                          | If device approval is on, update the client and approve it; otherwise check proxies/firewalls and save any Cloudflare Ray ID. |

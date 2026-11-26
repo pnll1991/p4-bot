@@ -34,7 +34,7 @@ The first time an outside agent connects, approve its sign-in page (via your T3 
 
 ## Available tools and limits
 
-Tools that act as a running T3 thread (`delegate_task`, `create_threads`, `request_secret`, `html_render`, `preview_*`, `device_*`, `t3_worktree_handoff`) only work for agents running **inside** P4 Bot.
+Tools that act as a running P4 Bot thread (`delegate_task`, `create_threads`, `request_secret`, `html_render`, `preview_*`, `device_*`, `t3_worktree_handoff`) only work for agents running **inside** P4 Bot.
 
 - Use `t3_thread_launch` + `t3_thread_wait` / `t3_thread_read` to run and follow work.
 - Pass `projectId` or `threadId` explicitly (or `allProjects: true` on `t3_thread_list`).

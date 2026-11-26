@@ -523,7 +523,7 @@ describe("AcpRegistrySupport", () => {
     );
   });
 
-  it.effect("installs into T3 home a package and launches its exposed command", () => {
+  it.effect("installs into P4 Bot home a package and launches its exposed command", () => {
     const agent = makeAgent({
       npx: { package: "@example/acp@V1.2.3", args: ["--stdio"] },
     });
