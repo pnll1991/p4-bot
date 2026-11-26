@@ -236,45 +236,99 @@ describe("thread links", () => {
   });
 });
 
-describe("hosted thread links", () => {
-  it("escapes every id character a sentence or path could claim, and reads it back", () => {
+const HOSTED_APP = "https://app.example.test";
+
+describe("copied thread links", () => {
+  it("without a hosted app, copies the app's own link and reads no hosted link", () => {
     const thread = ref("env.1", "thread:delegated/mcp%3A1.");
     const link = hostedThreadLink(thread);
-    expect(link).toBe("https://app.t3.codes/threads/env%2E1/thread%3Adelegated%2Fmcp%253A1%2E");
+    expect(link).toBe("t3-thread://v2/env.1/thread:delegated/mcp%3A1.");
     expect(parseThreadLinkHref(link)).toEqual(thread);
-    expect(hostedThreadLink(thread, "https://preview.t3.codes/")).toMatch(
-      /^https:\/\/preview\.t3\.codes\/threads\//,
+    expect(formatHostedThreadLink(ref("e", "t1"), "Fix [ci]")).toBe(
+      "[Fix ci](t3-thread://v2/e/t1)",
     );
+    expect(formatHostedThreadLink(ref("e", "t1"), " ")).toBe("<t3-thread://v2/e/t1>");
+    // T3 Tools' hosted app is not this app's, so its links stay plain text.
+    const foreign = "See https://app.t3.codes/threads/there/t1.";
+    expect(parseThreadLinkHref("https://app.t3.codes/threads/env-1/thread-1")).toBeNull();
+    expect(relabelThreadLinks(foreign, local, () => "There")).toBe(foreign);
+    expect(threadLinkRefs(foreign, local)).toEqual([]);
   });
 
-  it("reads only a bare thread path on the hosted app", () => {
-    expect(parseThreadLinkHref("https://app.t3.codes/threads/env-1/thread-1")).toEqual(
+  it("escapes every id character a sentence or path could claim on a given hosted app", () => {
+    const thread = ref("env.1", "thread:delegated/mcp%3A1.");
+    expect(hostedThreadLink(thread, "https://preview.example.test/")).toBe(
+      "https://preview.example.test/threads/env%2E1/thread%3Adelegated%2Fmcp%253A1%2E",
+    );
+    expect(formatHostedThreadLink(ref("e", "t1"), "Fix [ci]", HOSTED_APP)).toBe(
+      `[Fix ci](${HOSTED_APP}/threads/e/t1)`,
+    );
+    expect(formatHostedThreadLink(ref("e", "t1"), " ", HOSTED_APP)).toBe(
+      `${HOSTED_APP}/threads/e/t1`,
+    );
+  });
+});
+
+/** The links module as a build with a hosted app loads it; it reads the app once, at load. */
+async function withHostedApp() {
+  vi.resetModules();
+  vi.doMock("./connectAuth.ts", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("./connectAuth.ts")>()),
+    DEFAULT_HOSTED_APP_URL: HOSTED_APP,
+  }));
+  try {
+    const [links, copy] = await Promise.all([
+      import("./threadLinks.ts"),
+      import("./threadLinksCopy.ts"),
+    ]);
+    return { ...links, ...copy };
+  } finally {
+    vi.doUnmock("./connectAuth.ts");
+    vi.resetModules();
+  }
+}
+
+describe("hosted thread links", () => {
+  it("escapes every id character a sentence or path could claim, and reads it back", async () => {
+    const { hostedThreadLink, parseThreadLinkHref } = await withHostedApp();
+    const thread = ref("env.1", "thread:delegated/mcp%3A1.");
+    const link = hostedThreadLink(thread);
+    expect(link).toBe(`${HOSTED_APP}/threads/env%2E1/thread%3Adelegated%2Fmcp%253A1%2E`);
+    expect(parseThreadLinkHref(link)).toEqual(thread);
+  });
+
+  it("reads only a bare thread path on the hosted app", async () => {
+    const { parseThreadLinkHref } = await withHostedApp();
+    expect(parseThreadLinkHref(`${HOSTED_APP}/threads/env-1/thread-1`)).toEqual(
       ref("env-1", "thread-1"),
     );
-    expect(parseThreadLinkHref("https://app.t3.codes/threads/env-1/thread-1?prompt=go")).toBeNull();
-    expect(parseThreadLinkHref("https://app.t3.codes/threads/env-1/thread-1/extra")).toBeNull();
-    expect(parseThreadLinkHref("https://app.t3.codes/threads/env-1")).toBeNull();
-    expect(parseThreadLinkHref("https://app.t3.codes/env-1/thread-1")).toBeNull();
+    expect(parseThreadLinkHref(`${HOSTED_APP}/threads/env-1/thread-1?prompt=go`)).toBeNull();
+    expect(parseThreadLinkHref(`${HOSTED_APP}/threads/env-1/thread-1/extra`)).toBeNull();
+    expect(parseThreadLinkHref(`${HOSTED_APP}/threads/env-1`)).toBeNull();
+    expect(parseThreadLinkHref(`${HOSTED_APP}/env-1/thread-1`)).toBeNull();
+    expect(parseThreadLinkHref("https://app.t3.codes/threads/env-1/thread-1")).toBeNull();
     expect(parseThreadLinkHref("https://evil.test/threads/env-1/thread-1")).toBeNull();
   });
 
-  it("writes a copied link a reader can follow, labeled when it has a title", () => {
+  it("writes a copied link a reader can follow, labeled when it has a title", async () => {
+    const { formatHostedThreadLink } = await withHostedApp();
     expect(formatHostedThreadLink(ref("e", "t1"), "Fix [ci]")).toBe(
-      "[Fix ci](https://app.t3.codes/threads/e/t1)",
+      `[Fix ci](${HOSTED_APP}/threads/e/t1)`,
     );
-    expect(formatHostedThreadLink(ref("e", "t1"), " ")).toBe("https://app.t3.codes/threads/e/t1");
+    expect(formatHostedThreadLink(ref("e", "t1"), " ")).toBe(`${HOSTED_APP}/threads/e/t1`);
   });
 
-  it("titles hosted links in every Markdown form and writes them as v2 links", () => {
+  it("titles hosted links in every Markdown form and writes them as v2 links", async () => {
+    const { relabelThreadLinks, threadLinkRefs } = await withHostedApp();
     const title = titlesIn({ there: { t1: "There" } });
     expect(
       relabelThreadLinks(
         [
-          "See https://app.t3.codes/threads/there/t1.",
-          "[old](https://app.t3.codes/threads/there/t1)",
-          "<https://app.t3.codes/threads/there/t1>",
-          "`https://app.t3.codes/threads/there/t1`",
-          "https://app.t3.codes/threads/there/t1?prompt=go",
+          `See ${HOSTED_APP}/threads/there/t1.`,
+          `[old](${HOSTED_APP}/threads/there/t1)`,
+          `<${HOSTED_APP}/threads/there/t1>`,
+          `\`${HOSTED_APP}/threads/there/t1\``,
+          `${HOSTED_APP}/threads/there/t1?prompt=go`,
         ].join("\n"),
         local,
         title,
@@ -284,20 +338,21 @@ describe("hosted thread links", () => {
         "See [There](t3-thread://v2/there/t1).",
         "[There](t3-thread://v2/there/t1)",
         "[There](t3-thread://v2/there/t1)",
-        "`https://app.t3.codes/threads/there/t1`",
-        "https://app.t3.codes/threads/there/t1?prompt=go",
+        `\`${HOSTED_APP}/threads/there/t1\``,
+        `${HOSTED_APP}/threads/there/t1?prompt=go`,
       ].join("\n"),
     );
-    expect(
-      relabelThreadLinks("https://app.t3.codes/threads/there/t1", local, () => undefined),
-    ).toBe("Thread on another machine");
-    expect(threadLinkRefs("Open https://app.t3.codes/threads/there/t%3A1", local)).toEqual([
+    expect(relabelThreadLinks(`${HOSTED_APP}/threads/there/t1`, local, () => undefined)).toBe(
+      "Thread on another machine",
+    );
+    expect(threadLinkRefs(`Open ${HOSTED_APP}/threads/there/t%3A1`, local)).toEqual([
       ref("there", "t:1"),
     ]);
   });
 
-  it("leaves a hosted link that is part of another link as written", () => {
-    const hosted = "https://app.t3.codes/threads/there/t1";
+  it("leaves a hosted link that is part of another link as written", async () => {
+    const { relabelThreadLinks, threadLinkRefs } = await withHostedApp();
+    const hosted = `${HOSTED_APP}/threads/there/t1`;
     const relabeled = "[There](t3-thread://v2/there/t1)";
     const title = titlesIn({ there: { t1: "There" } });
     for (const [markdown, expected] of [

@@ -144,7 +144,7 @@ const appLinking = {
     "t3code://",
     "t3code-dev://",
     "t3code-preview://",
-    DEFAULT_HOSTED_APP_URL,
+    ...(DEFAULT_HOSTED_APP_URL === null ? [] : [DEFAULT_HOSTED_APP_URL]),
   ],
   config: { initialRouteName: "Home" },
   filter: (url: string) => shouldHandleAppLink(url, hasCloudPublicConfig()),

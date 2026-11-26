@@ -10,8 +10,9 @@ export interface HostedPairingRequest {
 
 export type HostedAppChannel = "latest" | "nightly";
 
-export function configuredHostedAppUrl(): string {
-  return import.meta.env.VITE_HOSTED_APP_URL?.trim() || DEFAULT_HOSTED_APP_URL;
+/** This build's hosted app, if it has one; P4 Bot ships without. */
+export function configuredHostedAppUrl(): string | undefined {
+  return import.meta.env.VITE_HOSTED_APP_URL?.trim() || (DEFAULT_HOSTED_APP_URL ?? undefined);
 }
 
 function configuredBackendUrl(): string {
@@ -44,7 +45,8 @@ export function isHostedStaticApp(url?: URL): boolean {
     return false;
   }
 
-  const hostedOrigin = originFromUrl(configuredHostedAppUrl());
+  const hostedAppUrl = configuredHostedAppUrl();
+  const hostedOrigin = hostedAppUrl === undefined ? null : originFromUrl(hostedAppUrl);
   return hostedOrigin !== null && (url ?? new URL(window.location.href)).origin === hostedOrigin;
 }
 
@@ -72,8 +74,10 @@ export function buildHostedPairingUrl(input: {
   readonly host: string;
   readonly token: string;
   readonly label?: string | null;
-}): string {
-  const url = new URL("/pair", configuredHostedAppUrl());
+}): string | null {
+  const hostedAppUrl = configuredHostedAppUrl();
+  if (hostedAppUrl === undefined) return null;
+  const url = new URL("/pair", hostedAppUrl);
   url.searchParams.set("host", input.host);
 
   const label = input.label?.trim();
@@ -86,8 +90,10 @@ export function buildHostedPairingUrl(input: {
 
 export function buildHostedChannelSelectionUrl(input: {
   readonly channel: HostedAppChannel;
-}): string {
-  const url = new URL("/__t3code/channel", configuredHostedAppUrl());
+}): string | null {
+  const hostedAppUrl = configuredHostedAppUrl();
+  if (hostedAppUrl === undefined) return null;
+  const url = new URL("/__t3code/channel", hostedAppUrl);
   url.searchParams.set("channel", input.channel);
   return url.toString();
 }

@@ -358,7 +358,7 @@ it.effect(
 );
 
 it.effect.each(["startup", "open-url", "early-second-instance"] as const)(
-  "receives hosted web sign-in through the desktop %s handler",
+  "receives web app sign-in through the desktop %s handler",
   (entry) =>
     Effect.gen(function* () {
       storageMock.mockReturnValue(storageAdapter);
@@ -382,7 +382,7 @@ it.effect.each(["startup", "open-url", "early-second-instance"] as const)(
       }).toString();
       const request = {
         authorizationUrl: authorize.toString(),
-        returnUrl: "https://app.t3.codes/welcome#agents:remote-one",
+        returnUrl: "http://localhost:5733/welcome#agents:remote-one",
         environmentId: EnvironmentId.make("remote-one"),
         instanceId: ProviderInstanceId.make("work"),
         flowId: "flow-one",

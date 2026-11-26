@@ -17,5 +17,7 @@ describe("provider auth return destinations", () => {
     "t3code://attacker/welcome",
     "t3code://app/welcome/../evil",
     "https://attacker.example/welcome",
+    // T3 Tools' hosted app is not P4 Bot's.
+    "https://app.t3.codes/welcome",
   ])("rejects %s", (url) => expect(providerAuthReturnUrl(url)).toBeUndefined());
 });
