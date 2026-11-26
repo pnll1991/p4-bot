@@ -11,6 +11,8 @@ export interface BotRosterEntry {
   readonly bot: BotProfile;
   /** The bot's most recently active chat, the one its row opens. */
   readonly latestThread: EnvironmentThreadShell | null;
+  /** All of the bot's chats, most recent first. */
+  readonly threads: ReadonlyArray<EnvironmentThreadShell>;
   readonly preview: string | null;
   readonly lastActivityAt: string | null;
   readonly needsYou: boolean;
@@ -50,6 +52,7 @@ export function useBotRoster(): {
         return {
           bot,
           latestThread,
+          threads,
           preview: latestMessage?.text.trim() || latestThread?.title || null,
           lastActivityAt:
             latestMessage === null

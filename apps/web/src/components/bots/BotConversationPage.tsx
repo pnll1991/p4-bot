@@ -1,4 +1,5 @@
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import {
   type BotProfile,
   type ChatAttachment,
@@ -23,6 +24,8 @@ import {
   CheckIcon,
   ChevronRightIcon,
   CopyIcon,
+  HistoryIcon,
+  ReplyIcon,
   LoaderIcon,
   SquareIcon,
   ExternalLinkIcon,
@@ -48,12 +51,14 @@ import { selectMessageImageResources } from "../../session-logic";
 import ChatMarkdown from "../ChatMarkdown";
 import { AttachmentImage } from "../media/AttachmentImage";
 import { toastManager } from "../ui/toast";
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { BotAvatar } from "./BotAvatar";
 import { BotDetails, failureMessage } from "./BotDetailPage";
-import { isToday, useBotRoster } from "./useBotRoster";
+import { formatRosterTime, isToday, useBotRoster } from "./useBotRoster";
 
 const CONVERSATION_WIDTH = "mx-auto w-full max-w-3xl";
+const COMPOSER_ID = "bot-composer";
 const WORKING_STATUSES = new Set(["preparing", "queued", "starting", "running"]);
 
 /** A bot's chat: its latest conversation, or a fresh one after "New chat". */
@@ -87,6 +92,8 @@ export function BotConversationPage() {
         environmentId={environmentId}
         bot={entry.bot}
         threadRef={threadId === null ? null : scopeThreadRef(environmentId, threadId)}
+        chats={entry.threads}
+        onSelectChat={(id) => setChosen({ projectId, threadId: id })}
         onNewChat={() => setChosen({ projectId, threadId: "new" })}
         onThreadStarted={(id) => setChosen({ projectId, threadId: id })}
         detailsOpen={detailsOpen}
@@ -105,6 +112,8 @@ function Conversation({
   environmentId,
   bot,
   threadRef,
+  chats,
+  onSelectChat,
   onNewChat,
   onThreadStarted,
   detailsOpen,
@@ -113,6 +122,8 @@ function Conversation({
   readonly environmentId: EnvironmentId;
   readonly bot: BotProfile;
   readonly threadRef: ScopedThreadRef | null;
+  readonly chats: ReadonlyArray<EnvironmentThreadShell>;
+  readonly onSelectChat: (threadId: ThreadId) => void;
   readonly onNewChat: () => void;
   readonly onThreadStarted: (threadId: ThreadId) => void;
   readonly detailsOpen: boolean;
@@ -143,6 +154,7 @@ function Conversation({
   };
   const scrollRef = useRef<HTMLDivElement>(null);
   const [awayFromBottom, setAwayFromBottom] = useState(false);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
 
   const send = async (
     text: string,
@@ -217,6 +229,13 @@ function Conversation({
               <ExternalLinkIcon className="size-4" />
             </HeaderButton>
           ) : null}
+          {chats.length > 0 ? (
+            <ChatsMenu
+              chats={chats}
+              currentThreadId={threadRef?.threadId ?? null}
+              onSelect={onSelectChat}
+            />
+          ) : null}
           <HeaderButton label={gt("New chat")} onClick={onNewChat}>
             <SquarePenIcon className="size-4" />
           </HeaderButton>
@@ -255,6 +274,10 @@ function Conversation({
                   ) : (
                     <MessageRow
                       key={row.projected.item.id}
+                      onReply={(text) => {
+                        setReplyTo(text);
+                        document.getElementById(COMPOSER_ID)?.focus();
+                      }}
                       projected={row.projected}
                       startsGroup={startsGroup}
                       bot={bot}
@@ -285,7 +308,11 @@ function Conversation({
 
       <Composer
         botName={bot.name}
-        onSend={send}
+        replyTo={replyTo}
+        onClearReply={() => setReplyTo(null)}
+        onSend={(text, attachments) =>
+          send(replyTo === null ? text : `${quote(replyTo)}\n\n${text}`, attachments)
+        }
         working={working && threadRef !== null}
         onStop={() => void stop()}
       />
@@ -379,22 +406,51 @@ function StepsRow({ steps }: { readonly steps: ReadonlyArray<CommandItem> }) {
       {open ? (
         <ul className="mt-1 flex flex-col gap-1 border-l pl-3">
           {steps.map((step) => (
-            <li key={step.id} className="flex list-none items-start gap-2 text-xs">
-              {step.status === "running" ? (
-                <LoaderIcon className="mt-0.5 size-3 shrink-0 animate-spin text-muted-foreground" />
-              ) : stepFailed(step) ? (
-                <XIcon className="mt-0.5 size-3 shrink-0 text-destructive" />
-              ) : (
-                <CheckIcon className="mt-0.5 size-3 shrink-0 text-success" />
-              )}
-              <code className="min-w-0 whitespace-pre-wrap break-all font-mono text-muted-foreground">
-                {step.input}
-              </code>
-            </li>
+            <StepLine key={step.id} step={step} />
           ))}
         </ul>
       ) : null}
     </div>
+  );
+}
+
+const OUTPUT_LINE_LIMIT = 40;
+
+function StepLine({ step }: { readonly step: CommandItem }) {
+  const gt = useGT();
+  const [open, setOpen] = useState(false);
+  const output = step.output?.trimEnd() ?? "";
+  const lines = output.split("\n");
+  const shown =
+    lines.length > OUTPUT_LINE_LIMIT ? lines.slice(-OUTPUT_LINE_LIMIT).join("\n") : output;
+  return (
+    <li className="list-none text-xs">
+      <button
+        type="button"
+        aria-expanded={output === "" ? undefined : open}
+        disabled={output === ""}
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-start gap-2 text-left enabled:hover:text-foreground"
+      >
+        {step.status === "running" ? (
+          <LoaderIcon className="mt-0.5 size-3 shrink-0 animate-spin text-muted-foreground" />
+        ) : stepFailed(step) ? (
+          <XIcon className="mt-0.5 size-3 shrink-0 text-destructive" />
+        ) : (
+          <CheckIcon className="mt-0.5 size-3 shrink-0 text-success" />
+        )}
+        <code className="min-w-0 whitespace-pre-wrap break-all font-mono text-muted-foreground">
+          {step.input}
+        </code>
+      </button>
+      {open ? (
+        <pre className="mt-1 ml-5 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-muted px-2.5 py-2 font-mono text-muted-foreground">
+          {lines.length > OUTPUT_LINE_LIMIT
+            ? `${gt("Last {count} lines", { count: OUTPUT_LINE_LIMIT })}\n${shown}`
+            : shown}
+        </pre>
+      ) : null}
+    </li>
   );
 }
 
@@ -437,12 +493,14 @@ function DayDivider({ at }: { readonly at: Date | null }) {
 
 function MessageRow({
   projected,
+  onReply,
   startsGroup,
   bot,
   environmentId,
   threadRef,
 }: {
   readonly projected: OrchestrationV2ProjectedTurnItem;
+  readonly onReply: (text: string) => void;
   readonly startsGroup: boolean;
   readonly bot: BotProfile;
   readonly environmentId: EnvironmentId;
@@ -480,6 +538,7 @@ function MessageRow({
           itemId={item.id}
           text={item.text}
           streaming={item.streaming}
+          onReply={onReply}
         />
       ) : item.type === "approval_request" ? (
         <ApprovalCard
@@ -588,7 +647,9 @@ function AssistantText({
   itemId,
   text,
   streaming,
+  onReply,
 }: {
+  readonly onReply: (text: string) => void;
   readonly threadRef: ScopedThreadRef | null;
   readonly itemId: OrchestrationV2ProjectedTurnItem["item"]["id"];
   readonly text: string;
@@ -614,16 +675,91 @@ function AssistantText({
         {...(threadRef ? { threadRef } : {})}
       />
       {streaming ? null : (
-        <button
-          type="button"
-          aria-label={copied ? gt("Copied") : gt("Copy reply")}
-          onClick={() => void copy()}
-          className="mt-0.5 -mb-3 flex size-5 items-center justify-center rounded-md text-muted-foreground opacity-0 hover:bg-accent hover:text-foreground focus-visible:opacity-100 group-hover/reply:opacity-100 pointer-coarse:opacity-100"
-        >
-          {copied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
-        </button>
+        <div className="mt-0.5 -mb-3 flex gap-0.5 opacity-0 focus-within:opacity-100 group-hover/reply:opacity-100 pointer-coarse:opacity-100">
+          <ReplyAction label={copied ? gt("Copied") : gt("Copy reply")} onClick={() => void copy()}>
+            {copied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
+          </ReplyAction>
+          <ReplyAction label={gt("Reply")} onClick={() => onReply(shown)}>
+            <ReplyIcon className="size-3.5" />
+          </ReplyAction>
+        </div>
       )}
     </div>
+  );
+}
+
+function ReplyAction({
+  label,
+  onClick,
+  children,
+}: {
+  readonly label: string;
+  readonly onClick: () => void;
+  readonly children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="flex size-5 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+    >
+      {children}
+    </button>
+  );
+}
+
+const QUOTE_LIMIT = 280;
+
+/** A reply carries the quoted text as Markdown so every runtime sees what it answers. */
+function quote(text: string): string {
+  const trimmed = text.trim();
+  const short = trimmed.length > QUOTE_LIMIT ? `${trimmed.slice(0, QUOTE_LIMIT)}…` : trimmed;
+  return short
+    .split("\n")
+    .map((line) => `> ${line}`)
+    .join("\n");
+}
+
+function ChatsMenu({
+  chats,
+  currentThreadId,
+  onSelect,
+}: {
+  readonly chats: ReadonlyArray<EnvironmentThreadShell>;
+  readonly currentThreadId: ThreadId | null;
+  readonly onSelect: (threadId: ThreadId) => void;
+}) {
+  const gt = useGT();
+  return (
+    <Menu>
+      <MenuTrigger
+        render={
+          <button
+            type="button"
+            aria-label={gt("Chats")}
+            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          >
+            <HistoryIcon className="size-4" />
+          </button>
+        }
+      />
+      <MenuPopup align="end" className="max-h-96 w-72">
+        {chats.map((chat) => (
+          <MenuItem key={chat.id} onClick={() => onSelect(chat.id)}>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className={cn("truncate", chat.id === currentThreadId && "font-medium")}>
+                {chat.title}
+              </span>
+              <span className="text-muted-foreground text-xs">
+                {formatRosterTime(chat.updatedAt)}
+              </span>
+            </span>
+            {chat.id === currentThreadId ? <CheckIcon className="size-3.5" /> : null}
+          </MenuItem>
+        ))}
+      </MenuPopup>
+    </Menu>
   );
 }
 
@@ -863,11 +999,15 @@ function readAsDataUrl(file: File): Promise<string> {
 
 function Composer({
   botName,
+  replyTo,
+  onClearReply,
   onSend,
   working,
   onStop,
 }: {
   readonly botName: string;
+  readonly replyTo: string | null;
+  readonly onClearReply: () => void;
   readonly working: boolean;
   readonly onStop: () => void;
   readonly onSend: (
@@ -889,6 +1029,7 @@ function Composer({
     if (sent) {
       setText("");
       setImages([]);
+      onClearReply();
     }
   };
 
@@ -933,6 +1074,20 @@ function Composer({
           }
         }}
       >
+        {replyTo !== null ? (
+          <div className="mx-1 mb-2 flex items-center gap-2 rounded-xl bg-foreground/8 px-3 py-1.5 text-xs">
+            <ReplyIcon className="size-3.5 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 flex-1 truncate text-muted-foreground">{replyTo}</span>
+            <button
+              type="button"
+              aria-label={gt("Cancel reply")}
+              onClick={onClearReply}
+              className="flex size-5 shrink-0 items-center justify-center rounded-full hover:bg-foreground/10"
+            >
+              <XIcon className="size-3" />
+            </button>
+          </div>
+        ) : null}
         {images.length > 0 ? (
           <ul className="flex flex-wrap gap-2 px-1 pt-1 pb-2">
             {images.map((image, index) => (
@@ -976,6 +1131,7 @@ function Composer({
           <textarea
             // Opening a bot or a new chat is an invitation to type.
             autoFocus
+            id={COMPOSER_ID}
             value={text}
             rows={1}
             onChange={(event) => setText(event.target.value)}
