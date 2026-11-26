@@ -22,7 +22,7 @@ import * as ServerConfig from "../config.ts";
 import * as Orchestrator from "../orchestration-v2/Orchestrator.ts";
 import * as ProjectionStore from "../orchestration-v2/ProjectionStore.ts";
 import { forkParked } from "../serverActivation.ts";
-import { BUILT_IN_BOT_RULES, matchBotRule } from "./botRules.ts";
+import { matchBotRule } from "./botRules.ts";
 import * as BotService from "./BotService.ts";
 
 /**
@@ -116,7 +116,7 @@ const make = Effect.gen(function* () {
       ]
         .filter(Boolean)
         .join(": ");
-      const rule = matchBotRule([...BUILT_IN_BOT_RULES, ...(bot.rules ?? [])], {
+      const rule = matchBotRule(bot.rules ?? [], {
         kind: item.requestKind,
         text,
       });

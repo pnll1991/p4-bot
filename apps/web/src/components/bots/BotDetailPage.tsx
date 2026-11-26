@@ -836,7 +836,8 @@ function RulesSection(props: {
           <T>
             Before an action reaches you, this bot's rules check it. A match is declined with the
             reason, even if you would approve it; anything else still asks you. Nothing is ever
-            approved for you.
+            approved for you. Rules only check actions the bot asks you about, so with Full access
+            they check nothing. They catch the usual ways to write an action, not every one.
           </T>
         </p>
       </div>

@@ -3392,7 +3392,7 @@
   "dc6a4a20be84a6ac": "When",
   "06db1a9b68cf4f84": "Create routine",
   "0f84e7dce2bfa895": "Action rules",
-  "cbeddb0a0d8fa052": "Before an action reaches you, this bot's rules check it. A match is declined with the reason, even if you would approve it; anything else still asks you. Nothing is ever approved for you.",
+  "34b4c65e5e69e646": "Прежде чем действие дойдёт до вас, его проверяют правила этого бота. Совпадение отклоняется с указанием причины, даже если вы бы его одобрили; обо всём остальном бот по-прежнему спрашивает вас. Ничего не одобряется за вас. Правила проверяют только те действия, о которых бот вас спрашивает, поэтому при полном доступе они ничего не проверяют. Они распознают обычные способы записать действие, но не все.",
   "111a44209dc6e701": "Удалить",
   "17894372adb439a9": "Add rule",
   "5ab0fccce1651433": "Recent decisions",

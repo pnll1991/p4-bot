@@ -3393,7 +3393,7 @@
   "dc6a4a20be84a6ac": "When",
   "06db1a9b68cf4f84": "Create routine",
   "0f84e7dce2bfa895": "Action rules",
-  "cbeddb0a0d8fa052": "Before an action reaches you, this bot's rules check it. A match is declined with the reason, even if you would approve it; anything else still asks you. Nothing is ever approved for you.",
+  "34b4c65e5e69e646": "Antes que uma ação chegue até você, as regras deste bot a verificam. Se houver correspondência, ela é recusada com o motivo, mesmo que você fosse aprovar; todo o resto continua pedindo sua decisão. Nada é aprovado por você. As regras só verificam as ações que o bot pergunta a você, então com Acesso total elas não verificam nada. Elas detectam as formas comuns de escrever uma ação, não todas.",
   "111a44209dc6e701": "Remover",
   "17894372adb439a9": "Add rule",
   "5ab0fccce1651433": "Recent decisions",
