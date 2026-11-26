@@ -1,19 +1,21 @@
 # Security
 
-Report vulnerabilities to [security@t3.codes](mailto:security@t3.codes). The
-[security policy](.github/SECURITY.md) covers disclosure and safe harbor.
+Report vulnerabilities in P4 Bot privately through
+[GitHub security advisories](https://github.com/pnll1991/p4-bot/security/advisories/new). P4 Bot is an unofficial fork; do not send
+reports about it to T3 Tools. The [security policy](.github/SECURITY.md) covers disclosure.
 
-The rest of this file is for agents and maintainers auditing T3 Code or triaging
+The rest of this file is for agents and maintainers auditing P4 Bot or triaging
 reports. It defines who is trusted with what, which boundaries a real finding
 crosses, and what is intended. The reasoning behind each boundary lives in
 [environment auth](docs/internals/04_environment-auth.md),
 [T3 Connect](docs/internals/06_t3-connect.md), and
 [remote environments](docs/internals/05_remote.md); read those before reporting
-in their area.
+in their area. T3 Connect is off in P4 Bot: the server refuses a `*.t3.codes`
+relay, so the relay rows below apply only to a self-configured relay.
 
 ## The model in one paragraph
 
-An environment is a T3 server running as an OS user. It is not a sandbox: it
+An environment is a P4 Bot server running as an OS user. It is not a sandbox: it
 intentionally runs agents and terminals with that user's privileges. Clients
 gain authority by pairing, which issues a scoped session. A full-scope session
 equals a shell as the server's OS user, because `terminal:operate` opens a PTY
@@ -30,7 +32,7 @@ revocation and ceilings hold, not what a full-scope session can do once issued.
 | Narrow client                                                                                    | Pairing link with explicit scopes                                        | Only the RPCs and routes its scopes allow. Can never widen its own grant.                                                                                                                  |
 | MCP client (outside agent, subject `mcp-client`)                                                 | OAuth on `/mcp`                                                          | Only `/mcp`, within a read-only grant or a runtime-mode ceiling. Every other route rejects it.                                                                                             |
 | Linked environment (peer link)                                                                   | OAuth client `t3code-peer-link`                                          | Work it starts carries an immutable `linkOrigin` and never exceeds the access it was paired with.                                                                                          |
-| Agent run by T3                                                                                  | Thread's runtime mode and thread credential                              | Within its runtime mode, managed policy, and the MCP access declared per tool.                                                                                                             |
+| Agent run by P4 Bot                                                                              | Thread's runtime mode and thread credential                              | Within its runtime mode, managed policy, and the MCP access declared per tool.                                                                                                             |
 | Guest link                                                                                       | HMAC token for one share                                                 | Read one thread and propose messages. Never a session; no RPC, WebSocket, or MCP path accepts it.                                                                                          |
 | Signed asset URL                                                                                 | Minted with `filesystem:read`                                            | One file, by device and inode identity, until it expires.                                                                                                                                  |
 | Webhook sender                                                                                   | A task's webhook URL, plus its signing secret when the task requires one | Start that one task's run with content of its choosing. Nothing in the request is trusted beyond the signature check.                                                                      |
@@ -109,8 +111,8 @@ revocation and ceilings hold, not what a full-scope session can do once issued.
   requires, or has its values treated as anything but untrusted data. Tokens in
   or around the request remain covered by 6.
 - The machine owner's own configuration. Whoever sets a provider's launch
-  arguments, an environment variable, a binary path, or the endpoint or file T3
-  Code points at already holds the OS account, so a value weakening their own
+  arguments, an environment variable, a binary path, or the endpoint or file P4
+  Bot points at already holds the OS account, so a value weakening their own
   setup is their choice. It is a finding when a narrower principal can set it
   for them (a narrow client, an MCP client, an agent below full access,
   repository content), when [managed policy](docs/user/managed-policy.md) locks
@@ -118,7 +120,7 @@ revocation and ceilings hold, not what a full-scope session can do once issued.
   Choosing a host does not make it trusted: what a configured endpoint can do
   to the server or its clients stays in scope.
 - An attacker already running code as the same OS user. That includes one whose
-  only move is to rewrite files that user owns outside a workspace: T3 Code's
+  only move is to rewrite files that user owns outside a workspace: P4 Bot's
   data directory, its installed helpers, the user's own config. Another OS
   account on the same machine is not this attacker; neither is repository
   content or an agent below full access, which write inside a workspace without
@@ -163,7 +165,7 @@ revocation and ceilings hold, not what a full-scope session can do once issued.
 - Check the reported commit against `main`. Reports often trail fixes.
 - Prove a finding with a failing test at the lowest layer that shows it, as
   [Verifying](AGENTS.md#verifying) describes. Do not run a PoC against
-  `~/.t3/userdata` or any live environment; use a dev server on seeded data.
+  `~/.p4/userdata` or any live environment; use a dev server on seeded data.
 - Treat report attachments as untrusted. Extract them into an empty directory
   outside the worktree and read PoCs before running anything.
 - Fix confirmed findings rather than filing them. Keep advisory details out of

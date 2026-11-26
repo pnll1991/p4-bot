@@ -1,54 +1,41 @@
-# T3 Code
+# P4 Bot
 
-T3 Code is a minimal GUI for coding agents. A Node WebSocket server wraps provider CLIs and agents (Codex, Claude Code, Cursor, Grok, OpenCode, Antigravity, Kiro, Pi, Muse Code, fx) and serves web, desktop, and mobile clients.
+P4 Bot is an unofficial fork of the T3 Code source code (github.com/pingdotgg/t3code). It is not affiliated with, endorsed by, or maintained by T3 Tools, Inc.; see [TRADEMARK.md](TRADEMARK.md).
 
-You can think of T3 Code as an open source "bring-your-own-subscription" alternative to apps like Claude Desktop, Codex App, Cursor Glass and Conductor.
+It keeps T3 Code's core, a Node WebSocket server that wraps provider CLIs and agents and serves web, desktop, and mobile clients, and adds **Bots**: persistent agents, each with its own workspace, provider credentials, memory, routines, and action rules, whose approvals the owner can always see.
 
-## What makes T3 Code special?
+## What P4 Bot differs on
 
-We have over 500,000 users who love T3 Code. It's important we maintain the things they love as we continue to iterate on the product. Here's a brief list of the things we can never compromise on.
+- **Safe by default.** New threads start in Supervised, not Full access. A bot never approves on the owner's behalf; its action rules can only decline.
+- **Its own data.** State lives in `~/.p4`, so P4 Bot runs side by side with a T3 Code install.
+- **No T3 Tools services.** There is no hosted web app (app.t3.codes), no T3 Connect relay, and no T3 Chat. Remote access is direct: local network, Tailscale, or SSH. Do not add code paths, links, or defaults that point at `*.t3.codes` or other T3 Tools infrastructure.
+- **Own branding.** User-facing copy says P4 Bot. Mention T3 Code only as plain-text attribution of where the code came from.
 
-### 1. Open at the core
+## What we keep from upstream
 
-T3 Code is truly open. We share our roadmap, we share how we think about things, and of course we share all our code. A large number of our users run forks (our MIT license covers source code only, not T3 Code's trademarks or branding; see [TRADEMARK.md](TRADEMARK.md)). We work in the open, and should strive to stay that way.
+- **Performance without compromise.** Watch what goes over the websocket, avoid CSS animations that spike the GPU, and keep lists cheap to render. Make every change considerate of performance.
+- **Remote ready.** The websocket layer is what makes remote control work. New features must work for a client on another device, not only on the host.
+- **Multi-surface.** Three surfaces: **web** (served locally by the server), **desktop** (Electron, bundles the server and can host remote clients), and **mobile** (React Native, iOS and Android, connects to any P4 Bot server).
 
-### 2. Performance without compromise
+## Taste, inherited from upstream
 
-Lots of apps have gotten bogged down with bad tech decisions and "slop". We have not, and we're proud of the performance of T3 Code. We regularly audit for performance regressions, often caused by sending too much data over websockets, css animations causing gpu spikes, lists being hard to render, and more. Make sure all changes are considerate of performance impact.
-
-### 3. Remote ready
-
-The architecture of T3 Code's websocket layer (`t3`) enables a lot of awesome remote features. These have become core to the product. Whether users are connecting directly over their local network, using Tailscale, or leaning in fully with T3 Connect (our tunnel solution, also in this repo), we need to make sure new features are properly supported.
-
-### 4. Multi-surface
-
-T3 Code has 3 key app surfaces: **web**, **desktop**, and **mobile**.
-
-**Web** is kind of two surfaces, as we have the public facing "app.t3.codes" as well as locally hosting the web app through the `t3` command. Both need to be supported by all new features where reasonable.
-
-**Desktop** is the main surface most users install first. It's a full Electron app that bundles the server runner as well. The desktop app can also be used as the host server, allowing remote connections from app.t3.codes or the mobile app.
-
-**Mobile** is a React Native app for both iOS and Android, available on the App Store and Google Play. The mobile app allows for connecting to any T3 Code server to control work remotely.
-
-## A note from Theo
-
-I like ambitious ideas, simple systems, and software that feels obvious. Do not preserve complexity just because it already exists. Do not introduce machinery because it looks architecturally impressive. Understand the real constraint, then fight for the smallest model that makes the correct behavior unsurprising.
+Ambitious ideas, simple systems, and software that feels obvious. Do not preserve complexity just because it already exists. Do not introduce machinery because it looks architecturally impressive. Understand the real constraint, then fight for the smallest model that makes the correct behavior unsurprising.
 
 Channel both "measure twice, cut once" and "yagni". Fight scope creep. Try to honor the dev's intent in both a minimal and realistic fashion.
 
 The rest of this document is meant to help you navigate the codebase and make changes effectively. Think of these instructions less as "hard rules", more as "good defaults". The developer's preferences should be able to override anything here.
 
-Of note: Most T3 Code contributions will come from T3 Code itself, often controlled remotely. This means you should be careful about accessing data, killing dev servers, and other things that may damage the T3 Code instance that the contributor is using.
+Of note: most P4 Bot contributions come from P4 Bot itself, often controlled remotely. Be careful about accessing data, killing dev servers, and other things that may damage the instance the contributor is using.
 
 ## Terminology
 
-- **you** = the agent reading this file. **we / us / maintainers** = Theo, Julius, and the people building T3 Code. **user** = person driving coding agents in T3 Code. **agent** = coding agent running inside T3 Code.
+- **you** = the agent reading this file. **we / us / maintainers** = the people building P4 Bot. **upstream** = T3 Code, the project this fork tracks. **user** = person driving coding agents in P4 Bot. **agent** = coding agent running inside P4 Bot. **bot** = a persistent P4 Bot agent with its own project, provider instance, and profile.
 - Domain terms (environment, project, thread, turn, provider, checkpoint, etc.): [00_glossary.md](docs/internals/00_glossary.md).
 
 ## The three ways to hurt yourself
 
 1. **Killing by pattern.** Never `pkill -f`, `pgrep | kill`, or `kill` a PID you found by matching a name, path, or worktree string. Your own agent process has this worktree's path in its argv, and this machine runs several other dev servers at once. Kill only a PID you captured at spawn, or the owner of your port from `ss -H -ltnp` after confirming `/proc/<pid>/cwd` is your worktree.
-2. **Writing to the live install.** `~/.t3/userdata` is the developer's real T3 Code database, in use while you work. Reading or copying from it is fine. Never start a server against it, never open it read-write, never clean it up.
+2. **Writing to the live install.** `~/.p4/userdata` is the developer's real P4 Bot database, in use while you work (and `~/.t3/userdata` is their T3 Code install, if any). Reading or copying from it is fine. Never start a server against it, never open it read-write, never clean it up.
 3. **Baking in origins.** Never set `VITE_HTTP_URL` or `VITE_WS_URL` for dev. Dev is single-origin and Vite proxies `/api`, `/ws`, `/oauth`, and `/.well-known`. Setting them bakes localhost into the bundle and silently breaks every remote browser.
 
 ## Hit every surface
@@ -61,7 +48,7 @@ The most common defect in this repo is a change that works on the path you teste
 - **Agents.** Capabilities a user triggers should be service methods reachable by MCP tools and scheduled tasks, not inline handler code.
 - **Contracts.** Wire changes go in `packages/contracts` so server, web, mobile, and desktop follow.
 - **Reverse states.** Every way in needs a way out and a way to see it (snooze/unsnooze, close/reopen). A one-way door is a bug.
-- **Connection modes.** Local, remote/relay, and tunnel; multi-device and multi-environment.
+- **Connection modes.** Local and remote (LAN, Tailscale, SSH); multi-device and multi-environment.
 - **Languages.** Translate user-facing copy in `apps/{web,mobile}/src/i18n/translations` (`vp run i18n:generate` / `vp run i18n:check`) and `apps/marketing/src/i18n`. See [14_i18n.md](docs/internals/14_i18n.md).
 - **Docs.** Check whether the change makes existing guidance inaccurate. Follow [Documentation](#documentation).
 
@@ -84,7 +71,7 @@ See [00_development.md](docs/operations/00_development.md) for setup, ports, see
 
 ## Evals
 
-`evals/` checks how real models behave with T3 Code's model-facing text: agent instructions, MCP tool descriptions and schemas, and generated titles. Before changing that text, read [evals/README.md](evals/README.md) and run the evals it names. When fixing a model behavior bug, add a case that fails before the fix.
+`evals/` checks how real models behave with P4 Bot's model-facing text: agent instructions, MCP tool descriptions and schemas, and generated titles. Before changing that text, read [evals/README.md](evals/README.md) and run the evals it names. When fixing a model behavior bug, add a case that fails before the fix.
 
 ## Pull requests
 
@@ -132,7 +119,7 @@ Read the matching doc before changing code in that area; code review enforces th
 | Providers & ACP                            | [03_providers.md](docs/internals/03_providers.md)                                                                                                                                                 |
 | Auth, MCP, guest links, assets, security   | [04_environment-auth.md](docs/internals/04_environment-auth.md), [SECURITY.md](SECURITY.md)                                                                                                       |
 | Remote routes, peer links, previews        | [05_remote.md](docs/internals/05_remote.md)                                                                                                                                                       |
-| T3 Connect & relay                         | [06_t3-connect.md](docs/internals/06_t3-connect.md)                                                                                                                                               |
+| T3 Connect & relay (off in P4 Bot)         | [06_t3-connect.md](docs/internals/06_t3-connect.md)                                                                                                                                               |
 | Server updates & crash recovery            | [07_server-updates.md](docs/internals/07_server-updates.md)                                                                                                                                       |
 | Telemetry & analytics                      | [08_product-analytics.md](docs/internals/08_product-analytics.md)                                                                                                                                 |
 | Client connection & sync runtime           | [09_connection-runtime.md](docs/internals/09_connection-runtime.md)                                                                                                                               |
