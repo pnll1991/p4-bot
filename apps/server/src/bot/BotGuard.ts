@@ -16,6 +16,8 @@ import * as Schema from "effect/Schema";
 import type * as Scope from "effect/Scope";
 import * as Stream from "effect/Stream";
 
+import { readableApprovalPrompt } from "@t3tools/shared/approvalPrompt";
+
 import * as ServerConfig from "../config.ts";
 import * as Orchestrator from "../orchestration-v2/Orchestrator.ts";
 import * as ProjectionStore from "../orchestration-v2/ProjectionStore.ts";
@@ -105,7 +107,15 @@ const make = Effect.gen(function* () {
       const bot = (yield* bots.list).find((profile) => profile.projectId === thread.projectId);
       if (bot === undefined) return;
 
+      // Rules match the raw text; the log keeps what a person reads: the command, not its JSON.
       const text = [item.title, item.prompt, item.reason].filter(Boolean).join(": ");
+      const readable = [
+        item.title,
+        item.prompt === undefined ? undefined : readableApprovalPrompt(item.prompt),
+        item.reason,
+      ]
+        .filter(Boolean)
+        .join(": ");
       const rule = matchBotRule([...BUILT_IN_BOT_RULES, ...(bot.rules ?? [])], {
         kind: item.requestKind,
         text,
@@ -116,7 +126,7 @@ const make = Effect.gen(function* () {
         threadId: event.threadId,
         requestId: item.requestId,
         kind: item.requestKind,
-        summary: text.slice(0, SUMMARY_LIMIT),
+        summary: readable.slice(0, SUMMARY_LIMIT),
         outcome: rule === null ? "asked" : "blocked",
         rule: rule === null ? null : (rule.label ?? rule.pattern),
       });

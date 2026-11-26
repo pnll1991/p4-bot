@@ -196,6 +196,7 @@ export const RPC_REQUIRED_SCOPES = {
   [WS_METHODS.botsRulesSet]: AuthOrchestrationOperateScope,
   [WS_METHODS.botsPermissionsSet]: AuthOrchestrationOperateScope,
   [WS_METHODS.botsStartOver]: AuthOrchestrationOperateScope,
+  [WS_METHODS.botsDelete]: AuthOrchestrationOperateScope,
   [WS_METHODS.shellOpenInEditor]: AuthOrchestrationOperateScope,
   [WS_METHODS.filesystemBrowse]: AuthFilesystemReadScope,
   [WS_METHODS.workspaceListFolders]: AuthFilesystemReadScope,

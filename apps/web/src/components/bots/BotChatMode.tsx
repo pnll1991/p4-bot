@@ -9,7 +9,7 @@ import {
 import { Navigate, useParams, useSearch } from "@tanstack/react-router";
 import { useGT } from "gt-react";
 import { BotIcon } from "lucide-react";
-import { createContext, useEffect, useState, useSyncExternalStore } from "react";
+import { createContext, useEffect, useSyncExternalStore } from "react";
 
 import { useNewThreadHandler } from "../../hooks/useHandleNewThread";
 import { cn } from "../../lib/utils";
@@ -17,8 +17,7 @@ import { botEnvironment } from "../../state/bots";
 import { waitForProject } from "../../state/entities";
 import { usePrimaryEnvironmentId } from "../../state/environments";
 import { useEnvironmentQuery } from "../../state/query";
-import { Sheet, SheetHeader, SheetPopup, SheetTitle } from "../ui/sheet";
-import { BotDetails } from "./BotDetailPage";
+import { openBotSettings } from "./BotDialogs";
 import { useBotRoster } from "./useBotRoster";
 
 /**
@@ -92,12 +91,12 @@ export function BotThreadHeaderControls({
 }: {
   readonly environmentId: EnvironmentId;
   readonly projectId: ProjectId | null;
-  readonly threadId: ThreadId;
+  /** Null on a draft: there is no chat yet to apply a permission change to. */
+  readonly threadId: ThreadId | null;
 }) {
   const gt = useGT();
   const isBot = useIsBotProject(projectId);
   const mode = useBotChatMode();
-  const [detailsOpen, setDetailsOpen] = useState(false);
   if (!isBot || projectId === null) return null;
   const options: ReadonlyArray<{ readonly value: BotChatMode; readonly label: string }> = [
     { value: "compact", label: gt("Compact") },
@@ -131,23 +130,11 @@ export function BotThreadHeaderControls({
       <button
         type="button"
         aria-label={gt("Bot details")}
-        onClick={() => setDetailsOpen(true)}
+        onClick={() => openBotSettings({ environmentId, projectId, threadId })}
         className="flex size-7 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
         <BotIcon className="size-4" />
       </button>
-      <Sheet open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <SheetPopup side="right" className="w-[min(92vw,28rem)]">
-          <SheetHeader className="sr-only">
-            <SheetTitle>{gt("Bot details")}</SheetTitle>
-          </SheetHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto p-5">
-            {detailsOpen ? (
-              <BotDetails environmentId={environmentId} projectId={projectId} threadId={threadId} />
-            ) : null}
-          </div>
-        </SheetPopup>
-      </Sheet>
     </div>
   );
 }

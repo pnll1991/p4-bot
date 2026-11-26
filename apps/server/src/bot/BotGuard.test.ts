@@ -121,7 +121,11 @@ it.layer(NodeServices.layer)("BotGuard", (it) => {
       ))
         .trim()
         .split("\n")
-        .map((line) => JSON.parse(line) as { outcome: string; rule: string | null });
+        .map(
+          (line) => JSON.parse(line) as { outcome: string; rule: string | null; summary: string },
+        );
+      // The log shows the command itself, not the tool's JSON arguments.
+      assert.equal(log[0]?.summary, "Allow bash?: sudo -n apt install nginx");
       assert.deepEqual(
         log.map((entry) => [entry.outcome, entry.rule]),
         [

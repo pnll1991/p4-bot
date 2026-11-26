@@ -20,10 +20,11 @@ import { T, useGT, Var } from "gt-react";
 import { ShieldIcon, ShieldOffIcon } from "lucide-react";
 import { useState } from "react";
 
-import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { readableApprovalPrompt } from "@t3tools/shared/approvalPrompt";
 
-import { useThreadActions } from "../../hooks/useThreadActions";
 import { cn } from "../../lib/utils";
+import { BotAvatar } from "./BotAvatar";
+import { BotDeleteDialog, BotStartOverDialog } from "./BotDialogs";
 import { threadEnvironment } from "../../state/threads";
 
 import { botEnvironment } from "../../state/bots";
@@ -94,6 +95,8 @@ function PresenceBadge({ presence }: { readonly presence: BotPresence }) {
 }
 
 /** Everything the owner manages about a bot, shown beside its chat. */
+type DetailsTab = "general" | "rules" | "memory" | "routines";
+
 export function BotDetails({
   environmentId,
   projectId,
@@ -104,10 +107,13 @@ export function BotDetails({
   /** The chat the details were opened from; a permission change applies to it right away. */
   readonly threadId?: ThreadId | null;
 }) {
+  const gt = useGT();
   const overview = useEnvironmentQuery(
     botEnvironment.overview({ environmentId, input: { projectId } }),
   );
   const navigate = useNavigate();
+  const [tab, setTab] = useState<DetailsTab>("general");
+  const [dialog, setDialog] = useState<"start-over" | "delete" | null>(null);
   const data = overview.data;
 
   if (overview.error !== null) {
@@ -119,87 +125,149 @@ export function BotDetails({
     (thread) => thread.presence === "needs_you" || thread.presence === "blocked",
   );
 
+  const target = { environmentId, projectId };
+  const tabs: ReadonlyArray<{ readonly id: DetailsTab; readonly label: string }> = [
+    { id: "general", label: gt("General") },
+    { id: "rules", label: gt("Rules") },
+    { id: "memory", label: gt("Memory") },
+    { id: "routines", label: gt("Routines") },
+  ];
+
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <h2 className="truncate font-semibold text-base">{data.bot.name}</h2>
-          <PresenceBadge presence={data.presence} />
+    <div className="flex flex-col gap-5">
+      <header className="flex items-center gap-3">
+        <BotAvatar seed={data.bot.providerInstanceId} name={data.bot.name} className="size-10" />
+        <div className="flex min-w-0 flex-col">
+          <div className="flex items-center gap-2">
+            <h2 className="truncate font-semibold text-base">{data.bot.name}</h2>
+            <PresenceBadge presence={data.presence} />
+          </div>
+          <p className="truncate text-muted-foreground text-sm">
+            {data.bot.runtime} · {data.bot.model}
+          </p>
         </div>
-        <p className="text-muted-foreground text-sm">
-          {data.bot.runtime} · {data.bot.model} ·{" "}
-          {data.bot.runtimeMode === "full-access" ? <T>Full access</T> : <T>Supervised</T>}
-        </p>
       </header>
 
-      <PermissionsSection
-        environmentId={environmentId}
-        projectId={projectId}
-        threadId={threadId}
-        runtimeMode={data.bot.runtimeMode ?? "approval-required"}
-        onChange={overview.refresh}
-      />
+      <div
+        role="tablist"
+        aria-label={gt("Bot settings")}
+        className="grid grid-cols-4 gap-1 rounded-xl bg-foreground/6 p-1"
+      >
+        {tabs.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === option.id}
+            onClick={() => setTab(option.id)}
+            className={cn(
+              "rounded-lg px-2 py-1.5 font-medium text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              tab === option.id
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="font-medium text-base">
-          <T>Needs you</T>
-        </h2>
-        {waitingOnYou.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            <T>Nothing is waiting on you.</T>
-          </p>
-        ) : (
-          <ul className="flex flex-col divide-y rounded-lg border">
-            {waitingOnYou.map((thread) => (
-              <li key={thread.threadId}>
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-accent/50"
-                  onClick={() =>
-                    void navigate({
-                      to: "/$environmentId/$threadId",
-                      params: { environmentId, threadId: thread.threadId },
-                    })
-                  }
-                >
-                  <PresenceBadge presence={thread.presence} />
-                  <span className="min-w-0 flex-1 truncate text-sm">{thread.title}</span>
-                  {thread.error ? (
-                    <span className="truncate text-destructive text-xs">{thread.error}</span>
-                  ) : null}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {tab === "general" ? (
+        <div className="flex flex-col gap-6">
+          <PermissionsSection
+            environmentId={environmentId}
+            projectId={projectId}
+            threadId={threadId}
+            runtimeMode={data.bot.runtimeMode ?? "approval-required"}
+            onChange={overview.refresh}
+          />
 
-      <RulesSection
-        environmentId={environmentId}
-        projectId={projectId}
-        builtInRules={data.builtInRules}
-        rules={data.rules}
-        decisions={data.decisions}
-        onChange={overview.refresh}
-      />
+          {waitingOnYou.length > 0 ? (
+            <section className="flex flex-col gap-2">
+              <h3 className="font-medium text-sm">
+                <T>Needs you</T>
+              </h3>
+              <ul className="flex flex-col divide-y rounded-lg border">
+                {waitingOnYou.map((thread) => (
+                  <li key={thread.threadId}>
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-accent/50"
+                      onClick={() =>
+                        void navigate({
+                          to: "/$environmentId/$threadId",
+                          params: { environmentId, threadId: thread.threadId },
+                        })
+                      }
+                    >
+                      <PresenceBadge presence={thread.presence} />
+                      <span className="min-w-0 flex-1 truncate text-sm">{thread.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
-      <MemorySection
-        environmentId={environmentId}
-        projectId={projectId}
-        memory={data.memory}
-        onChange={overview.refresh}
-      />
-      <RoutinesSection
-        environmentId={environmentId}
-        projectId={projectId}
-        routines={data.routines}
-        onChange={overview.refresh}
-      />
+          <section className="flex flex-col gap-2">
+            <h3 className="font-medium text-sm">
+              <T>Conversation</T>
+            </h3>
+            <div className="flex items-center justify-between gap-3 rounded-xl border p-3">
+              <p className="text-muted-foreground text-sm">
+                <T>Archive this conversation and start a fresh one.</T>
+              </p>
+              <Button variant="outline" size="sm" onClick={() => setDialog("start-over")}>
+                <T>Start over</T>
+              </Button>
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive/30 p-3">
+              <p className="text-muted-foreground text-sm">
+                <T>Delete the bot and everything it brought.</T>
+              </p>
+              <Button variant="destructive-outline" size="sm" onClick={() => setDialog("delete")}>
+                <T>Delete bot</T>
+              </Button>
+            </div>
+          </section>
+        </div>
+      ) : tab === "rules" ? (
+        <RulesSection
+          environmentId={environmentId}
+          projectId={projectId}
+          builtInRules={data.builtInRules}
+          rules={data.rules}
+          decisions={data.decisions}
+          onChange={overview.refresh}
+        />
+      ) : tab === "memory" ? (
+        <MemorySection
+          environmentId={environmentId}
+          projectId={projectId}
+          memory={data.memory}
+          onChange={overview.refresh}
+        />
+      ) : (
+        <RoutinesSection
+          environmentId={environmentId}
+          projectId={projectId}
+          routines={data.routines}
+          onChange={overview.refresh}
+        />
+      )}
 
-      <StartOverSection
-        environmentId={environmentId}
-        projectId={projectId}
+      <BotStartOverDialog
+        target={target}
+        botName={data.bot.name}
         threadIds={data.threads.map((thread) => thread.threadId)}
+        open={dialog === "start-over"}
+        onOpenChange={(open) => setDialog(open ? "start-over" : null)}
+      />
+      <BotDeleteDialog
+        target={target}
+        botName={data.bot.name}
+        open={dialog === "delete"}
+        onOpenChange={(open) => setDialog(open ? "delete" : null)}
       />
     </div>
   );
@@ -294,76 +362,6 @@ function PermissionsSection(props: {
           </T>
         )}
       </p>
-    </section>
-  );
-}
-
-/** One conversation per bot: starting over archives it, so nothing is lost. */
-function StartOverSection(props: {
-  readonly environmentId: EnvironmentId;
-  readonly projectId: ProjectId;
-  readonly threadIds: ReadonlyArray<ThreadId>;
-}) {
-  const gt = useGT();
-  const navigate = useNavigate();
-  const actions = useThreadActions();
-  const startOver = useAtomCommand(botEnvironment.startOver, { reportFailure: false });
-  const [confirming, setConfirming] = useState(false);
-  const [working, setWorking] = useState(false);
-
-  const run = async () => {
-    setWorking(true);
-    for (const threadId of props.threadIds) {
-      await actions.archiveThread(scopeThreadRef(props.environmentId, threadId));
-    }
-    const result = await startOver({
-      environmentId: props.environmentId,
-      input: { projectId: props.projectId },
-    });
-    setWorking(false);
-    setConfirming(false);
-    if (result._tag === "Failure") {
-      toastManager.add({
-        type: "error",
-        title: gt("Could not start over"),
-        description: failureMessage(result, gt("Try again.")),
-      });
-      return;
-    }
-    void navigate({
-      to: "/bots/$projectId",
-      params: { projectId: props.projectId },
-      replace: true,
-    });
-  };
-
-  return (
-    <section className="flex flex-col gap-2">
-      <h2 className="font-medium text-base">
-        <T>Conversation</T>
-      </h2>
-      <p className="text-muted-foreground text-sm">
-        <T>
-          Start a fresh conversation. The current one is archived, not deleted, and the bot keeps
-          its memory, rules and routines.
-        </T>
-      </p>
-      {confirming ? (
-        <div className="flex gap-2">
-          <Button variant="destructive" size="sm" disabled={working} onClick={() => void run()}>
-            <T>Archive and start over</T>
-          </Button>
-          <Button variant="ghost" size="sm" disabled={working} onClick={() => setConfirming(false)}>
-            <T>Cancel</T>
-          </Button>
-        </div>
-      ) : (
-        <div>
-          <Button variant="outline" size="sm" onClick={() => setConfirming(true)}>
-            <T>Start over</T>
-          </Button>
-        </div>
-      )}
     </section>
   );
 }
@@ -680,6 +678,39 @@ function RoutinesSection(props: {
   );
 }
 
+/**
+ * A decision's summary is the approval's title and the tool's arguments ("Allow bash?: {...}"),
+ * cut to a few hundred characters. Show the tool and what it wanted, even from cut JSON.
+ */
+function describeDecision(summary: string): { tool: string | null; action: string } {
+  const split = summary.indexOf(": ");
+  const title = split === -1 ? "" : summary.slice(0, split);
+  const body = split === -1 ? summary : summary.slice(split + 2);
+  const tool =
+    /^Allow (.+?)\??$/.exec(title)?.[1]?.replace(/^mcp__[^_]+(?:_[^_]+)*?__/, "") ?? null;
+  const readable = readableApprovalPrompt(body);
+  if (readable !== body) return { tool, action: readable };
+  const cut = /"(?:command|cmd|path|file_path|url)"\s*:\s*"((?:[^"\\]|\\.)*)/.exec(body);
+  return { tool, action: cut?.[1] !== undefined ? cut[1].replaceAll('\\"', '"') : body };
+}
+
+function DecisionText({ summary, kind }: { readonly summary: string; readonly kind: string }) {
+  if (summary.trim() === "") {
+    return <span className="min-w-0 flex-1 truncate text-muted-foreground">{kind}</span>;
+  }
+  const { tool, action } = describeDecision(summary);
+  return (
+    <span className="flex min-w-0 flex-1 items-center gap-2">
+      {tool ? (
+        <span className="shrink-0 rounded bg-foreground/8 px-1.5 py-0.5 text-muted-foreground text-xs">
+          {tool}
+        </span>
+      ) : null}
+      <code className="min-w-0 truncate font-mono text-xs">{action || kind}</code>
+    </span>
+  );
+}
+
 function RulesSection(props: {
   readonly environmentId: EnvironmentId;
   readonly projectId: ProjectId;
@@ -690,6 +721,7 @@ function RulesSection(props: {
 }) {
   const gt = useGT();
   const setRules = useAtomCommand(botEnvironment.setRules, { reportFailure: false });
+  const [showBuiltIn, setShowBuiltIn] = useState(false);
   const [pattern, setPattern] = useState("");
   const [label, setLabel] = useState("");
 
@@ -727,8 +759,22 @@ function RulesSection(props: {
           </T>
         </p>
       </div>
-      <ul className="flex flex-col divide-y rounded-lg border text-sm">
-        {props.builtInRules.map((rule) => (
+      <button
+        type="button"
+        aria-expanded={showBuiltIn}
+        onClick={() => setShowBuiltIn((value) => !value)}
+        className="flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm hover:bg-accent/50"
+      >
+        <ShieldIcon className="size-4 shrink-0 text-muted-foreground" />
+        <span className="flex-1">
+          {gt("{count} built-in rules always on", { count: props.builtInRules.length })}
+        </span>
+        <span className="text-muted-foreground text-xs">
+          {showBuiltIn ? gt("Hide") : gt("Show")}
+        </span>
+      </button>
+      <ul className="flex flex-col divide-y rounded-lg border text-sm empty:hidden">
+        {(showBuiltIn ? props.builtInRules : []).map((rule) => (
           <li key={`builtin:${rule.pattern}`} className="flex items-center gap-3 px-4 py-2">
             <Badge variant="secondary">{gt("Always")}</Badge>
             <span className="min-w-0 flex-1 truncate">{rule.label ?? rule.pattern}</span>
@@ -796,7 +842,7 @@ function RulesSection(props: {
                 ) : (
                   <Badge variant="secondary">{gt("Asked you")}</Badge>
                 )}
-                <span className="min-w-0 flex-1 truncate">{decision.summary || decision.kind}</span>
+                <DecisionText summary={decision.summary} kind={decision.kind} />
                 {decision.rule ? (
                   <span className="truncate text-muted-foreground text-xs">{decision.rule}</span>
                 ) : null}

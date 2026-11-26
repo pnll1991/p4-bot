@@ -17,6 +17,8 @@ import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
 
 import * as ServerConfig from "../config.ts";
+import * as ManagedProjectFolders from "../project/ManagedProjectFolders.ts";
+import * as ProjectService from "../project/ProjectService.ts";
 import * as ServerSettingsService from "../serverSettings.ts";
 import * as ProjectionStore from "../orchestration-v2/ProjectionStore.ts";
 import * as ScheduledTasks from "../scheduledTasks/ScheduledTaskService.ts";
@@ -47,6 +49,8 @@ const harness = (
   workspaceRoot: string,
   upserts: Array<ScheduledTaskUpsertInput>,
   settingsPatches: Array<ServerSettingsPatch> = [],
+  calls: Array<string> = [],
+  namedProjectsRoot = "/nowhere",
 ) => {
   const bot: BotProfile = {
     version: 1,
@@ -62,7 +66,19 @@ const harness = (
     Layer.provide(
       Layer.mergeAll(
         Layer.mock(BotService.BotService)({ list: Effect.succeed([bot]) }),
+        Layer.mock(ProjectService.ProjectService)({
+          delete: (input) => {
+            calls.push(`project.delete:${input.projectId}:${String(input.force)}`);
+            return Effect.succeed({} as never);
+          },
+        }),
+        Layer.mock(ManagedProjectFolders.ManagedProjectFolders)({ namedProjectsRoot }),
         Layer.mock(ServerSettingsService.ServerSettingsService)({
+          updateProviderInstance: (mutation, patch) => {
+            calls.push(`provider.${mutation.operation}:${mutation.instanceId}`);
+            if (patch) settingsPatches.push(patch);
+            return Effect.succeed({} as never);
+          },
           getSettings: Effect.succeed({
             projectSettingsOverrides: {
               [projectId]: {
@@ -95,7 +111,24 @@ const harness = (
             } as never),
         }),
         Layer.mock(ScheduledTasks.ScheduledTaskService)({
-          list: () => Effect.succeed({ tasks: [] }),
+          list: () =>
+            Effect.succeed({
+              tasks: [
+                {
+                  id: "task-bot",
+                  projectId,
+                  title: "Precios",
+                  enabled: true,
+                  schedule: { type: "fixed_time", timeOfDay: "09:00" },
+                  lastRunStatus: "never",
+                  nextRunAt: null,
+                } as unknown as ScheduledTask,
+              ],
+            }),
+          delete: (input) => {
+            calls.push(`task.delete:${input.id}`);
+            return Effect.succeed({} as never);
+          },
           upsert: (input) => {
             upserts.push(input);
             return Effect.succeed({
@@ -194,6 +227,38 @@ it.layer(NodeServices.layer)("BotDesk", (it) => {
         yield* fileSystem.readFileString(`${workspaceRoot}/bots/bot-test/bot.json`),
       ) as { runtimeMode?: string };
       assert.equal(saved.runtimeMode, "full-access");
+    }).pipe(Effect.scoped),
+  );
+
+  it.effect("deleting a bot removes its routines, project, provider and files", () =>
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
+      const root = yield* fileSystem.makeTempDirectoryScoped({ prefix: "p4-bot-delete-" });
+      const projectsRoot = path.join(root, "projects");
+      const workspace = path.join(projectsRoot, "comprador");
+      yield* fileSystem.makeDirectory(path.join(workspace, "memory"), { recursive: true });
+      yield* fileSystem.writeFileString(path.join(workspace, "memory", "talle.md"), "M");
+      yield* fileSystem.makeDirectory(path.join(workspace, "bots", "bot-test"), {
+        recursive: true,
+      });
+      const calls: Array<string> = [];
+      const patches: Array<ServerSettingsPatch> = [];
+
+      yield* Effect.gen(function* () {
+        const desk = yield* BotDesk.BotDesk;
+        yield* desk.deleteBot(projectId);
+      }).pipe(Effect.provide(harness(workspace, [], patches, calls, projectsRoot)));
+
+      assert.deepEqual(calls, [
+        "task.delete:task-bot",
+        `project.delete:${projectId}:true`,
+        "provider.remove:bot-test",
+      ]);
+      assert.deepEqual(patches, [{ projectSettingsOverrides: { [projectId]: null } }]);
+      // The bot's folder, with its memory, is gone; the managed root stays.
+      assert.isFalse(yield* fileSystem.exists(workspace));
+      assert.isTrue(yield* fileSystem.exists(projectsRoot));
     }).pipe(Effect.scoped),
   );
 });

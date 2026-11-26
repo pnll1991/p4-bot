@@ -10,6 +10,9 @@ import {
   SquarePenIcon,
   SunIcon,
   type LucideIcon,
+  EllipsisIcon,
+  RotateCcwIcon,
+  Trash2Icon,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -18,8 +21,11 @@ import { cn } from "../../lib/utils";
 import { T3Wordmark } from "../T3Wordmark";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
+import type { EnvironmentId } from "@t3tools/contracts";
 
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "../ui/menu";
 import { BotAvatar } from "./BotAvatar";
+import { BotDeleteDialog, BotStartOverDialog, openBotSettings } from "./BotDialogs";
 import { formatRosterTime, useBotRoster, type BotRosterEntry } from "./useBotRoster";
 
 /** A rail of places beside the bot roster; each bot lists its own chats. */
@@ -120,7 +126,7 @@ function RailButton({
 function BotRoster({ pathname }: { readonly pathname: string }) {
   const gt = useGT();
   const navigate = useNavigate();
-  const { entries, loading } = useBotRoster();
+  const { environmentId, entries, loading } = useBotRoster();
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const needle = query.trim().toLowerCase();
@@ -171,19 +177,22 @@ function BotRoster({ pathname }: { readonly pathname: string }) {
         </div>
       ) : null}
       <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-2">
-        {visible.map((entry) => (
-          <RosterRow
-            key={entry.bot.projectId}
-            entry={entry}
-            pathname={pathname}
-            onSelect={() =>
-              void navigate({
-                to: "/bots/$projectId",
-                params: { projectId: entry.bot.projectId },
-              })
-            }
-          />
-        ))}
+        {environmentId === null
+          ? null
+          : visible.map((entry) => (
+              <RosterRow
+                key={entry.bot.projectId}
+                environmentId={environmentId}
+                entry={entry}
+                pathname={pathname}
+                onSelect={() =>
+                  void navigate({
+                    to: "/bots/$projectId",
+                    params: { projectId: entry.bot.projectId },
+                  })
+                }
+              />
+            ))}
         {!loading && entries.length === 0 ? (
           <li className="list-none px-2 py-6 text-center text-muted-foreground text-sm">
             {gt("No bots yet.")}{" "}
@@ -235,20 +244,24 @@ function threadPath(thread: EnvironmentThreadShell): string {
 
 /** A bot is one conversation, like a contact in a messenger; its row opens that chat. */
 function RosterRow({
+  environmentId,
   entry,
   pathname,
   onSelect,
 }: {
+  readonly environmentId: EnvironmentId;
   readonly entry: BotRosterEntry;
   readonly pathname: string;
   readonly onSelect: () => void;
 }) {
   const gt = useGT();
+  const [dialog, setDialog] = useState<"start-over" | "delete" | null>(null);
+  const target = { environmentId, projectId: entry.bot.projectId };
   const active =
     pathname === `/bots/${entry.bot.projectId}` ||
     entry.threads.some((thread) => pathname === threadPath(thread));
   return (
-    <li className="list-none">
+    <li className="group/bot relative list-none">
       <button
         type="button"
         aria-current={active || undefined}
@@ -303,6 +316,46 @@ function RosterRow({
           </span>
         </span>
       </button>
+      <Menu>
+        <MenuTrigger
+          render={
+            <button
+              type="button"
+              aria-label={gt("Actions for {name}", { name: entry.bot.name })}
+              className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md bg-sidebar text-muted-foreground opacity-0 outline-none hover:text-sidebar-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring group-hover/bot:opacity-100 aria-expanded:opacity-100 pointer-coarse:opacity-100"
+            >
+              <EllipsisIcon className="size-4" />
+            </button>
+          }
+        />
+        <MenuPopup align="end">
+          <MenuItem onClick={() => openBotSettings(target)}>
+            <SettingsIcon />
+            {gt("Bot settings")}
+          </MenuItem>
+          <MenuItem onClick={() => setDialog("start-over")}>
+            <RotateCcwIcon />
+            {gt("Start over")}
+          </MenuItem>
+          <MenuItem variant="destructive" onClick={() => setDialog("delete")}>
+            <Trash2Icon />
+            {gt("Delete bot")}
+          </MenuItem>
+        </MenuPopup>
+      </Menu>
+      <BotStartOverDialog
+        target={target}
+        botName={entry.bot.name}
+        threadIds={entry.threads.map((thread) => thread.id)}
+        open={dialog === "start-over"}
+        onOpenChange={(open) => setDialog(open ? "start-over" : null)}
+      />
+      <BotDeleteDialog
+        target={target}
+        botName={entry.bot.name}
+        open={dialog === "delete"}
+        onOpenChange={(open) => setDialog(open ? "delete" : null)}
+      />
     </li>
   );
 }

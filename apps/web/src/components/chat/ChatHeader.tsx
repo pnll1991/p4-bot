@@ -431,13 +431,12 @@ export const ChatHeader = memo(function ChatHeader({
           </>
         )}
       </WorkspaceBreadcrumb>
-      {isServerThread ? (
-        <BotThreadHeaderControls
-          environmentId={activeThreadEnvironmentId}
-          projectId={activeProject?.id ?? null}
-          threadId={activeThreadId}
-        />
-      ) : null}
+      {/* Also on a bot's draft, so a bot with no conversation yet can still be managed. */}
+      <BotThreadHeaderControls
+        environmentId={activeThreadEnvironmentId}
+        projectId={activeProject?.id ?? null}
+        threadId={isServerThread ? activeThreadId : null}
+      />
       {isServerThread ? <GuestShareIndicator threadRef={activeThreadRef} /> : null}
     </div>
   );

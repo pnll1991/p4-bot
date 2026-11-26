@@ -189,7 +189,11 @@ export function ThreadDetailsPanel(props: ThreadDetailsPanelProps) {
       {(density) => {
         if (isBotThread) {
           return (
-            <BotThreadDetails environmentId={props.environmentId} projectId={props.projectId} />
+            <BotThreadDetails
+              environmentId={props.environmentId}
+              projectId={props.projectId}
+              threadId={props.isServerThread ? props.threadId : null}
+            />
           );
         }
         // Section flags follow the rows that will render, so no empty section steals the divider rule.

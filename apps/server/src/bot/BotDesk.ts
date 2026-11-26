@@ -1,5 +1,6 @@
 import {
   BotDecision,
+  CommandId,
   BotProfile,
   type BotMemoryDeleteInput,
   type BotMemoryFile,
@@ -28,6 +29,8 @@ import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 
 import * as ServerConfig from "../config.ts";
+import * as ManagedProjectFolders from "../project/ManagedProjectFolders.ts";
+import * as ProjectService from "../project/ProjectService.ts";
 import * as ServerSettingsService from "../serverSettings.ts";
 import * as ProjectionStore from "../orchestration-v2/ProjectionStore.ts";
 import * as ScheduledTasks from "../scheduledTasks/ScheduledTaskService.ts";
@@ -52,6 +55,7 @@ export class BotOperationError extends Schema.TaggedError<BotOperationError>()(
       "routines",
       "rules",
       "permissions",
+      "delete",
     ]),
     cause: Schema.Defect(),
   },
@@ -93,6 +97,11 @@ export class BotDesk extends Context.Service<
      * the next message, the owner's or a routine's, starts the fresh one they all share.
      */
     readonly startOver: (projectId: ProjectId) => Effect.Effect<void, BotError>;
+    /**
+     * Deletes the bot and everything it brought: routines, its project and conversations, its
+     * provider instance and settings, its profile and log, and its folder with memory.
+     */
+    readonly deleteBot: (projectId: ProjectId) => Effect.Effect<void, BotError>;
   }
 >()("t3/bot/BotDesk") {}
 
@@ -147,6 +156,8 @@ const make = Effect.gen(function* () {
   const projections = yield* ProjectionStore.ProjectionStoreV2;
   const scheduledTasks = yield* ScheduledTasks.ScheduledTaskService;
   const serverSettings = yield* ServerSettingsService.ServerSettingsService;
+  const projects = yield* ProjectService.ProjectService;
+  const folders = yield* ManagedProjectFolders.ManagedProjectFolders;
   const list = bots.list;
   const botsRoot = path.resolve((yield* ServerConfig.ServerConfig).baseDir, "bots");
   const decodeDecision = Schema.decodeUnknownOption(Schema.fromJsonString(BotDecision));
@@ -404,7 +415,43 @@ const make = Effect.gen(function* () {
     },
   );
 
+  const deleteBot: BotDesk["Service"]["deleteBot"] = Effect.fn("BotDesk.deleteBot")(
+    function* (projectId) {
+      const bot = yield* findBot(projectId);
+      const failed = (cause: unknown) => new BotOperationError({ operation: "delete", cause });
+      const { tasks } = yield* scheduledTasks.list().pipe(Effect.mapError(failed));
+      yield* Effect.forEach(
+        tasks.filter((task) => task.projectId === bot.projectId),
+        (task) => scheduledTasks.delete({ id: task.id }).pipe(Effect.mapError(failed)),
+      );
+      // Deleting the project deletes its threads: the bot's conversation goes with it.
+      yield* projects
+        .delete({
+          commandId: CommandId.make(`server:bot-delete:${bot.projectId}`),
+          projectId: bot.projectId,
+          force: true,
+        })
+        .pipe(Effect.mapError(failed));
+      yield* serverSettings
+        .updateProviderInstance(
+          { operation: "remove", instanceId: bot.providerInstanceId },
+          { projectSettingsOverrides: { [bot.projectId]: null } },
+        )
+        .pipe(Effect.mapError(failed));
+      yield* fileSystem
+        .remove(path.join(botsRoot, bot.providerInstanceId), { recursive: true })
+        .pipe(Effect.mapError(failed));
+      // Only a folder P4 created for the bot is removed, never a path the profile points elsewhere.
+      const workspace = path.resolve(bot.workspaceRoot);
+      const managedRoot = path.resolve(folders.namedProjectsRoot);
+      if (workspace.startsWith(`${managedRoot}${path.sep}`)) {
+        yield* fileSystem.remove(workspace, { recursive: true }).pipe(Effect.mapError(failed));
+      }
+    },
+  );
+
   return BotDesk.of({
+    deleteBot,
     get,
     writeMemory,
     deleteMemory,

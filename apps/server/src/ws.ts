@@ -3117,6 +3117,8 @@ export const layerWsRpc = (
           botDesk.setPermissions(input).pipe(Effect.mapError(botDeskError)),
         [WS_METHODS.botsStartOver]: (input) =>
           botDesk.startOver(input.projectId).pipe(Effect.mapError(botDeskError)),
+        [WS_METHODS.botsDelete]: (input) =>
+          botDesk.deleteBot(input.projectId).pipe(Effect.mapError(botDeskError)),
         [WS_METHODS.projectsCreateFromThread]: (input) =>
           scratchThreadPromotion
             .promote(input)

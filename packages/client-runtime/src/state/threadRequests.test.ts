@@ -1,3 +1,4 @@
+import { readableApprovalPrompt } from "@t3tools/shared/approvalPrompt";
 import { presentThreadShell } from "./models.ts";
 import { threadKey } from "./entities.ts";
 import {
@@ -22,7 +23,6 @@ import {
   createChildThreadApprovalsAtom,
   type PendingThreadRequests,
   derivePendingThreadRequests,
-  readableApprovalPrompt,
   APPROVAL_TEXT_LIMIT,
   approvalTextParts,
   declinePendingApprovals,

@@ -444,7 +444,14 @@ export const layerProduction = Layer.mergeAll(
   layerManagedProjectFoldersProvided,
   BotDesk.layer.pipe(
     Layer.provideMerge(BotService.layer.pipe(Layer.provide(layerManagedProjectFoldersProvided))),
-    Layer.provide(Layer.merge(layerScheduledTaskProvided, ProjectionStore.layer)),
+    Layer.provide(
+      Layer.mergeAll(
+        layerScheduledTaskProvided,
+        ProjectionStore.layer,
+        layerProjectService,
+        layerManagedProjectFoldersProvided,
+      ),
+    ),
   ),
   layerThreadLaunchProvided,
   layerScheduledTaskProvided,
