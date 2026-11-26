@@ -24,6 +24,7 @@ import { useV2ItemSupport } from "../../state/v2ItemSupport";
 import { TimelineRowCtx, TimelineRowActivityCtx, type TimelineRow } from "./timelineRowContext";
 import { MESSAGE_HEADING_LEVEL, MessageAuthorHeading } from "./TimelineRowParts";
 import { SharedTooltipTrigger } from "../ui/shared-tooltip";
+import { BotThreadContext } from "../bots/BotChatMode";
 
 export function AssistantTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" }> }) {
   const ctx = use(TimelineRowCtx);
@@ -130,6 +131,7 @@ function AssistantForkButton({
   readonly projectedItem: NonNullable<Extract<TimelineRow, { kind: "message" }>["projectedItem"]>;
 }) {
   const ctx = use(TimelineRowCtx);
+  const isBotThread = use(BotThreadContext);
   const gt = useGT();
   const [busy, setBusy] = useState(false);
   const support = useV2ItemSupport({
@@ -143,7 +145,10 @@ function AssistantForkButton({
   });
 
   const onForkFromRun = ctx.onForkFromRun;
-  if (!canFork || onForkFromRun === undefined || projectedItem.item.runId === null) return null;
+  // A fork starts a second conversation, which a bot does not have.
+  if (isBotThread || !canFork || onForkFromRun === undefined || projectedItem.item.runId === null) {
+    return null;
+  }
   const runId = projectedItem.item.runId;
 
   return (

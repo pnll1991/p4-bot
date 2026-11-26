@@ -12,7 +12,7 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import { T, useGT, Var } from "gt-react";
-import { BotThreadHeaderControls } from "../bots/BotChatMode";
+import { BotThreadHeaderControls, useIsBotProject } from "../bots/BotChatMode";
 import { ChevronDownIcon } from "lucide-react";
 import {
   memo,
@@ -89,6 +89,7 @@ export const ChatHeader = memo(function ChatHeader({
   const gt = useGT();
   const activeProjectName = activeProject?.isScratch ? gt("No project") : activeProject?.title;
   const activeProjectCwd = activeProject?.workspaceRoot ?? null;
+  const isBotThread = useIsBotProject(activeProject?.id ?? null);
   const interfaceFont = useClientSettings((settings) => settings.fontFamilySans);
   const breadcrumbContainerRef = useRef<HTMLDivElement>(null);
   const [collapseParentTitle, setCollapseParentTitle] = useState(false);
@@ -267,31 +268,44 @@ export const ChatHeader = memo(function ChatHeader({
         {activeProject ? (
           <>
             <WorkspaceBreadcrumbItem className="shrink">
-              <SharedTooltipTrigger
-                render={
-                  <button
-                    type="button"
-                    aria-label={gt("New thread in {project}", { project: activeProjectName })}
-                    onClick={onNewThreadInProject}
-                    className="inline-flex min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+              {isBotThread ? (
+                // A bot is one conversation, so its name is a label, not a "new thread" button.
+                <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-muted-foreground">
+                  <ProjectFavicon project={activeProject} className="size-3.5" />
+                  <MiddleTruncate
+                    data-slot="workspace-breadcrumb-text"
+                    value={activeProjectName ?? ""}
+                    showTitle={false}
+                    variant="cap-aligned"
                   />
-                }
-                label={
-                  <>
-                    <T>
-                      New thread in <Var>{activeProjectName}</Var>
-                    </T>
-                  </>
-                }
-              >
-                <ProjectFavicon project={activeProject} className="size-3.5" />
-                <MiddleTruncate
-                  data-slot="workspace-breadcrumb-text"
-                  value={activeProjectName ?? ""}
-                  showTitle={false}
-                  variant="cap-aligned"
-                />
-              </SharedTooltipTrigger>
+                </span>
+              ) : (
+                <SharedTooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      aria-label={gt("New thread in {project}", { project: activeProjectName })}
+                      onClick={onNewThreadInProject}
+                      className="inline-flex min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    />
+                  }
+                  label={
+                    <>
+                      <T>
+                        New thread in <Var>{activeProjectName}</Var>
+                      </T>
+                    </>
+                  }
+                >
+                  <ProjectFavicon project={activeProject} className="size-3.5" />
+                  <MiddleTruncate
+                    data-slot="workspace-breadcrumb-text"
+                    value={activeProjectName ?? ""}
+                    showTitle={false}
+                    variant="cap-aligned"
+                  />
+                </SharedTooltipTrigger>
+              )}
             </WorkspaceBreadcrumbItem>
             <WorkspaceBreadcrumbSeparator>
               <WorkspaceBreadcrumbText>/</WorkspaceBreadcrumbText>

@@ -72,6 +72,9 @@ export function useBotCompactView(projectId: ProjectId | null): boolean {
 /** Set by the thread view so the timeline can drop tool steps in the compact bot chat. */
 export const BotCompactContext = createContext(false);
 
+/** Set by the thread view for any bot chat; branching actions hide, a bot is one conversation. */
+export const BotThreadContext = createContext(false);
+
 /** The thread header's controls for a bot thread: the density switch and the bot's details. */
 export function BotThreadHeaderControls({
   environmentId,
