@@ -29,6 +29,7 @@ import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
+import * as Semaphore from "effect/Semaphore";
 
 import * as ServerConfig from "../config.ts";
 import * as ManagedProjectFolders from "../project/ManagedProjectFolders.ts";
@@ -199,6 +200,29 @@ const make = Effect.gen(function* () {
     return bot;
   });
 
+  // Profile edits read and rewrite all of bot.json; one at a time, so none writes a stale copy.
+  const profileWrites = yield* Semaphore.make(1);
+  const updateProfile = (
+    projectId: ProjectId,
+    operation: BotOperationError["operation"],
+    change: (bot: BotProfile) => BotProfile,
+  ) =>
+    profileWrites.withPermits(1)(
+      Effect.gen(function* () {
+        const next = change(yield* findBot(projectId));
+        yield* encodeProfile(next).pipe(
+          Effect.flatMap((json) =>
+            fileSystem.writeFileString(
+              path.join(botsRoot, next.providerInstanceId, "bot.json"),
+              `${json}\n`,
+            ),
+          ),
+          Effect.mapError((cause) => new BotOperationError({ operation, cause })),
+        );
+        return next;
+      }),
+    );
+
   const memoryPath = (bot: BotProfile, name?: string) =>
     name === undefined
       ? path.join(bot.workspaceRoot, "memory")
@@ -353,30 +377,15 @@ const make = Effect.gen(function* () {
   );
 
   const setRules: BotDesk["Service"]["setRules"] = Effect.fn("BotDesk.setRules")(function* (input) {
-    const bot = yield* findBot(input.projectId);
-    yield* encodeProfile({ ...bot, rules: input.rules }).pipe(
-      Effect.flatMap((json) =>
-        fileSystem.writeFileString(
-          path.join(botsRoot, bot.providerInstanceId, "bot.json"),
-          `${json}\n`,
-        ),
-      ),
-      Effect.mapError((cause) => new BotOperationError({ operation: "rules", cause })),
-    );
+    yield* updateProfile(input.projectId, "rules", (bot) => ({ ...bot, rules: input.rules }));
   });
 
   const setPermissions: BotDesk["Service"]["setPermissions"] = Effect.fn("BotDesk.setPermissions")(
     function* (input) {
-      const bot = yield* findBot(input.projectId);
-      yield* encodeProfile({ ...bot, runtimeMode: input.runtimeMode }).pipe(
-        Effect.flatMap((json) =>
-          fileSystem.writeFileString(
-            path.join(botsRoot, bot.providerInstanceId, "bot.json"),
-            `${json}\n`,
-          ),
-        ),
-        Effect.mapError((cause) => new BotOperationError({ operation: "permissions", cause })),
-      );
+      const bot = yield* updateProfile(input.projectId, "permissions", (profile) => ({
+        ...profile,
+        runtimeMode: input.runtimeMode,
+      }));
       // New chats in the bot's project start from the project's default permissions.
       yield* serverSettings.getSettings.pipe(
         Effect.flatMap((settings) => {
@@ -414,19 +423,13 @@ const make = Effect.gen(function* () {
 
   const setRuntime: BotDesk["Service"]["setRuntime"] = Effect.fn("BotDesk.setRuntime")(
     function* (input) {
-      const bot = yield* findBot(input.projectId);
       const failed = (cause: unknown) => new BotOperationError({ operation: "runtime", cause });
-      const next: BotProfile = { ...bot, runtime: input.runtime, model: input.model };
+      const bot = yield* updateProfile(input.projectId, "runtime", (profile) => ({
+        ...profile,
+        runtime: input.runtime,
+        model: input.model,
+      }));
       const modelSelection = { instanceId: bot.providerInstanceId, model: input.model };
-      yield* encodeProfile(next).pipe(
-        Effect.flatMap((json) =>
-          fileSystem.writeFileString(
-            path.join(botsRoot, bot.providerInstanceId, "bot.json"),
-            `${json}\n`,
-          ),
-        ),
-        Effect.mapError(failed),
-      );
       const settings = yield* serverSettings.getSettings.pipe(Effect.mapError(failed));
       const { providerInstances: _kept, ...override } =
         settings.projectSettingsOverrides[bot.projectId] ?? {};
@@ -435,7 +438,7 @@ const make = Effect.gen(function* () {
           {
             operation: "upsert",
             instanceId: bot.providerInstanceId,
-            instance: BotService.botProviderInstance(next, botsRoot, path),
+            instance: BotService.botProviderInstance(bot, botsRoot, path),
           },
           {
             projectSettingsOverrides: {
@@ -572,17 +575,8 @@ const make = Effect.gen(function* () {
   );
 
   const arrange: BotDesk["Service"]["arrange"] = Effect.fn("BotDesk.arrange")(function* (input) {
-    const bot = yield* findBot(input.projectId);
-    const { projectId: _projectId, ...changes } = input;
-    yield* encodeProfile({ ...bot, ...changes }).pipe(
-      Effect.flatMap((json) =>
-        fileSystem.writeFileString(
-          path.join(botsRoot, bot.providerInstanceId, "bot.json"),
-          `${json}\n`,
-        ),
-      ),
-      Effect.mapError((cause) => new BotOperationError({ operation: "arrange", cause })),
-    );
+    const { projectId, ...changes } = input;
+    yield* updateProfile(projectId, "arrange", (bot) => ({ ...bot, ...changes }));
   });
 
   return BotDesk.of({

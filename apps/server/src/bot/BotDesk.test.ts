@@ -67,7 +67,18 @@ const harness = (
   return BotDesk.layer.pipe(
     Layer.provide(
       Layer.mergeAll(
-        Layer.mock(BotService.BotService)({ list: Effect.succeed([bot]) }),
+        // Like the real service, the list reads each profile from disk on every call.
+        Layer.unwrap(
+          Effect.gen(function* () {
+            const fileSystem = yield* FileSystem.FileSystem;
+            return Layer.mock(BotService.BotService)({
+              list: fileSystem.readFileString(`${workspaceRoot}/bots/bot-test/bot.json`).pipe(
+                Effect.map((json) => [JSON.parse(json) as BotProfile]),
+                Effect.orElseSucceed(() => [bot]),
+              ),
+            });
+          }),
+        ),
         Layer.mock(ProjectService.ProjectService)({
           delete: (input) => {
             calls.push(`project.delete:${input.projectId}:${String(input.force)}`);
@@ -365,7 +376,7 @@ it.layer(NodeServices.layer)("BotDesk", (it) => {
     }).pipe(Effect.scoped),
   );
 
-  it.effect("arranging a bot keeps its group, pin and visibility in its profile", () =>
+  it.effect("arranging a bot keeps its group, pin and visibility, even beside other changes", () =>
     Effect.gen(function* () {
       const fileSystem = yield* FileSystem.FileSystem;
       const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({
@@ -376,13 +387,25 @@ it.layer(NodeServices.layer)("BotDesk", (it) => {
       yield* Effect.gen(function* () {
         const desk = yield* BotDesk.BotDesk;
         yield* desk.arrange({ projectId, group: "Marketing", pinned: true });
+        // Changes that land together each keep the other's: none rewrites a stale profile.
+        yield* Effect.all(
+          [
+            desk.arrange({ projectId, hidden: true }),
+            desk.setRules({ projectId, rules: [{ pattern: "mercadopago.com" }] }),
+            desk.setPermissions({ projectId, runtimeMode: "full-access" }),
+          ],
+          { concurrency: "unbounded" },
+        );
       }).pipe(Effect.provide(harness(workspaceRoot, [])));
 
       const saved = JSON.parse(
         yield* fileSystem.readFileString(`${workspaceRoot}/bots/bot-test/bot.json`),
-      ) as { group?: string; pinned?: boolean; name: string };
+      ) as BotProfile;
       assert.equal(saved.group, "Marketing");
       assert.equal(saved.pinned, true);
+      assert.equal(saved.hidden, true);
+      assert.deepEqual(saved.rules, [{ pattern: "mercadopago.com" }]);
+      assert.equal(saved.runtimeMode, "full-access");
       assert.equal(saved.name, "Comprador");
     }).pipe(Effect.scoped),
   );

@@ -64,7 +64,7 @@ export function BotSettingsHost() {
         if (!open) setOpenSettings(null);
       }}
     >
-      <SheetPopup side="right" className="w-[min(94vw,32rem)]">
+      <SheetPopup side="right" layer="dialog" className="w-[min(94vw,32rem)]">
         <SheetHeader className="sr-only">
           <SheetTitle>{gt("Bot settings")}</SheetTitle>
         </SheetHeader>
