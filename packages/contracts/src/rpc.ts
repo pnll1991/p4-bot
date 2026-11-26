@@ -5,7 +5,18 @@ import {
   OrchestrationV2SearchThreadsInput,
   OrchestrationV2SearchThreadsResult,
 } from "./orchestrationV2.ts";
-import { BotCreateInput, BotListInput, BotListResult, BotProfile } from "./bot.ts";
+import {
+  BotCreateInput,
+  BotGetInput,
+  BotListInput,
+  BotListResult,
+  BotMemoryDeleteInput,
+  BotMemoryWriteInput,
+  BotOverview,
+  BotProfile,
+  BotRoutine,
+  BotRoutineCreateInput,
+} from "./bot.ts";
 import { OrchestrationDispatchCommandError } from "./orchestrationDispatch.ts";
 import {
   McpAppCallToolInput,
@@ -503,6 +514,10 @@ export const WS_METHODS = {
   projectsCreateNew: "projects.createNew",
   botsCreate: "bots.create",
   botsList: "bots.list",
+  botsGet: "bots.get",
+  botsMemoryWrite: "bots.memory.write",
+  botsMemoryDelete: "bots.memory.delete",
+  botsRoutineCreate: "bots.routine.create",
   projectsCreateFromThread: "projects.createFromThread",
 
   shellOpenInEditor: "shell.openInEditor",
@@ -1712,6 +1727,33 @@ const WsBotsListRpc = Rpc.make(WS_METHODS.botsList, {
   error: Schema.Union([OrchestrationDispatchCommandError, EnvironmentAuthorizationError]),
 });
 
+const botRpcError = Schema.Union([
+  OrchestrationDispatchCommandError,
+  EnvironmentAuthorizationError,
+]);
+
+const WsBotsGetRpc = Rpc.make(WS_METHODS.botsGet, {
+  payload: BotGetInput,
+  success: BotOverview,
+  error: botRpcError,
+});
+
+const WsBotsMemoryWriteRpc = Rpc.make(WS_METHODS.botsMemoryWrite, {
+  payload: BotMemoryWriteInput,
+  error: botRpcError,
+});
+
+const WsBotsMemoryDeleteRpc = Rpc.make(WS_METHODS.botsMemoryDelete, {
+  payload: BotMemoryDeleteInput,
+  error: botRpcError,
+});
+
+const WsBotsRoutineCreateRpc = Rpc.make(WS_METHODS.botsRoutineCreate, {
+  payload: BotRoutineCreateInput,
+  success: BotRoutine,
+  error: botRpcError,
+});
+
 const WsProjectsCreateFromThreadRpc = Rpc.make(WS_METHODS.projectsCreateFromThread, {
   payload: ProjectCreateFromThreadInput,
   success: ProjectCreateFromThreadResult,
@@ -2674,6 +2716,10 @@ export const WsRpcGroup = RpcGroup.make(
   WsProjectsCreateNewRpc,
   WsBotsCreateRpc,
   WsBotsListRpc,
+  WsBotsGetRpc,
+  WsBotsMemoryWriteRpc,
+  WsBotsMemoryDeleteRpc,
+  WsBotsRoutineCreateRpc,
   WsProjectsCreateFromThreadRpc,
   WsProjectsWriteFileRpc,
   WsProjectsMutateRpc,

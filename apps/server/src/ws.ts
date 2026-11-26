@@ -135,6 +135,7 @@ import * as ThreadLaunchService from "./orchestration-v2/ThreadLaunchService.ts"
 import * as ThreadMessageIntake from "./orchestration-v2/ThreadMessageIntake.ts";
 import * as DocumentText from "./provider/DocumentText.ts";
 import * as ScheduledTasks from "./scheduledTasks/ScheduledTaskService.ts";
+import * as BotDesk from "./bot/BotDesk.ts";
 import * as BotService from "./bot/BotService.ts";
 import * as Workflows from "./workflows/Workflows.ts";
 import * as WorkflowRuntime from "./workflows/WorkflowRuntime.ts";
@@ -350,6 +351,9 @@ const resolveEditorConfig = Effect.fn("ws.resolveEditorConfig")(function* <E, R>
         }),
   };
 });
+
+const botDeskError = (cause: { readonly message: string }) =>
+  new OrchestrationDispatchCommandError({ message: cause.message, cause });
 
 export const withLateConfigDiscovery = <E, R>(
   config: ClientServerConfig,
@@ -1481,6 +1485,7 @@ export const layerWsRpc = (
       const projectService = yield* ProjectService.ProjectService;
       const managedFolders = yield* ManagedProjectFolders.ManagedProjectFolders;
       const bots = yield* BotService.BotService;
+      const botDesk = yield* BotDesk.BotDesk;
       const scratchThreadPromotion = yield* ScratchThreadPromotion.ScratchThreadPromotion;
       const eventLoopMonitor = yield* EventLoopMonitor.EventLoopMonitor;
       const threadSearch = yield* ThreadSearch.ThreadSearch;
@@ -3098,6 +3103,14 @@ export const layerWsRpc = (
               ),
             ),
         [WS_METHODS.botsList]: (_input) => bots.list.pipe(Effect.map((list) => ({ bots: list }))),
+        [WS_METHODS.botsGet]: (input) =>
+          botDesk.get(input.projectId).pipe(Effect.mapError(botDeskError)),
+        [WS_METHODS.botsMemoryWrite]: (input) =>
+          botDesk.writeMemory(input).pipe(Effect.mapError(botDeskError)),
+        [WS_METHODS.botsMemoryDelete]: (input) =>
+          botDesk.deleteMemory(input).pipe(Effect.mapError(botDeskError)),
+        [WS_METHODS.botsRoutineCreate]: (input) =>
+          botDesk.createRoutine(input).pipe(Effect.mapError(botDeskError)),
         [WS_METHODS.projectsCreateFromThread]: (input) =>
           scratchThreadPromotion
             .promote(input)

@@ -99,6 +99,7 @@ import * as EnvironmentAuth from "./auth/EnvironmentAuth.ts";
 import * as EnvironmentTheme from "./environmentTheme.ts";
 import * as GitWorkflowService from "./git/GitWorkflowService.ts";
 import * as HostResources from "./resourceTelemetry/HostResources.ts";
+import * as BotDesk from "./bot/BotDesk.ts";
 import * as BotService from "./bot/BotService.ts";
 import * as ManagedProjectFolders from "./project/ManagedProjectFolders.ts";
 import * as ScratchThreadPromotion from "./project/ScratchThreadPromotion.ts";
@@ -978,6 +979,7 @@ it.live.each([
           namedProjectsRoot: process.cwd(),
         }),
         Layer.mock(BotService.BotService)({}),
+        Layer.mock(BotDesk.BotDesk)({}),
         Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
         Layer.mock(ProviderRegistry.ProviderRegistry)({}),
         Layer.mock(UsageLimitSources.UsageLimitSources)({}),
@@ -1122,6 +1124,7 @@ it.effect.each([
           namedProjectsRoot: process.cwd(),
         }),
         Layer.mock(BotService.BotService)({}),
+        Layer.mock(BotDesk.BotDesk)({}),
         Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
         Layer.mock(ServerEnvironment.ServerEnvironment)({
           getDescriptor: Effect.succeed({
@@ -1347,6 +1350,7 @@ it.effect("access changes made while the snapshot loads reach the client after i
                 namedProjectsRoot: "/unused",
               }),
               Layer.mock(BotService.BotService)({}),
+              Layer.mock(BotDesk.BotDesk)({}),
               Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
               Layer.mock(ServerEnvironment.ServerEnvironment)({}),
               Layer.mock(EnvironmentAuth.EnvironmentAuth)({
@@ -1505,6 +1509,7 @@ it.effect("on-demand clients get provider config without workspace snapshots", (
         namedProjectsRoot: process.cwd(),
       }),
       Layer.mock(BotService.BotService)({}),
+      Layer.mock(BotDesk.BotDesk)({}),
       Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
       Layer.mock(ServerEnvironment.ServerEnvironment)({
         getDescriptor: Effect.succeed({
@@ -1885,6 +1890,7 @@ it.effect("a missing thread worktree gets its project's skills in the cwd snapsh
         namedProjectsRoot: process.cwd(),
       }),
       Layer.mock(BotService.BotService)({}),
+      Layer.mock(BotDesk.BotDesk)({}),
       Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
       Layer.mock(ServerEnvironment.ServerEnvironment)({}),
       Layer.mock(EnvironmentAuth.EnvironmentAuth)({}),
@@ -1974,6 +1980,7 @@ it.effect(
           Layer.mock(DirectEndpoints.DirectEndpoints)({}),
           Layer.mock(ManagedProjectFolders.ManagedProjectFolders)({ namedProjectsRoot: "/unused" }),
           Layer.mock(BotService.BotService)({}),
+          Layer.mock(BotDesk.BotDesk)({}),
           Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
           Layer.mock(ServerEnvironment.ServerEnvironment)({}),
           Layer.mock(EnvironmentAuth.EnvironmentAuth)({}),
@@ -2066,6 +2073,7 @@ it.effect(
           Layer.mock(DirectEndpoints.DirectEndpoints)({}),
           Layer.mock(ManagedProjectFolders.ManagedProjectFolders)({ namedProjectsRoot: "/unused" }),
           Layer.mock(BotService.BotService)({}),
+          Layer.mock(BotDesk.BotDesk)({}),
           Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
           Layer.mock(ServerEnvironment.ServerEnvironment)({}),
           Layer.mock(EnvironmentAuth.EnvironmentAuth)({}),
@@ -2152,6 +2160,7 @@ it.effect("a git action that fails partway still refreshes the repository status
       Layer.mock(DirectEndpoints.DirectEndpoints)({}),
       Layer.mock(ManagedProjectFolders.ManagedProjectFolders)({ namedProjectsRoot: "/unused" }),
       Layer.mock(BotService.BotService)({}),
+      Layer.mock(BotDesk.BotDesk)({}),
       Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
       Layer.mock(ServerEnvironment.ServerEnvironment)({}),
       Layer.mock(EnvironmentAuth.EnvironmentAuth)({}),
@@ -2233,6 +2242,7 @@ it.effect("a publish whose push fails still refreshes the new remote", () =>
       Layer.mock(DirectEndpoints.DirectEndpoints)({}),
       Layer.mock(ManagedProjectFolders.ManagedProjectFolders)({ namedProjectsRoot: "/unused" }),
       Layer.mock(BotService.BotService)({}),
+      Layer.mock(BotDesk.BotDesk)({}),
       Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
       Layer.mock(ServerEnvironment.ServerEnvironment)({}),
       Layer.mock(EnvironmentAuth.EnvironmentAuth)({}),
@@ -2792,6 +2802,7 @@ it.effect("ACP session RPCs list a thread missing its history and repair it on i
       Layer.mock(DirectEndpoints.DirectEndpoints)({}),
       Layer.mock(ManagedProjectFolders.ManagedProjectFolders)({ namedProjectsRoot: "/unused" }),
       Layer.mock(BotService.BotService)({}),
+      Layer.mock(BotDesk.BotDesk)({}),
       Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
       Layer.mock(ServerEnvironment.ServerEnvironment)({}),
       Layer.mock(EnvironmentAuth.EnvironmentAuth)({}),
@@ -2967,6 +2978,7 @@ const makeWorkflowClient = Effect.fn("test.makeWorkflowClient")(function* (
     Layer.mock(DirectEndpoints.DirectEndpoints)({}),
     Layer.mock(ManagedProjectFolders.ManagedProjectFolders)({ namedProjectsRoot: "/unused" }),
     Layer.mock(BotService.BotService)({}),
+    Layer.mock(BotDesk.BotDesk)({}),
     Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
     Layer.mock(ServerEnvironment.ServerEnvironment)({}),
     Layer.mock(EnvironmentAuth.EnvironmentAuth)({
@@ -3033,6 +3045,7 @@ const makeAcpRegistryClient = Effect.fn("test.makeAcpRegistryClient")(function* 
     Layer.mock(DirectEndpoints.DirectEndpoints)({}),
     Layer.mock(ManagedProjectFolders.ManagedProjectFolders)({ namedProjectsRoot: "/unused" }),
     Layer.mock(BotService.BotService)({}),
+    Layer.mock(BotDesk.BotDesk)({}),
     Layer.mock(ScratchThreadPromotion.ScratchThreadPromotion)({}),
     Layer.mock(ServerEnvironment.ServerEnvironment)({}),
     Layer.mock(EnvironmentAuth.EnvironmentAuth)({}),

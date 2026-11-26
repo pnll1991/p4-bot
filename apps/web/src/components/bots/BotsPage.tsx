@@ -4,6 +4,7 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import type { BotProfile, BotRuntime } from "@t3tools/contracts";
+import { Link } from "@tanstack/react-router";
 import { T, useGT } from "gt-react";
 import { BotIcon } from "lucide-react";
 import { useState } from "react";
@@ -135,7 +136,13 @@ export function BotsPage() {
               <li key={bot.projectId} className="flex items-center gap-3 px-4 py-3">
                 <BotIcon className="size-4 shrink-0 text-muted-foreground" />
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate font-medium text-sm">{bot.name}</span>
+                  <Link
+                    to="/bots/$projectId"
+                    params={{ projectId: bot.projectId }}
+                    className="truncate font-medium text-sm hover:underline"
+                  >
+                    {bot.name}
+                  </Link>
                   <span className="truncate text-muted-foreground text-xs">
                     {RUNTIME_LABEL[bot.runtime]} · {bot.model}
                   </span>

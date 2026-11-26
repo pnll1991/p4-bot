@@ -16,5 +16,23 @@ export function createBotEnvironmentAtoms<R, E>(
       label: "environment-command:bots:create",
       tag: WS_METHODS.botsCreate,
     }),
+    overview: createEnvironmentRpcQueryAtomFamily(runtime, {
+      label: "environment-data:bots:get",
+      tag: WS_METHODS.botsGet,
+      staleTimeMs: 5_000,
+      refreshIntervalMs: 5_000,
+    }),
+    writeMemory: createEnvironmentRpcCommand(runtime, {
+      label: "environment-command:bots:memory-write",
+      tag: WS_METHODS.botsMemoryWrite,
+    }),
+    deleteMemory: createEnvironmentRpcCommand(runtime, {
+      label: "environment-command:bots:memory-delete",
+      tag: WS_METHODS.botsMemoryDelete,
+    }),
+    createRoutine: createEnvironmentRpcCommand(runtime, {
+      label: "environment-command:bots:routine-create",
+      tag: WS_METHODS.botsRoutineCreate,
+    }),
   };
 }
