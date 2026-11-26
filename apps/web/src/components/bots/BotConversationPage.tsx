@@ -17,6 +17,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import * as DateTime from "effect/DateTime";
 import { T, useGT } from "gt-react";
 import {
+  ArrowDownIcon,
   ArrowUpIcon,
   ExternalLinkIcon,
   PanelRightIcon,
@@ -25,7 +26,7 @@ import {
   SquarePenIcon,
   XIcon,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 import { cn, newMessageId, newThreadId } from "../../lib/utils";
 import {
@@ -116,6 +117,8 @@ function Conversation({
   const lastError = shell?.runtime?.lastError ?? null;
   const startTurn = useOrchestrationCommand(threadEnvironment.startTurn, { reportFailure: false });
   const messages = items.filter(isShown);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [awayFromBottom, setAwayFromBottom] = useState(false);
 
   const send = async (
     text: string,
@@ -192,35 +195,52 @@ function Conversation({
         </div>
       </header>
 
-      {/* Reversed so the scroll position stays pinned to the newest message as replies arrive. */}
-      <div className="flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-5">
-        <div className={cn(CONVERSATION_WIDTH, "flex min-h-full flex-col pb-4")}>
-          {messages.length === 0 ? (
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 py-12 text-center">
-              <BotAvatar seed={bot.providerInstanceId} name={bot.name} className="size-14" />
-              <h1 className="font-medium text-lg">{gt("Message {name}", { name: bot.name })}</h1>
-              <p className="max-w-md text-muted-foreground text-sm">{bot.persona}</p>
-            </div>
-          ) : (
-            <div className="mt-auto flex flex-col gap-1 pt-6">
-              <DayDivider at={startedAt(messages[0])} />
-              {messages.map((projected, index) => (
-                <MessageRow
-                  key={projected.item.id}
-                  projected={projected}
-                  previous={messages[index - 1]}
-                  bot={bot}
-                  environmentId={environmentId}
-                  threadRef={threadRef}
-                />
-              ))}
-              {working ? <TypingRow bot={bot} /> : null}
-              {lastError && !working ? (
-                <p className="mt-3 ml-10 text-destructive text-xs">{lastError}</p>
-              ) : null}
-            </div>
-          )}
+      {/* Reversed so the scroll position stays pinned to the newest message as replies arrive;
+          scrollTop is 0 at the bottom and negative above it. */}
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div
+          ref={scrollRef}
+          onScroll={(event) => setAwayFromBottom(event.currentTarget.scrollTop < -120)}
+          className="flex min-h-0 flex-1 flex-col-reverse overflow-y-auto px-5"
+        >
+          <div className={cn(CONVERSATION_WIDTH, "flex min-h-full shrink-0 flex-col pb-4")}>
+            {messages.length === 0 ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 py-12 text-center">
+                <BotAvatar seed={bot.providerInstanceId} name={bot.name} className="size-14" />
+                <h1 className="font-medium text-lg">{gt("Message {name}", { name: bot.name })}</h1>
+                <p className="max-w-md text-muted-foreground text-sm">{bot.persona}</p>
+              </div>
+            ) : (
+              <div className="mt-auto flex flex-col gap-1 pt-6">
+                <DayDivider at={startedAt(messages[0])} />
+                {messages.map((projected, index) => (
+                  <MessageRow
+                    key={projected.item.id}
+                    projected={projected}
+                    previous={messages[index - 1]}
+                    bot={bot}
+                    environmentId={environmentId}
+                    threadRef={threadRef}
+                  />
+                ))}
+                {working ? <TypingRow bot={bot} /> : null}
+                {lastError && !working ? (
+                  <p className="mt-3 ml-10 text-destructive text-xs">{lastError}</p>
+                ) : null}
+              </div>
+            )}
+          </div>
         </div>
+        {awayFromBottom ? (
+          <button
+            type="button"
+            aria-label={gt("Jump to latest")}
+            onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
+            className="absolute bottom-3 left-1/2 flex size-9 -translate-x-1/2 items-center justify-center rounded-full border bg-card text-foreground shadow-md hover:bg-accent"
+          >
+            <ArrowDownIcon className="size-4" />
+          </button>
+        ) : null}
       </div>
 
       <Composer botName={bot.name} onSend={send} />
