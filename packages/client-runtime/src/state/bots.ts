@@ -30,6 +30,10 @@ export function createBotEnvironmentAtoms<R, E>(
       label: "environment-command:bots:memory-delete",
       tag: WS_METHODS.botsMemoryDelete,
     }),
+    setRules: createEnvironmentRpcCommand(runtime, {
+      label: "environment-command:bots:rules-set",
+      tag: WS_METHODS.botsRulesSet,
+    }),
     createRoutine: createEnvironmentRpcCommand(runtime, {
       label: "environment-command:bots:routine-create",
       tag: WS_METHODS.botsRoutineCreate,

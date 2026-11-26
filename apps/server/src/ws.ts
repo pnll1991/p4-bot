@@ -3111,6 +3111,8 @@ export const layerWsRpc = (
           botDesk.deleteMemory(input).pipe(Effect.mapError(botDeskError)),
         [WS_METHODS.botsRoutineCreate]: (input) =>
           botDesk.createRoutine(input).pipe(Effect.mapError(botDeskError)),
+        [WS_METHODS.botsRulesSet]: (input) =>
+          botDesk.setRules(input).pipe(Effect.mapError(botDeskError)),
         [WS_METHODS.projectsCreateFromThread]: (input) =>
           scratchThreadPromotion
             .promote(input)

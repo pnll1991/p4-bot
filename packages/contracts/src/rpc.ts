@@ -16,6 +16,7 @@ import {
   BotProfile,
   BotRoutine,
   BotRoutineCreateInput,
+  BotRulesSetInput,
 } from "./bot.ts";
 import { OrchestrationDispatchCommandError } from "./orchestrationDispatch.ts";
 import {
@@ -518,6 +519,7 @@ export const WS_METHODS = {
   botsMemoryWrite: "bots.memory.write",
   botsMemoryDelete: "bots.memory.delete",
   botsRoutineCreate: "bots.routine.create",
+  botsRulesSet: "bots.rules.set",
   projectsCreateFromThread: "projects.createFromThread",
 
   shellOpenInEditor: "shell.openInEditor",
@@ -1754,6 +1756,11 @@ const WsBotsRoutineCreateRpc = Rpc.make(WS_METHODS.botsRoutineCreate, {
   error: botRpcError,
 });
 
+const WsBotsRulesSetRpc = Rpc.make(WS_METHODS.botsRulesSet, {
+  payload: BotRulesSetInput,
+  error: botRpcError,
+});
+
 const WsProjectsCreateFromThreadRpc = Rpc.make(WS_METHODS.projectsCreateFromThread, {
   payload: ProjectCreateFromThreadInput,
   success: ProjectCreateFromThreadResult,
@@ -2720,6 +2727,7 @@ export const WsRpcGroup = RpcGroup.make(
   WsBotsMemoryWriteRpc,
   WsBotsMemoryDeleteRpc,
   WsBotsRoutineCreateRpc,
+  WsBotsRulesSetRpc,
   WsProjectsCreateFromThreadRpc,
   WsProjectsWriteFileRpc,
   WsProjectsMutateRpc,

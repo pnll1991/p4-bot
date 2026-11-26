@@ -8,6 +8,7 @@ import {
   TrimmedNonEmptyString,
 } from "./baseSchemas.ts";
 import { ProviderInstanceId } from "./providerInstance.ts";
+import { ProviderRequestKind } from "./providerPolicy.ts";
 import {
   ScheduledTaskRunStatus,
   ScheduledTaskSchedule,
@@ -18,6 +19,14 @@ import {
 export const BotRuntime = Schema.Literals(["pi", "codex", "claudeAgent"]);
 export type BotRuntime = typeof BotRuntime.Type;
 
+/** Blocks any action whose request text contains `pattern` (case-insensitive), optionally of some kinds only. */
+export const BotRule = Schema.Struct({
+  pattern: TrimmedNonEmptyString.check(Schema.isMaxLength(200)),
+  kinds: Schema.optionalKey(Schema.Array(ProviderRequestKind)),
+  label: Schema.optionalKey(Schema.String),
+});
+export type BotRule = typeof BotRule.Type;
+
 export const BotProfile = Schema.Struct({
   version: Schema.Literal(1),
   name: Schema.String,
@@ -27,6 +36,8 @@ export const BotProfile = Schema.Struct({
   projectId: ProjectId,
   workspaceRoot: Schema.String,
   providerInstanceId: ProviderInstanceId,
+  /** The owner's own block rules, on top of the built-in ones. */
+  rules: Schema.optionalKey(Schema.Array(BotRule)),
 });
 export type BotProfile = typeof BotProfile.Type;
 
@@ -86,12 +97,28 @@ export const BotRoutine = Schema.Struct({
 });
 export type BotRoutine = typeof BotRoutine.Type;
 
+/** What the Bot's guard did with one action request: blocked by a rule, or left to the owner. */
+export const BotDecision = Schema.Struct({
+  at: Schema.String,
+  threadId: ThreadId,
+  requestId: Schema.String,
+  kind: Schema.String,
+  summary: Schema.String,
+  outcome: Schema.Literals(["blocked", "asked"]),
+  rule: Schema.NullOr(Schema.String),
+});
+export type BotDecision = typeof BotDecision.Type;
+
 export const BotOverview = Schema.Struct({
   bot: BotProfile,
   presence: BotPresence,
   threads: ForwardCompatibleArray(BotThreadSummary),
   memory: ForwardCompatibleArray(BotMemoryFile),
   routines: ForwardCompatibleArray(BotRoutine),
+  builtInRules: ForwardCompatibleArray(BotRule),
+  rules: ForwardCompatibleArray(BotRule),
+  /** Newest first. */
+  decisions: ForwardCompatibleArray(BotDecision),
 });
 export type BotOverview = typeof BotOverview.Type;
 
@@ -115,3 +142,9 @@ export const BotRoutineCreateInput = Schema.Struct({
   schedule: ScheduledTaskUpsertSchedule,
 });
 export type BotRoutineCreateInput = typeof BotRoutineCreateInput.Type;
+
+export const BotRulesSetInput = Schema.Struct({
+  projectId: ProjectId,
+  rules: Schema.Array(BotRule).check(Schema.isMaxLength(100)),
+});
+export type BotRulesSetInput = typeof BotRulesSetInput.Type;

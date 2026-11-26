@@ -14,6 +14,7 @@ import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
 
+import * as ServerConfig from "../config.ts";
 import * as ProjectionStore from "../orchestration-v2/ProjectionStore.ts";
 import * as ScheduledTasks from "../scheduledTasks/ScheduledTaskService.ts";
 import * as BotDesk from "./BotDesk.ts";
@@ -50,6 +51,7 @@ const harness = (workspaceRoot: string, upserts: Array<ScheduledTaskUpsertInput>
     Layer.provide(
       Layer.mergeAll(
         Layer.mock(BotService.BotService)({ list: Effect.succeed([bot]) }),
+        ServerConfig.layerTest(workspaceRoot, workspaceRoot),
         Layer.mock(ProjectionStore.ProjectionStoreV2)({
           listActiveThreads: () => Effect.succeed([{ id: waiting }, { id: quiet }] as never),
           getThreadShell: (threadId) => Effect.succeed(shell(threadId, threadId === waiting)),

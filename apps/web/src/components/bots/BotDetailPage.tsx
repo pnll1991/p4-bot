@@ -4,9 +4,11 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import {
+  type BotDecision,
   type BotMemoryFile,
   type BotPresence,
   type BotRoutine,
+  type BotRule,
   type EnvironmentId,
   MAX_BOT_ROUTINE_RUNS_PER_DAY,
   ProjectId,
@@ -170,6 +172,15 @@ export function BotDetailPage() {
           </ul>
         )}
       </section>
+
+      <RulesSection
+        environmentId={environmentId}
+        projectId={projectId}
+        builtInRules={data.builtInRules}
+        rules={data.rules}
+        decisions={data.decisions}
+        onChange={overview.refresh}
+      />
 
       <MemorySection
         environmentId={environmentId}
@@ -501,6 +512,135 @@ function RoutinesSection(props: {
           </Button>
         </div>
       </form>
+    </section>
+  );
+}
+
+function RulesSection(props: {
+  readonly environmentId: EnvironmentId;
+  readonly projectId: ProjectId;
+  readonly builtInRules: ReadonlyArray<BotRule>;
+  readonly rules: ReadonlyArray<BotRule>;
+  readonly decisions: ReadonlyArray<BotDecision>;
+  readonly onChange: () => void;
+}) {
+  const gt = useGT();
+  const setRules = useAtomCommand(botEnvironment.setRules, { reportFailure: false });
+  const [pattern, setPattern] = useState("");
+  const [label, setLabel] = useState("");
+
+  const save = async (rules: ReadonlyArray<BotRule>) => {
+    const result = await setRules({
+      environmentId: props.environmentId,
+      input: { projectId: props.projectId, rules: [...rules] },
+    });
+    if (result._tag === "Failure") {
+      if (!isAtomCommandInterrupted(result)) {
+        toastManager.add(
+          stackedThreadToast({
+            type: "error",
+            title: gt("Could not save the rules"),
+            description: failureMessage(result, gt("An error occurred.")),
+          }),
+        );
+      }
+      return;
+    }
+    props.onChange();
+  };
+
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1">
+        <h2 className="font-medium text-base">
+          <T>Action rules</T>
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          <T>
+            Before an action reaches you, this bot's rules check it. A match is declined with the
+            reason, even if you would approve it; anything else still asks you. Nothing is ever
+            approved for you.
+          </T>
+        </p>
+      </div>
+      <ul className="flex flex-col divide-y rounded-lg border text-sm">
+        {props.builtInRules.map((rule) => (
+          <li key={`builtin:${rule.pattern}`} className="flex items-center gap-3 px-4 py-2">
+            <Badge variant="secondary">{gt("Always")}</Badge>
+            <span className="min-w-0 flex-1 truncate">{rule.label ?? rule.pattern}</span>
+            <code className="truncate text-muted-foreground text-xs">{rule.pattern}</code>
+          </li>
+        ))}
+        {props.rules.map((rule) => (
+          <li key={`own:${rule.pattern}`} className="flex items-center gap-3 px-4 py-2">
+            <Badge variant="outline">{gt("Yours")}</Badge>
+            <span className="min-w-0 flex-1 truncate">{rule.label ?? rule.pattern}</span>
+            <code className="truncate text-muted-foreground text-xs">{rule.pattern}</code>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => void save(props.rules.filter((own) => own.pattern !== rule.pattern))}
+            >
+              <T>Remove</T>
+            </Button>
+          </li>
+        ))}
+      </ul>
+      <form
+        className="flex flex-col gap-2 sm:flex-row"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const trimmed = pattern.trim();
+          if (trimmed === "") return;
+          void save([
+            ...props.rules,
+            label.trim() === "" ? { pattern: trimmed } : { pattern: trimmed, label: label.trim() },
+          ]).then(() => {
+            setPattern("");
+            setLabel("");
+          });
+        }}
+      >
+        <Input
+          value={pattern}
+          placeholder={gt("Block actions containing… e.g. mercadopago.com")}
+          onChange={(event) => setPattern(event.target.value)}
+        />
+        <Input
+          value={label}
+          className="sm:w-56"
+          placeholder={gt("Why (optional)")}
+          onChange={(event) => setLabel(event.target.value)}
+        />
+        <Button type="submit" variant="outline" disabled={pattern.trim() === ""}>
+          <T>Add rule</T>
+        </Button>
+      </form>
+      {props.decisions.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <h3 className="font-medium text-sm">
+            <T>Recent decisions</T>
+          </h3>
+          <ul className="flex flex-col divide-y rounded-lg border text-sm">
+            {props.decisions.map((decision) => (
+              <li
+                key={`${decision.threadId}:${decision.requestId}`}
+                className="flex items-center gap-3 px-4 py-2"
+              >
+                {decision.outcome === "blocked" ? (
+                  <Badge variant="error">{gt("Blocked")}</Badge>
+                ) : (
+                  <Badge variant="secondary">{gt("Asked you")}</Badge>
+                )}
+                <span className="min-w-0 flex-1 truncate">{decision.summary || decision.kind}</span>
+                {decision.rule ? (
+                  <span className="truncate text-muted-foreground text-xs">{decision.rule}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </section>
   );
 }

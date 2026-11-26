@@ -1,12 +1,14 @@
 import {
+  BotDecision,
+  BotProfile,
   type BotMemoryDeleteInput,
   type BotMemoryFile,
   type BotMemoryWriteInput,
   type BotOverview,
   type BotPresence,
-  type BotProfile,
   type BotRoutine,
   type BotRoutineCreateInput,
+  type BotRulesSetInput,
   BotMemoryName,
   MAX_BOT_ROUTINE_RUNS_PER_DAY,
   type OrchestrationV2ThreadShell,
@@ -22,8 +24,10 @@ import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 
+import * as ServerConfig from "../config.ts";
 import * as ProjectionStore from "../orchestration-v2/ProjectionStore.ts";
 import * as ScheduledTasks from "../scheduledTasks/ScheduledTaskService.ts";
+import { BUILT_IN_BOT_RULES } from "./botRules.ts";
 import * as BotService from "./BotService.ts";
 
 export class BotNotFoundError extends Schema.TaggedError<BotNotFoundError>()("BotNotFoundError", {
@@ -37,7 +41,13 @@ export class BotNotFoundError extends Schema.TaggedError<BotNotFoundError>()("Bo
 export class BotOperationError extends Schema.TaggedError<BotOperationError>()(
   "BotOperationError",
   {
-    operation: Schema.Literals(["read-threads", "read-memory", "write-memory", "routines"]),
+    operation: Schema.Literals([
+      "read-threads",
+      "read-memory",
+      "write-memory",
+      "routines",
+      "rules",
+    ]),
     cause: Schema.Defect(),
   },
 ) {
@@ -69,6 +79,8 @@ export class BotDesk extends Context.Service<
     readonly createRoutine: (
       input: BotRoutineCreateInput,
     ) => Effect.Effect<BotRoutine, BotError | BotRoutineTooFrequentError>;
+    /** Replaces the owner's block rules; built-in rules always apply. */
+    readonly setRules: (input: BotRulesSetInput) => Effect.Effect<void, BotError>;
   }
 >()("t3/bot/BotDesk") {}
 
@@ -123,6 +135,25 @@ const make = Effect.gen(function* () {
   const projections = yield* ProjectionStore.ProjectionStoreV2;
   const scheduledTasks = yield* ScheduledTasks.ScheduledTaskService;
   const list = bots.list;
+  const botsRoot = path.resolve((yield* ServerConfig.ServerConfig).baseDir, "bots");
+  const decodeDecision = Schema.decodeUnknownOption(Schema.fromJsonString(BotDecision));
+  const encodeProfile = Schema.encodeEffect(Schema.fromJsonString(BotProfile));
+
+  const readDecisions = (bot: BotProfile) =>
+    fileSystem.readFileString(path.join(botsRoot, bot.providerInstanceId, "decisions.jsonl")).pipe(
+      Effect.map((text) =>
+        text
+          .split("\n")
+          .filter((line) => line.trim() !== "")
+          .slice(-20)
+          .reverse()
+          .flatMap((line) => {
+            const decoded = decodeDecision(line);
+            return decoded._tag === "Some" ? [decoded.value] : [];
+          }),
+      ),
+      Effect.orElseSucceed((): ReadonlyArray<BotDecision> => []),
+    );
 
   const findBot = Effect.fn("BotDesk.findBot")(function* (projectId: ProjectId) {
     const bot = (yield* list).find((profile) => profile.projectId === projectId);
@@ -179,6 +210,9 @@ const make = Effect.gen(function* () {
     );
     return {
       bot,
+      builtInRules: BUILT_IN_BOT_RULES,
+      rules: bot.rules ?? [],
+      decisions: yield* readDecisions(bot),
       presence,
       threads: summaries,
       memory,
@@ -233,7 +267,20 @@ const make = Effect.gen(function* () {
     },
   );
 
-  return BotDesk.of({ get, writeMemory, deleteMemory, createRoutine });
+  const setRules: BotDesk["Service"]["setRules"] = Effect.fn("BotDesk.setRules")(function* (input) {
+    const bot = yield* findBot(input.projectId);
+    yield* encodeProfile({ ...bot, rules: input.rules }).pipe(
+      Effect.flatMap((json) =>
+        fileSystem.writeFileString(
+          path.join(botsRoot, bot.providerInstanceId, "bot.json"),
+          `${json}\n`,
+        ),
+      ),
+      Effect.mapError((cause) => new BotOperationError({ operation: "rules", cause })),
+    );
+  });
+
+  return BotDesk.of({ get, writeMemory, deleteMemory, createRoutine, setRules });
 });
 
 export const layer = Layer.effect(BotDesk, make);

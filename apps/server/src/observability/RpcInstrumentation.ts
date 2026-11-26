@@ -205,6 +205,7 @@ const RPC_AGGREGATES = {
   [WS_METHODS.botsMemoryWrite]: "orchestration",
   [WS_METHODS.botsMemoryDelete]: "orchestration",
   [WS_METHODS.botsRoutineCreate]: "orchestration",
+  [WS_METHODS.botsRulesSet]: "orchestration",
   [WS_METHODS.projectsCreateFromThread]: "orchestration",
   [WS_METHODS.shellOpenInEditor]: "workspace",
   [WS_METHODS.filesystemBrowse]: "workspace",
