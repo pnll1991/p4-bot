@@ -24,13 +24,13 @@ import { Textarea } from "../ui/textarea";
 import { stackedThreadToast, toastManager } from "../ui/toast";
 import { WorkspacePageContainer } from "../WorkspacePageContainer";
 
-const DEFAULT_MODEL: Record<BotRuntime, string> = {
+export const DEFAULT_MODEL: Record<BotRuntime, string> = {
   pi: "maya/inkling-2-mini",
   codex: "gpt-5.5",
   claudeAgent: "claude-sonnet-5-5",
 };
 
-const RUNTIME_LABEL: Record<BotRuntime, string> = {
+export const RUNTIME_LABEL: Record<BotRuntime, string> = {
   pi: "Pi",
   codex: "Codex",
   claudeAgent: "Claude Code",

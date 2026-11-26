@@ -207,6 +207,7 @@ const RPC_AGGREGATES = {
   [WS_METHODS.botsRoutineCreate]: "orchestration",
   [WS_METHODS.botsRulesSet]: "orchestration",
   [WS_METHODS.botsPermissionsSet]: "orchestration",
+  [WS_METHODS.botsRuntimeSet]: "orchestration",
   [WS_METHODS.botsStartOver]: "orchestration",
   [WS_METHODS.botsDelete]: "orchestration",
   [WS_METHODS.botsArrange]: "orchestration",

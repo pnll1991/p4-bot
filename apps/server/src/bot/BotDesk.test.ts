@@ -5,6 +5,7 @@ import {
   type OrchestrationV2ThreadShell,
   ProjectId,
   ProviderInstanceId,
+  ScheduledTaskId,
   type ScheduledTask,
   type ScheduledTaskUpsertInput,
   type ServerSettingsPatch,
@@ -20,6 +21,7 @@ import * as ServerConfig from "../config.ts";
 import * as ManagedProjectFolders from "../project/ManagedProjectFolders.ts";
 import * as ProjectService from "../project/ProjectService.ts";
 import * as ServerSettingsService from "../serverSettings.ts";
+import * as Orchestrator from "../orchestration-v2/Orchestrator.ts";
 import * as ProjectionStore from "../orchestration-v2/ProjectionStore.ts";
 import * as ScheduledTasks from "../scheduledTasks/ScheduledTaskService.ts";
 import * as BotDesk from "./BotDesk.ts";
@@ -73,9 +75,23 @@ const harness = (
           },
         }),
         Layer.mock(ManagedProjectFolders.ManagedProjectFolders)({ namedProjectsRoot }),
+        Layer.mock(Orchestrator.OrchestratorV2)({
+          dispatch: (command) => {
+            calls.push(
+              command.type === "thread.model-selection.set"
+                ? `thread.model:${command.threadId}:${command.modelSelection.model}`
+                : command.type,
+            );
+            return Effect.succeed({} as never);
+          },
+        }),
         Layer.mock(ServerSettingsService.ServerSettingsService)({
           updateProviderInstance: (mutation, patch) => {
-            calls.push(`provider.${mutation.operation}:${mutation.instanceId}`);
+            calls.push(
+              mutation.operation === "remove"
+                ? `provider.remove:${mutation.instanceId}`
+                : `provider.${mutation.operation}:${mutation.instanceId}:${mutation.instance.driver}:${JSON.stringify(mutation.instance.config)}`,
+            );
             if (patch) settingsPatches.push(patch);
             return Effect.succeed({} as never);
           },
@@ -227,6 +243,61 @@ it.layer(NodeServices.layer)("BotDesk", (it) => {
         yield* fileSystem.readFileString(`${workspaceRoot}/bots/bot-test/bot.json`),
       ) as { runtimeMode?: string };
       assert.equal(saved.runtimeMode, "full-access");
+    }).pipe(Effect.scoped),
+  );
+
+  it.effect("changing the agent keeps the bot's instance and moves its chats and routines", () =>
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({
+        prefix: "p4-bot-runtime-",
+      });
+      yield* fileSystem.makeDirectory(`${workspaceRoot}/bots/bot-test`, { recursive: true });
+      const upserts: Array<ScheduledTaskUpsertInput> = [];
+      const patches: Array<ServerSettingsPatch> = [];
+      const calls: Array<string> = [];
+
+      yield* Effect.gen(function* () {
+        const desk = yield* BotDesk.BotDesk;
+        yield* desk.setRuntime({ projectId, runtime: "claudeAgent", model: "claude-sonnet-5-5" });
+      }).pipe(Effect.provide(harness(workspaceRoot, upserts, patches, calls)));
+
+      const selection = {
+        instanceId: ProviderInstanceId.make("bot-test"),
+        model: "claude-sonnet-5-5",
+      };
+      assert.deepEqual(calls, [
+        `provider.upsert:bot-test:claudeAgent:${JSON.stringify({
+          homePath: `${workspaceRoot}/bots/bot-test/provider-home`,
+        })}`,
+        `thread.model:${waiting}:claude-sonnet-5-5`,
+        `thread.model:${quiet}:claude-sonnet-5-5`,
+      ]);
+      // The override that turns the bot's instance on is left alone.
+      assert.deepEqual(patches, [
+        {
+          projectSettingsOverrides: {
+            [projectId]: {
+              defaultRuntimeMode: "approval-required",
+              defaultModelSelection: selection,
+            },
+          },
+        },
+      ]);
+      assert.deepEqual(
+        upserts.map((upsert) => ({
+          id: upsert.id,
+          model: upsert.modelSelection,
+          thread: upsert.threadId,
+        })),
+        [{ id: ScheduledTaskId.make("task-bot"), model: selection, thread: undefined }],
+      );
+      const saved = JSON.parse(
+        yield* fileSystem.readFileString(`${workspaceRoot}/bots/bot-test/bot.json`),
+      ) as { runtime: string; model: string; providerInstanceId: string };
+      assert.equal(saved.runtime, "claudeAgent");
+      assert.equal(saved.model, "claude-sonnet-5-5");
+      assert.equal(saved.providerInstanceId, "bot-test");
     }).pipe(Effect.scoped),
   );
 

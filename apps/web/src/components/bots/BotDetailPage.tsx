@@ -8,6 +8,7 @@ import {
   type BotPresence,
   type BotRoutine,
   type BotRule,
+  type BotRuntime,
   type BotRuntimeMode,
   type EnvironmentId,
   MAX_BOT_ROUTINE_RUNS_PER_DAY,
@@ -25,6 +26,7 @@ import { readableApprovalPrompt } from "@t3tools/shared/approvalPrompt";
 import { cn } from "../../lib/utils";
 import { BotAvatar } from "./BotAvatar";
 import { BotDeleteDialog, BotStartOverDialog } from "./BotDialogs";
+import { DEFAULT_MODEL, RUNTIME_LABEL } from "./BotsPage";
 import { threadEnvironment } from "../../state/threads";
 
 import { botEnvironment } from "../../state/bots";
@@ -143,7 +145,7 @@ export function BotDetails({
             <PresenceBadge presence={data.presence} />
           </div>
           <p className="truncate text-muted-foreground text-sm">
-            {data.bot.runtime} · {data.bot.model}
+            {RUNTIME_LABEL[data.bot.runtime]} · {data.bot.model}
           </p>
         </div>
       </header>
@@ -179,6 +181,15 @@ export function BotDetails({
             projectId={projectId}
             threadId={threadId}
             runtimeMode={data.bot.runtimeMode ?? "approval-required"}
+            onChange={overview.refresh}
+          />
+
+          <AgentSection
+            key={`${data.bot.runtime}:${data.bot.model}`}
+            environmentId={environmentId}
+            projectId={projectId}
+            runtime={data.bot.runtime}
+            model={data.bot.model}
             onChange={overview.refresh}
           />
 
@@ -361,6 +372,91 @@ function PermissionsSection(props: {
             ones before they reach you.
           </T>
         )}
+      </p>
+    </section>
+  );
+}
+
+function AgentSection(props: {
+  readonly environmentId: EnvironmentId;
+  readonly projectId: ProjectId;
+  readonly runtime: BotRuntime;
+  readonly model: string;
+  readonly onChange: () => void;
+}) {
+  const gt = useGT();
+  const setRuntime = useAtomCommand(botEnvironment.setRuntime, { reportFailure: false });
+  const [runtime, setDraftRuntime] = useState(props.runtime);
+  const [model, setModel] = useState(props.model);
+  const [saving, setSaving] = useState(false);
+  const changed =
+    model.trim() !== "" && (runtime !== props.runtime || model.trim() !== props.model);
+
+  const save = async () => {
+    setSaving(true);
+    const result = await setRuntime({
+      environmentId: props.environmentId,
+      input: { projectId: props.projectId, runtime, model: model.trim() },
+    });
+    setSaving(false);
+    if (result._tag === "Failure") {
+      if (!isAtomCommandInterrupted(result)) {
+        toastManager.add({
+          type: "error",
+          title: gt("Could not change the agent"),
+          description: failureMessage(result, gt("Try again.")),
+        });
+      }
+      return;
+    }
+    toastManager.add({
+      type: "success",
+      title: gt("{name} is now the bot's agent", { name: RUNTIME_LABEL[runtime] }),
+      description:
+        runtime === "pi" || runtime === props.runtime
+          ? gt("Its chats continue with the new agent.")
+          : gt("Its chats continue with the new agent. Sign the bot in on its next message."),
+    });
+    props.onChange();
+  };
+
+  return (
+    <section className="flex flex-col gap-2">
+      <h2 className="font-medium text-base">
+        <T>Agent</T>
+      </h2>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Select
+          value={runtime}
+          onValueChange={(value) => {
+            if (value !== "pi" && value !== "codex" && value !== "claudeAgent") return;
+            setDraftRuntime(value);
+            setModel(value === props.runtime ? props.model : DEFAULT_MODEL[value]);
+          }}
+        >
+          <SelectTrigger className="sm:w-40" aria-label={gt("Agent")}>
+            <SelectValue>{(value: BotRuntime) => RUNTIME_LABEL[value]}</SelectValue>
+          </SelectTrigger>
+          <SelectPopup>
+            <SelectItem value="pi">{RUNTIME_LABEL.pi}</SelectItem>
+            <SelectItem value="claudeAgent">{RUNTIME_LABEL.claudeAgent}</SelectItem>
+            <SelectItem value="codex">{RUNTIME_LABEL.codex}</SelectItem>
+          </SelectPopup>
+        </Select>
+        <Input
+          aria-label={gt("Model")}
+          value={model}
+          onChange={(event) => setModel(event.target.value)}
+        />
+        <Button disabled={!changed || saving} onClick={() => void save()}>
+          <T>Save</T>
+        </Button>
+      </div>
+      <p className="text-muted-foreground text-sm">
+        <T>
+          The bot keeps its memory, rules and chats. Its chats and routines continue on the new
+          agent. Claude Code and Codex use a sign-in only this bot uses.
+        </T>
       </p>
     </section>
   );

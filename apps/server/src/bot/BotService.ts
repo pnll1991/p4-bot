@@ -42,6 +42,22 @@ const UNCONFIGURED_DEFAULT_INSTANCES = ["codex", "claudeAgent"];
 const homeDirectoryFor = (botsRoot: string, instanceId: string, path: Path.Path) =>
   path.join(botsRoot, instanceId, "provider-home");
 
+/** The bot's provider instance: off everywhere except its project, whose override turns it on. */
+export const botProviderInstance = (
+  bot: Pick<BotProfile, "name" | "runtime" | "providerInstanceId">,
+  botsRoot: string,
+  path: Path.Path,
+) => ({
+  driver: ProviderDriverKind.make(bot.runtime),
+  displayName: bot.name,
+  enabled: false,
+  // Pi keeps models, local endpoints and auth in its own agent dir, so a Bot reuses it.
+  config:
+    bot.runtime === "pi"
+      ? {}
+      : { homePath: homeDirectoryFor(botsRoot, bot.providerInstanceId, path) },
+});
+
 const agentsFile = (input: { readonly name: string; readonly persona: string }) =>
   `# ${input.name}
 
@@ -139,14 +155,7 @@ const make = Effect.gen(function* () {
         {
           operation: "create",
           instanceId,
-          instance: {
-            driver: ProviderDriverKind.make(input.runtime),
-            displayName: input.name,
-            // Off everywhere except the Bot project, where the override below turns it on.
-            enabled: false,
-            // Pi keeps models, local endpoints and auth in its own agent dir, so a Bot reuses it.
-            config: input.runtime === "pi" ? {} : { homePath },
-          },
+          instance: botProviderInstance(profile, botsRoot, path),
         },
         {
           projectSettingsOverrides: {

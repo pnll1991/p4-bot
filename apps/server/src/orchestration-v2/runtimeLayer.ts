@@ -450,6 +450,7 @@ export const layerProduction = Layer.mergeAll(
         ProjectionStore.layer,
         layerProjectService,
         layerManagedProjectFoldersProvided,
+        layerOrchestratorProvided,
       ),
     ),
   ),

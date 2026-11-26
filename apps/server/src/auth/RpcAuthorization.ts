@@ -195,6 +195,7 @@ export const RPC_REQUIRED_SCOPES = {
   [WS_METHODS.botsRoutineCreate]: AuthOrchestrationOperateScope,
   [WS_METHODS.botsRulesSet]: AuthOrchestrationOperateScope,
   [WS_METHODS.botsPermissionsSet]: AuthOrchestrationOperateScope,
+  [WS_METHODS.botsRuntimeSet]: AuthOrchestrationOperateScope,
   [WS_METHODS.botsStartOver]: AuthOrchestrationOperateScope,
   [WS_METHODS.botsDelete]: AuthOrchestrationOperateScope,
   [WS_METHODS.botsArrange]: AuthOrchestrationOperateScope,

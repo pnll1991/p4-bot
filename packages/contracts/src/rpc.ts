@@ -18,6 +18,7 @@ import {
   BotRoutineCreateInput,
   BotArrangeInput,
   BotPermissionsSetInput,
+  BotRuntimeSetInput,
   BotRulesSetInput,
 } from "./bot.ts";
 import { OrchestrationDispatchCommandError } from "./orchestrationDispatch.ts";
@@ -523,6 +524,7 @@ export const WS_METHODS = {
   botsRoutineCreate: "bots.routine.create",
   botsRulesSet: "bots.rules.set",
   botsPermissionsSet: "bots.permissions.set",
+  botsRuntimeSet: "bots.runtime.set",
   botsStartOver: "bots.startOver",
   botsDelete: "bots.delete",
   botsArrange: "bots.arrange",
@@ -1772,6 +1774,11 @@ const WsBotsPermissionsSetRpc = Rpc.make(WS_METHODS.botsPermissionsSet, {
   error: botRpcError,
 });
 
+const WsBotsRuntimeSetRpc = Rpc.make(WS_METHODS.botsRuntimeSet, {
+  payload: BotRuntimeSetInput,
+  error: botRpcError,
+});
+
 const WsBotsStartOverRpc = Rpc.make(WS_METHODS.botsStartOver, {
   payload: BotGetInput,
   error: botRpcError,
@@ -2755,6 +2762,7 @@ export const WsRpcGroup = RpcGroup.make(
   WsBotsRoutineCreateRpc,
   WsBotsRulesSetRpc,
   WsBotsPermissionsSetRpc,
+  WsBotsRuntimeSetRpc,
   WsBotsStartOverRpc,
   WsBotsDeleteRpc,
   WsBotsArrangeRpc,

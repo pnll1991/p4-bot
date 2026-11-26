@@ -173,6 +173,13 @@ export const BotPermissionsSetInput = Schema.Struct({
 });
 export type BotPermissionsSetInput = typeof BotPermissionsSetInput.Type;
 
+export const BotRuntimeSetInput = Schema.Struct({
+  projectId: ProjectId,
+  runtime: BotRuntime,
+  model: TrimmedNonEmptyString,
+});
+export type BotRuntimeSetInput = typeof BotRuntimeSetInput.Type;
+
 /** Omitted fields keep their value; a null group takes the bot out of its group. */
 export const BotArrangeInput = Schema.Struct({
   projectId: ProjectId,

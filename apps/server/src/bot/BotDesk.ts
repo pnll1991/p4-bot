@@ -11,6 +11,7 @@ import {
   type BotRoutineCreateInput,
   type BotArrangeInput,
   type BotPermissionsSetInput,
+  type BotRuntimeSetInput,
   type ThreadId,
   type BotRulesSetInput,
   BotMemoryName,
@@ -33,6 +34,7 @@ import * as ServerConfig from "../config.ts";
 import * as ManagedProjectFolders from "../project/ManagedProjectFolders.ts";
 import * as ProjectService from "../project/ProjectService.ts";
 import * as ServerSettingsService from "../serverSettings.ts";
+import * as Orchestrator from "../orchestration-v2/Orchestrator.ts";
 import * as ProjectionStore from "../orchestration-v2/ProjectionStore.ts";
 import * as ScheduledTasks from "../scheduledTasks/ScheduledTaskService.ts";
 import { BUILT_IN_BOT_RULES } from "./botRules.ts";
@@ -56,6 +58,7 @@ export class BotOperationError extends Schema.TaggedError<BotOperationError>()(
       "routines",
       "rules",
       "permissions",
+      "runtime",
       "delete",
       "arrange",
     ]),
@@ -94,6 +97,11 @@ export class BotDesk extends Context.Service<
     readonly setRules: (input: BotRulesSetInput) => Effect.Effect<void, BotError>;
     /** Sets how much the bot may do without asking, for new chats and routines. */
     readonly setPermissions: (input: BotPermissionsSetInput) => Effect.Effect<void, BotError>;
+    /**
+     * Swaps the agent behind the bot's own provider instance, keeping its id, so the bot keeps its
+     * folder, memory, rules and chats; its chats continue on the new agent through a handoff.
+     */
+    readonly setRuntime: (input: BotRuntimeSetInput) => Effect.Effect<void, BotError>;
     /**
      * Unbinds the bot's routines from its conversation; the client archives that conversation, and
      * the next message, the owner's or a routine's, starts the fresh one they all share.
@@ -158,6 +166,7 @@ const make = Effect.gen(function* () {
   const path = yield* Path.Path;
   const bots = yield* BotService.BotService;
   const projections = yield* ProjectionStore.ProjectionStoreV2;
+  const engine = yield* Orchestrator.OrchestratorV2;
   const scheduledTasks = yield* ScheduledTasks.ScheduledTaskService;
   const serverSettings = yield* ServerSettingsService.ServerSettingsService;
   const projects = yield* ProjectService.ProjectService;
@@ -383,6 +392,77 @@ const make = Effect.gen(function* () {
     },
   );
 
+  const setRuntime: BotDesk["Service"]["setRuntime"] = Effect.fn("BotDesk.setRuntime")(
+    function* (input) {
+      const bot = yield* findBot(input.projectId);
+      const failed = (cause: unknown) => new BotOperationError({ operation: "runtime", cause });
+      const next: BotProfile = { ...bot, runtime: input.runtime, model: input.model };
+      const modelSelection = { instanceId: bot.providerInstanceId, model: input.model };
+      yield* encodeProfile(next).pipe(
+        Effect.flatMap((json) =>
+          fileSystem.writeFileString(
+            path.join(botsRoot, bot.providerInstanceId, "bot.json"),
+            `${json}\n`,
+          ),
+        ),
+        Effect.mapError(failed),
+      );
+      const settings = yield* serverSettings.getSettings.pipe(Effect.mapError(failed));
+      const { providerInstances: _kept, ...override } =
+        settings.projectSettingsOverrides[bot.projectId] ?? {};
+      yield* serverSettings
+        .updateProviderInstance(
+          {
+            operation: "upsert",
+            instanceId: bot.providerInstanceId,
+            instance: BotService.botProviderInstance(next, botsRoot, path),
+          },
+          {
+            projectSettingsOverrides: {
+              [bot.projectId]: { ...override, defaultModelSelection: modelSelection },
+            },
+          },
+        )
+        .pipe(Effect.mapError(failed));
+      // Its chats name a model of the old agent; their next message hands off to the new one.
+      const changedAt = DateTime.toEpochMillis(yield* DateTime.now);
+      const threads = yield* projections
+        .listActiveThreads(bot.projectId)
+        .pipe(Effect.mapError(failed));
+      yield* Effect.forEach(threads, (thread) =>
+        engine
+          .dispatch({
+            type: "thread.model-selection.set",
+            commandId: CommandId.make(`server:bot-runtime:${thread.id}:${changedAt}`),
+            threadId: thread.id,
+            modelSelection,
+          })
+          .pipe(Effect.mapError(failed)),
+      );
+      // Routines name a model of the old agent; they move to the new one with the bot.
+      const { tasks } = yield* scheduledTasks.list().pipe(Effect.mapError(failed));
+      yield* Effect.forEach(
+        tasks.filter((task) => task.projectId === bot.projectId),
+        (task) =>
+          scheduledTasks
+            .upsert({
+              id: task.id,
+              requireExisting: true,
+              title: task.title,
+              prompt: task.prompt,
+              enabled: task.enabled,
+              schedule: task.schedule as ScheduledTaskUpsertSchedule,
+              projectId: task.projectId,
+              workspaceStrategy: task.workspaceStrategy,
+              modelSelection,
+              runtimeMode: task.runtimeMode,
+              interactionMode: task.interactionMode,
+            })
+            .pipe(Effect.mapError(failed)),
+      );
+    },
+  );
+
   const startOver: BotDesk["Service"]["startOver"] = Effect.fn("BotDesk.startOver")(
     function* (projectId) {
       const bot = yield* findBot(projectId);
@@ -477,6 +557,7 @@ const make = Effect.gen(function* () {
     createRoutine,
     setRules,
     setPermissions,
+    setRuntime,
     startOver,
   });
 });
