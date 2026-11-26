@@ -258,8 +258,9 @@ export const ChatHeader = memo(function ChatHeader({
       ref={breadcrumbContainerRef}
       className={cn(
         "flex min-w-0 flex-1 items-center gap-2 sm:gap-3",
-        // A compact bot chat keeps one panel control, so its own toggle sits right beside it.
-        botCompact ? "pr-6" : rightPanelOpen ? "pr-10" : "pr-24",
+        // Room for the window's panel controls: one in a compact bot chat, two in a full one
+        // (bots have no terminal), three elsewhere; the bot's own toggle sits right beside them.
+        botCompact ? "pr-6" : rightPanelOpen ? "pr-10" : isBotThread ? "pr-16" : "pr-24",
       )}
       onContextMenu={handleHeaderContextMenu}
     >
