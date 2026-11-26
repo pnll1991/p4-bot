@@ -209,6 +209,7 @@ const RPC_AGGREGATES = {
   [WS_METHODS.botsPermissionsSet]: "orchestration",
   [WS_METHODS.botsStartOver]: "orchestration",
   [WS_METHODS.botsDelete]: "orchestration",
+  [WS_METHODS.botsArrange]: "orchestration",
   [WS_METHODS.projectsCreateFromThread]: "orchestration",
   [WS_METHODS.shellOpenInEditor]: "workspace",
   [WS_METHODS.filesystemBrowse]: "workspace",

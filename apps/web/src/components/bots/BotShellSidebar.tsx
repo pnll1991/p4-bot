@@ -1,34 +1,63 @@
+import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
+import type { EnvironmentId } from "@t3tools/contracts";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { T, useGT } from "gt-react";
 import {
   BarChart3Icon,
   CalendarClockIcon,
-  MessageCircleIcon,
+  ChevronRightIcon,
+  EllipsisIcon,
+  EyeIcon,
+  EyeOffIcon,
+  FolderIcon,
   MoonIcon,
+  PinIcon,
+  PinOffIcon,
+  PlusIcon,
+  RotateCcwIcon,
   SearchIcon,
   SettingsIcon,
-  SquarePenIcon,
   SunIcon,
-  type LucideIcon,
-  EllipsisIcon,
-  RotateCcwIcon,
   Trash2Icon,
+  type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
 
 import { setAppearanceMode, useTheme } from "../../hooks/useTheme";
 import { cn } from "../../lib/utils";
+import { botEnvironment } from "../../state/bots";
+import { useEnvironmentQuery } from "../../state/query";
+import { useAtomCommand } from "../../state/use-atom-command";
 import { T3Wordmark } from "../T3Wordmark";
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import {
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuSub,
+  MenuSubPopup,
+  MenuSubTrigger,
+  MenuTrigger,
+} from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
-import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
-import type { EnvironmentId } from "@t3tools/contracts";
-
-import { Menu, MenuItem, MenuPopup, MenuTrigger } from "../ui/menu";
 import { BotAvatar } from "./BotAvatar";
 import { BotDeleteDialog, BotStartOverDialog, openBotSettings } from "./BotDialogs";
 import { formatRosterTime, useBotRoster, type BotRosterEntry } from "./useBotRoster";
 
-/** A rail of places beside the bot roster; each bot lists its own chats. */
+/**
+ * The bot list, laid out like a messenger: pinned bots as faces on top, then the owner's
+ * groups, then hidden bots folded away. App-wide places sit in a small footer.
+ */
 export function BotShellSidebar() {
   const gt = useGT();
   const navigate = useNavigate();
@@ -36,66 +65,43 @@ export function BotShellSidebar() {
   const { resolvedTheme } = useTheme();
   const nextAppearance = resolvedTheme === "dark" ? "light" : "dark";
 
-  const isUnder = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
-
   return (
-    <div className="flex h-full min-h-0 w-full overflow-hidden">
-      <nav
-        aria-label={gt("Main")}
-        className="flex h-full w-14 shrink-0 flex-col items-center gap-1.5 pt-3 pb-3"
-      >
-        <RailButton
-          label={gt("Bots")}
-          icon={MessageCircleIcon}
-          active={pathname.startsWith("/bots") || !pathname.startsWith("/settings")}
-          onClick={() => void navigate({ to: "/" })}
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+      <BotRoster pathname={pathname} />
+      <footer className="flex shrink-0 items-center gap-0.5 border-sidebar-border/70 border-t px-2 py-2">
+        <FooterButton
+          label={gt("Settings")}
+          icon={SettingsIcon}
+          onClick={() => void navigate({ to: "/settings" })}
         />
-        <RailButton
+        <FooterButton
           label={gt("Routines")}
           icon={CalendarClockIcon}
-          active={isUnder("/settings/scheduled-tasks")}
           onClick={() => void navigate({ to: "/settings/scheduled-tasks" })}
         />
-        <RailButton
+        <FooterButton
           label={gt("Usage")}
           icon={BarChart3Icon}
-          active={isUnder("/usage")}
           onClick={() => void navigate({ to: "/usage" })}
         />
-        <div className="mt-auto flex flex-col items-center gap-1.5">
-          <RailButton
-            label={
-              nextAppearance === "dark" ? gt("Switch to dark mode") : gt("Switch to light mode")
-            }
-            icon={nextAppearance === "dark" ? MoonIcon : SunIcon}
-            onClick={() => setAppearanceMode(nextAppearance)}
-          />
-          <RailButton
-            label={gt("Settings")}
-            icon={SettingsIcon}
-            active={isUnder("/settings") && !isUnder("/settings/scheduled-tasks")}
-            onClick={() => void navigate({ to: "/settings" })}
-          />
-        </div>
-      </nav>
-      <div className="flex min-w-0 flex-1 py-2 pr-2">
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-sidebar-border/70 bg-sidebar">
-          <BotRoster pathname={pathname} />
-        </div>
-      </div>
+        <span className="flex-1" />
+        <FooterButton
+          label={nextAppearance === "dark" ? gt("Switch to dark mode") : gt("Switch to light mode")}
+          icon={nextAppearance === "dark" ? MoonIcon : SunIcon}
+          onClick={() => setAppearanceMode(nextAppearance)}
+        />
+      </footer>
     </div>
   );
 }
 
-function RailButton({
+function FooterButton({
   label,
   icon: Icon,
-  active = false,
   onClick,
 }: {
   readonly label: string;
   readonly icon: LucideIcon;
-  readonly active?: boolean;
   readonly onClick: () => void;
 }) {
   return (
@@ -105,21 +111,26 @@ function RailButton({
           <button
             type="button"
             aria-label={label}
-            aria-current={active || undefined}
             onClick={onClick}
-            className={cn(
-              "flex size-10 cursor-pointer items-center justify-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-              active
-                ? "bg-sidebar text-sidebar-foreground shadow-xs ring-1 ring-sidebar-border/70"
-                : "text-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground",
-            )}
+            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground outline-none hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
-            <Icon className="size-5" strokeWidth={active ? 2 : 1.7} />
+            <Icon className="size-4" strokeWidth={1.8} />
           </button>
         }
       />
-      <TooltipPopup side="right">{label}</TooltipPopup>
+      <TooltipPopup side="top">{label}</TooltipPopup>
     </Tooltip>
+  );
+}
+
+function threadPath(thread: EnvironmentThreadShell): string {
+  return `/${encodeURIComponent(thread.environmentId)}/${encodeURIComponent(thread.id)}`;
+}
+
+function isOpen(entry: BotRosterEntry, pathname: string): boolean {
+  return (
+    pathname === `/bots/${entry.bot.projectId}` ||
+    entry.threads.some((thread) => pathname === threadPath(thread))
   );
 }
 
@@ -129,8 +140,9 @@ function BotRoster({ pathname }: { readonly pathname: string }) {
   const { environmentId, entries, loading } = useBotRoster();
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
   const needle = query.trim().toLowerCase();
-  const visible =
+  const matching =
     needle === ""
       ? entries
       : entries.filter(
@@ -138,6 +150,23 @@ function BotRoster({ pathname }: { readonly pathname: string }) {
             entry.bot.name.toLowerCase().includes(needle) ||
             (entry.preview ?? "").toLowerCase().includes(needle),
         );
+  const shown = matching.filter((entry) => entry.bot.hidden !== true);
+  const hidden = matching.filter((entry) => entry.bot.hidden === true);
+  // Searching lists every match in one place; pins and groups are for browsing.
+  const pinned = needle === "" ? shown.filter((entry) => entry.bot.pinned === true) : [];
+  const listed = needle === "" ? shown.filter((entry) => entry.bot.pinned !== true) : shown;
+  const groupNames = [
+    ...new Set(entries.flatMap((entry) => (entry.bot.group ? [entry.bot.group] : []))),
+  ].toSorted((left, right) => left.localeCompare(right));
+  const grouped = groupNames
+    .map((name) => ({ name, entries: listed.filter((entry) => entry.bot.group === name) }))
+    .filter((group) => group.entries.length > 0);
+  const ungrouped = listed.filter((entry) => !entry.bot.group);
+  const open = (entry: BotRosterEntry) =>
+    void navigate({ to: "/bots/$projectId", params: { projectId: entry.bot.projectId } });
+
+  if (environmentId === null) return <div className="flex-1" />;
+  const rowProps = { environmentId, pathname, groupNames, onSelect: open };
 
   return (
     <>
@@ -146,15 +175,15 @@ function BotRoster({ pathname }: { readonly pathname: string }) {
         <span className="ml-1 font-medium text-sidebar-foreground text-sm">
           <T>Bot</T>
         </span>
-        <div className="ml-auto flex items-center">
-          <PanelIconButton
+        <div className="ml-auto flex items-center gap-0.5">
+          <HeaderIconButton
             label={gt("Search bots")}
             icon={SearchIcon}
-            onClick={() => setSearching((open) => !open)}
+            onClick={() => setSearching((value) => !value)}
           />
-          <PanelIconButton
+          <HeaderIconButton
             label={gt("New bot")}
-            icon={SquarePenIcon}
+            icon={PlusIcon}
             onClick={() => void navigate({ to: "/bots" })}
           />
         </div>
@@ -176,25 +205,63 @@ function BotRoster({ pathname }: { readonly pathname: string }) {
           />
         </div>
       ) : null}
-      <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-2">
-        {environmentId === null
-          ? null
-          : visible.map((entry) => (
-              <RosterRow
+
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-2 pb-3">
+        {pinned.length > 0 ? (
+          <ul className="grid grid-cols-4 gap-1 px-1 pt-1">
+            {pinned.map((entry) => (
+              <PinnedBot
                 key={entry.bot.projectId}
-                environmentId={environmentId}
                 entry={entry}
-                pathname={pathname}
-                onSelect={() =>
-                  void navigate({
-                    to: "/bots/$projectId",
-                    params: { projectId: entry.bot.projectId },
-                  })
-                }
+                active={isOpen(entry, pathname)}
+                onSelect={() => open(entry)}
               />
             ))}
+          </ul>
+        ) : null}
+
+        {ungrouped.length > 0 ? (
+          <BotSection title={grouped.length > 0 ? gt("Unassigned") : null}>
+            {ungrouped.map((entry) => (
+              <RosterRow key={entry.bot.projectId} entry={entry} {...rowProps} />
+            ))}
+          </BotSection>
+        ) : null}
+
+        {grouped.map((group) => (
+          <BotSection key={group.name} title={group.name}>
+            {group.entries.map((entry) => (
+              <RosterRow key={entry.bot.projectId} entry={entry} {...rowProps} />
+            ))}
+          </BotSection>
+        ))}
+
+        {hidden.length > 0 ? (
+          <div className="flex flex-col">
+            <button
+              type="button"
+              aria-expanded={showHidden}
+              onClick={() => setShowHidden((value) => !value)}
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-left text-muted-foreground text-xs hover:text-sidebar-foreground"
+            >
+              <ChevronRightIcon className={cn("size-3.5", showHidden && "rotate-90")} />
+              <span className="flex-1">
+                <T>Hidden bots</T>
+              </span>
+              <span className="tabular-nums">{hidden.length}</span>
+            </button>
+            {showHidden ? (
+              <ul className="flex flex-col gap-0.5">
+                {hidden.map((entry) => (
+                  <RosterRow key={entry.bot.projectId} entry={entry} {...rowProps} />
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+
         {!loading && entries.length === 0 ? (
-          <li className="list-none px-2 py-6 text-center text-muted-foreground text-sm">
+          <p className="px-2 py-6 text-center text-muted-foreground text-sm">
             {gt("No bots yet.")}{" "}
             <button
               type="button"
@@ -203,14 +270,14 @@ function BotRoster({ pathname }: { readonly pathname: string }) {
             >
               {gt("Create one")}
             </button>
-          </li>
+          </p>
         ) : null}
-      </ul>
+      </div>
     </>
   );
 }
 
-function PanelIconButton({
+function HeaderIconButton({
   label,
   icon: Icon,
   onClick,
@@ -238,8 +305,66 @@ function PanelIconButton({
   );
 }
 
-function threadPath(thread: EnvironmentThreadShell): string {
-  return `/${encodeURIComponent(thread.environmentId)}/${encodeURIComponent(thread.id)}`;
+function BotSection({
+  title,
+  children,
+}: {
+  readonly title: string | null;
+  readonly children: React.ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-0.5">
+      {title ? <h3 className="px-2 pb-0.5 text-muted-foreground text-xs">{title}</h3> : null}
+      <ul className="flex flex-col gap-0.5">{children}</ul>
+    </section>
+  );
+}
+
+/** A pinned bot is a face to tap, like a favourite contact. */
+function PinnedBot({
+  entry,
+  active,
+  onSelect,
+}: {
+  readonly entry: BotRosterEntry;
+  readonly active: boolean;
+  readonly onSelect: () => void;
+}) {
+  const gt = useGT();
+  return (
+    <li className="list-none">
+      <button
+        type="button"
+        aria-current={active || undefined}
+        onClick={onSelect}
+        className={cn(
+          "flex w-full flex-col items-center gap-1 rounded-xl px-1 py-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+          active ? "bg-sidebar-row-active" : "hover:bg-sidebar-row-hover",
+        )}
+      >
+        <span className="relative">
+          <BotAvatar
+            seed={entry.bot.providerInstanceId}
+            name={entry.bot.name}
+            className="size-11"
+          />
+          {entry.needsYou || (entry.unread && !active) ? (
+            <span
+              role="img"
+              aria-label={entry.needsYou ? gt("Needs you") : gt("Unread")}
+              className={cn(
+                "absolute -right-px -bottom-px size-2.5 rounded-full ring-2 ring-sidebar",
+                entry.needsYou ? "bg-warning" : "bg-primary",
+              )}
+            />
+          ) : null}
+        </span>
+        <span className="max-w-full truncate text-sidebar-foreground text-xs">
+          {entry.bot.name}
+        </span>
+      </button>
+    </li>
+  );
 }
 
 /** A bot is one conversation, like a contact in a messenger; its row opens that chat. */
@@ -247,27 +372,39 @@ function RosterRow({
   environmentId,
   entry,
   pathname,
+  groupNames,
   onSelect,
 }: {
   readonly environmentId: EnvironmentId;
   readonly entry: BotRosterEntry;
   readonly pathname: string;
-  readonly onSelect: () => void;
+  readonly groupNames: ReadonlyArray<string>;
+  readonly onSelect: (entry: BotRosterEntry) => void;
 }) {
   const gt = useGT();
-  const [dialog, setDialog] = useState<"start-over" | "delete" | null>(null);
+  const arrange = useAtomCommand(botEnvironment.arrange, { reportFailure: false });
+  const bots = useEnvironmentQuery(botEnvironment.list({ environmentId, input: {} }));
+  const [dialog, setDialog] = useState<"start-over" | "delete" | "new-group" | null>(null);
   const target = { environmentId, projectId: entry.bot.projectId };
-  const active =
-    pathname === `/bots/${entry.bot.projectId}` ||
-    entry.threads.some((thread) => pathname === threadPath(thread));
+  const active = isOpen(entry, pathname);
+
+  const update = async (changes: {
+    readonly group?: string | null;
+    readonly pinned?: boolean;
+    readonly hidden?: boolean;
+  }) => {
+    await arrange({ environmentId, input: { projectId: entry.bot.projectId, ...changes } });
+    bots.refresh();
+  };
+
   return (
     <li className="group/bot relative list-none">
       <button
         type="button"
         aria-current={active || undefined}
-        onClick={onSelect}
+        onClick={() => onSelect(entry)}
         className={cn(
-          "flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+          "flex w-full items-center gap-3 rounded-xl px-2 py-2 pr-9 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
           active ? "bg-sidebar-row-active" : "hover:bg-sidebar-row-hover",
         )}
       >
@@ -293,7 +430,7 @@ function RosterRow({
             {entry.lastActivityAt ? (
               <time
                 dateTime={entry.lastActivityAt}
-                className="shrink-0 text-muted-foreground text-xs tabular-nums"
+                className="shrink-0 text-muted-foreground text-xs tabular-nums group-hover/bot:opacity-0"
               >
                 {formatRosterTime(entry.lastActivityAt)}
               </time>
@@ -322,13 +459,49 @@ function RosterRow({
             <button
               type="button"
               aria-label={gt("Actions for {name}", { name: entry.bot.name })}
-              className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md bg-sidebar text-muted-foreground opacity-0 outline-none hover:text-sidebar-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring group-hover/bot:opacity-100 aria-expanded:opacity-100 pointer-coarse:opacity-100"
+              className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md text-muted-foreground opacity-0 outline-none hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring group-hover/bot:opacity-100 aria-expanded:opacity-100 pointer-coarse:opacity-100"
             >
               <EllipsisIcon className="size-4" />
             </button>
           }
         />
         <MenuPopup align="end">
+          <MenuItem onClick={() => void update({ pinned: entry.bot.pinned !== true })}>
+            {entry.bot.pinned ? <PinOffIcon /> : <PinIcon />}
+            {entry.bot.pinned ? gt("Unpin") : gt("Pin to top")}
+          </MenuItem>
+          <MenuSub>
+            <MenuSubTrigger>
+              <FolderIcon />
+              {gt("Move to group")}
+            </MenuSubTrigger>
+            <MenuSubPopup>
+              {groupNames.map((name) => (
+                <MenuItem
+                  key={name}
+                  disabled={entry.bot.group === name}
+                  onClick={() => void update({ group: name })}
+                >
+                  {name}
+                </MenuItem>
+              ))}
+              {groupNames.length > 0 ? <MenuSeparator /> : null}
+              <MenuItem onClick={() => setDialog("new-group")}>
+                <PlusIcon />
+                {gt("New group…")}
+              </MenuItem>
+              {entry.bot.group ? (
+                <MenuItem onClick={() => void update({ group: null })}>
+                  {gt("Remove from group")}
+                </MenuItem>
+              ) : null}
+            </MenuSubPopup>
+          </MenuSub>
+          <MenuItem onClick={() => void update({ hidden: entry.bot.hidden !== true })}>
+            {entry.bot.hidden ? <EyeIcon /> : <EyeOffIcon />}
+            {entry.bot.hidden ? gt("Show bot") : gt("Hide bot")}
+          </MenuItem>
+          <MenuSeparator />
           <MenuItem onClick={() => openBotSettings(target)}>
             <SettingsIcon />
             {gt("Bot settings")}
@@ -343,6 +516,11 @@ function RosterRow({
           </MenuItem>
         </MenuPopup>
       </Menu>
+      <NewGroupDialog
+        open={dialog === "new-group"}
+        onOpenChange={(open) => setDialog(open ? "new-group" : null)}
+        onCreate={(name) => void update({ group: name })}
+      />
       <BotStartOverDialog
         target={target}
         botName={entry.bot.name}
@@ -357,5 +535,57 @@ function RosterRow({
         onOpenChange={(open) => setDialog(open ? "delete" : null)}
       />
     </li>
+  );
+}
+
+/** Groups exist only through the bots in them, so naming one moves this bot into it. */
+function NewGroupDialog({
+  open,
+  onOpenChange,
+  onCreate,
+}: {
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onCreate: (name: string) => void;
+}) {
+  const gt = useGT();
+  const [name, setName] = useState("");
+  const submit = () => {
+    const trimmed = name.trim();
+    if (trimmed === "") return;
+    onCreate(trimmed.slice(0, 60));
+    setName("");
+    onOpenChange(false);
+  };
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogPopup>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            <T>New group</T>
+          </AlertDialogTitle>
+        </AlertDialogHeader>
+        <div className="px-6">
+          <Input
+            autoFocus
+            value={name}
+            placeholder={gt("e.g. Marketing")}
+            aria-label={gt("Group name")}
+            onChange={(event) => setName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") submit();
+            }}
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogClose render={<Button variant="outline" />}>
+            <T>Cancel</T>
+          </AlertDialogClose>
+          <Button disabled={name.trim() === ""} onClick={submit}>
+            <T>Create group</T>
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogPopup>
+    </AlertDialog>
   );
 }

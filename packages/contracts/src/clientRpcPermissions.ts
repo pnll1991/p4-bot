@@ -90,6 +90,7 @@ export const CLIENT_GUARDED_RPC_SCOPES = {
   [WS_METHODS.botsPermissionsSet]: AuthOrchestrationOperateScope,
   [WS_METHODS.botsStartOver]: AuthOrchestrationOperateScope,
   [WS_METHODS.botsDelete]: AuthOrchestrationOperateScope,
+  [WS_METHODS.botsArrange]: AuthOrchestrationOperateScope,
   [WS_METHODS.scheduledTasksSetEnabled]: AuthOrchestrationOperateScope,
   [WS_METHODS.scheduledTasksDelete]: AuthOrchestrationOperateScope,
   [WS_METHODS.scheduledTasksRunNow]: AuthOrchestrationOperateScope,

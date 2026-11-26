@@ -9,6 +9,7 @@ import {
   type BotPresence,
   type BotRoutine,
   type BotRoutineCreateInput,
+  type BotArrangeInput,
   type BotPermissionsSetInput,
   type ThreadId,
   type BotRulesSetInput,
@@ -56,6 +57,7 @@ export class BotOperationError extends Schema.TaggedError<BotOperationError>()(
       "rules",
       "permissions",
       "delete",
+      "arrange",
     ]),
     cause: Schema.Defect(),
   },
@@ -102,6 +104,8 @@ export class BotDesk extends Context.Service<
      * provider instance and settings, its profile and log, and its folder with memory.
      */
     readonly deleteBot: (projectId: ProjectId) => Effect.Effect<void, BotError>;
+    /** Pins, groups or hides the bot in the owner's bot list. */
+    readonly arrange: (input: BotArrangeInput) => Effect.Effect<void, BotError>;
   }
 >()("t3/bot/BotDesk") {}
 
@@ -450,7 +454,22 @@ const make = Effect.gen(function* () {
     },
   );
 
+  const arrange: BotDesk["Service"]["arrange"] = Effect.fn("BotDesk.arrange")(function* (input) {
+    const bot = yield* findBot(input.projectId);
+    const { projectId: _projectId, ...changes } = input;
+    yield* encodeProfile({ ...bot, ...changes }).pipe(
+      Effect.flatMap((json) =>
+        fileSystem.writeFileString(
+          path.join(botsRoot, bot.providerInstanceId, "bot.json"),
+          `${json}\n`,
+        ),
+      ),
+      Effect.mapError((cause) => new BotOperationError({ operation: "arrange", cause })),
+    );
+  });
+
   return BotDesk.of({
+    arrange,
     deleteBot,
     get,
     writeMemory,

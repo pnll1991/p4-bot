@@ -38,6 +38,10 @@ export function createBotEnvironmentAtoms<R, E>(
       label: "environment-command:bots:permissions-set",
       tag: WS_METHODS.botsPermissionsSet,
     }),
+    arrange: createEnvironmentRpcCommand(runtime, {
+      label: "environment-command:bots:arrange",
+      tag: WS_METHODS.botsArrange,
+    }),
     deleteBot: createEnvironmentRpcCommand(runtime, {
       label: "environment-command:bots:delete",
       tag: WS_METHODS.botsDelete,

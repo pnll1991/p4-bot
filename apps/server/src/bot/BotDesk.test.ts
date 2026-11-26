@@ -261,4 +261,26 @@ it.layer(NodeServices.layer)("BotDesk", (it) => {
       assert.isTrue(yield* fileSystem.exists(projectsRoot));
     }).pipe(Effect.scoped),
   );
+
+  it.effect("arranging a bot keeps its group, pin and visibility in its profile", () =>
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({
+        prefix: "p4-bot-arrange-",
+      });
+      yield* fileSystem.makeDirectory(`${workspaceRoot}/bots/bot-test`, { recursive: true });
+
+      yield* Effect.gen(function* () {
+        const desk = yield* BotDesk.BotDesk;
+        yield* desk.arrange({ projectId, group: "Marketing", pinned: true });
+      }).pipe(Effect.provide(harness(workspaceRoot, [])));
+
+      const saved = JSON.parse(
+        yield* fileSystem.readFileString(`${workspaceRoot}/bots/bot-test/bot.json`),
+      ) as { group?: string; pinned?: boolean; name: string };
+      assert.equal(saved.group, "Marketing");
+      assert.equal(saved.pinned, true);
+      assert.equal(saved.name, "Comprador");
+    }).pipe(Effect.scoped),
+  );
 });

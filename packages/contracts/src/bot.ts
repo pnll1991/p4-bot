@@ -43,6 +43,10 @@ export const BotProfile = Schema.Struct({
   rules: Schema.optionalKey(Schema.Array(BotRule)),
   /** Supervised asks before acting; full access never asks. Absent means Supervised. */
   runtimeMode: Schema.optionalKey(BotRuntimeMode),
+  /** How the owner arranges the bot list: a named group, pinned to the top, or hidden. */
+  group: Schema.optionalKey(Schema.NullOr(TrimmedNonEmptyString.check(Schema.isMaxLength(60)))),
+  pinned: Schema.optionalKey(Schema.Boolean),
+  hidden: Schema.optionalKey(Schema.Boolean),
 });
 export type BotProfile = typeof BotProfile.Type;
 
@@ -168,3 +172,12 @@ export const BotPermissionsSetInput = Schema.Struct({
   runtimeMode: BotRuntimeMode,
 });
 export type BotPermissionsSetInput = typeof BotPermissionsSetInput.Type;
+
+/** Omitted fields keep their value; a null group takes the bot out of its group. */
+export const BotArrangeInput = Schema.Struct({
+  projectId: ProjectId,
+  group: Schema.optionalKey(Schema.NullOr(TrimmedNonEmptyString.check(Schema.isMaxLength(60)))),
+  pinned: Schema.optionalKey(Schema.Boolean),
+  hidden: Schema.optionalKey(Schema.Boolean),
+});
+export type BotArrangeInput = typeof BotArrangeInput.Type;

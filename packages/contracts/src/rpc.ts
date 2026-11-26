@@ -16,6 +16,7 @@ import {
   BotProfile,
   BotRoutine,
   BotRoutineCreateInput,
+  BotArrangeInput,
   BotPermissionsSetInput,
   BotRulesSetInput,
 } from "./bot.ts";
@@ -524,6 +525,7 @@ export const WS_METHODS = {
   botsPermissionsSet: "bots.permissions.set",
   botsStartOver: "bots.startOver",
   botsDelete: "bots.delete",
+  botsArrange: "bots.arrange",
   projectsCreateFromThread: "projects.createFromThread",
 
   shellOpenInEditor: "shell.openInEditor",
@@ -1780,6 +1782,11 @@ const WsBotsDeleteRpc = Rpc.make(WS_METHODS.botsDelete, {
   error: botRpcError,
 });
 
+const WsBotsArrangeRpc = Rpc.make(WS_METHODS.botsArrange, {
+  payload: BotArrangeInput,
+  error: botRpcError,
+});
+
 const WsProjectsCreateFromThreadRpc = Rpc.make(WS_METHODS.projectsCreateFromThread, {
   payload: ProjectCreateFromThreadInput,
   success: ProjectCreateFromThreadResult,
@@ -2750,6 +2757,7 @@ export const WsRpcGroup = RpcGroup.make(
   WsBotsPermissionsSetRpc,
   WsBotsStartOverRpc,
   WsBotsDeleteRpc,
+  WsBotsArrangeRpc,
   WsProjectsCreateFromThreadRpc,
   WsProjectsWriteFileRpc,
   WsProjectsMutateRpc,
