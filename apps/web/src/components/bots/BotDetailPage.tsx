@@ -20,6 +20,9 @@ import { T, useGT, Var } from "gt-react";
 import { ShieldIcon, ShieldOffIcon } from "lucide-react";
 import { useState } from "react";
 
+import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+
+import { useThreadActions } from "../../hooks/useThreadActions";
 import { cn } from "../../lib/utils";
 import { threadEnvironment } from "../../state/threads";
 
@@ -101,7 +104,6 @@ export function BotDetails({
   /** The chat the details were opened from; a permission change applies to it right away. */
   readonly threadId?: ThreadId | null;
 }) {
-  const gt = useGT();
   const overview = useEnvironmentQuery(
     botEnvironment.overview({ environmentId, input: { projectId } }),
   );
@@ -194,11 +196,11 @@ export function BotDetails({
         onChange={overview.refresh}
       />
 
-      <p className="text-muted-foreground text-xs">
-        {gt("{count, plural, =1 {1 open thread} other {{count} open threads}}", {
-          count: data.threads.length,
-        })}
-      </p>
+      <StartOverSection
+        environmentId={environmentId}
+        projectId={projectId}
+        threadIds={data.threads.map((thread) => thread.threadId)}
+      />
     </div>
   );
 }
@@ -292,6 +294,76 @@ function PermissionsSection(props: {
           </T>
         )}
       </p>
+    </section>
+  );
+}
+
+/** One conversation per bot: starting over archives it, so nothing is lost. */
+function StartOverSection(props: {
+  readonly environmentId: EnvironmentId;
+  readonly projectId: ProjectId;
+  readonly threadIds: ReadonlyArray<ThreadId>;
+}) {
+  const gt = useGT();
+  const navigate = useNavigate();
+  const actions = useThreadActions();
+  const startOver = useAtomCommand(botEnvironment.startOver, { reportFailure: false });
+  const [confirming, setConfirming] = useState(false);
+  const [working, setWorking] = useState(false);
+
+  const run = async () => {
+    setWorking(true);
+    for (const threadId of props.threadIds) {
+      await actions.archiveThread(scopeThreadRef(props.environmentId, threadId));
+    }
+    const result = await startOver({
+      environmentId: props.environmentId,
+      input: { projectId: props.projectId },
+    });
+    setWorking(false);
+    setConfirming(false);
+    if (result._tag === "Failure") {
+      toastManager.add({
+        type: "error",
+        title: gt("Could not start over"),
+        description: failureMessage(result, gt("Try again.")),
+      });
+      return;
+    }
+    void navigate({
+      to: "/bots/$projectId",
+      params: { projectId: props.projectId },
+      replace: true,
+    });
+  };
+
+  return (
+    <section className="flex flex-col gap-2">
+      <h2 className="font-medium text-base">
+        <T>Conversation</T>
+      </h2>
+      <p className="text-muted-foreground text-sm">
+        <T>
+          Start a fresh conversation. The current one is archived, not deleted, and the bot keeps
+          its memory, rules and routines.
+        </T>
+      </p>
+      {confirming ? (
+        <div className="flex gap-2">
+          <Button variant="destructive" size="sm" disabled={working} onClick={() => void run()}>
+            <T>Archive and start over</T>
+          </Button>
+          <Button variant="ghost" size="sm" disabled={working} onClick={() => setConfirming(false)}>
+            <T>Cancel</T>
+          </Button>
+        </div>
+      ) : (
+        <div>
+          <Button variant="outline" size="sm" onClick={() => setConfirming(true)}>
+            <T>Start over</T>
+          </Button>
+        </div>
+      )}
     </section>
   );
 }

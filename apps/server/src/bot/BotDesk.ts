@@ -88,6 +88,11 @@ export class BotDesk extends Context.Service<
     readonly setRules: (input: BotRulesSetInput) => Effect.Effect<void, BotError>;
     /** Sets how much the bot may do without asking, for new chats and routines. */
     readonly setPermissions: (input: BotPermissionsSetInput) => Effect.Effect<void, BotError>;
+    /**
+     * Unbinds the bot's routines from its conversation; the client archives that conversation, and
+     * the next message, the owner's or a routine's, starts the fresh one they all share.
+     */
+    readonly startOver: (projectId: ProjectId) => Effect.Effect<void, BotError>;
   }
 >()("t3/bot/BotDesk") {}
 
@@ -274,9 +279,30 @@ const make = Effect.gen(function* () {
     },
   );
 
+  /** A bot is one conversation: its most recently active, unarchived thread. */
+  const conversationThreadId = Effect.fnUntraced(function* (projectId: ProjectId) {
+    const shells = yield* projections.listActiveThreads(projectId).pipe(
+      Effect.flatMap((entries) =>
+        Effect.forEach(entries, (entry) => projections.getThreadShell(entry.id)),
+      ),
+      Effect.orElseSucceed(() => []),
+    );
+    const newest = shells
+      .flatMap((shell): ReadonlyArray<OrchestrationV2ThreadShell> =>
+        shell === null ? [] : [shell],
+      )
+      .toSorted(
+        (left, right) =>
+          DateTime.toEpochMillis(right.updatedAt) - DateTime.toEpochMillis(left.updatedAt),
+      )[0];
+    return newest?.id ?? null;
+  });
+
   const createRoutine: BotDesk["Service"]["createRoutine"] = Effect.fn("BotDesk.createRoutine")(
     function* (input) {
       const bot = yield* findBot(input.projectId);
+      // Runs post into the bot's conversation; with none yet, the first run starts it.
+      const threadId = yield* conversationThreadId(bot.projectId);
       const rate = runsPerDay(input.schedule);
       if (rate !== null && rate > MAX_BOT_ROUTINE_RUNS_PER_DAY) {
         return yield* new BotRoutineTooFrequentError({ runsPerDay: rate });
@@ -288,7 +314,8 @@ const make = Effect.gen(function* () {
           enabled: true,
           schedule: input.schedule,
           projectId: bot.projectId,
-          threadId: null,
+          threadId,
+          threadMode: "continue",
           workspaceStrategy: { type: "root" },
           modelSelection: { instanceId: bot.providerInstanceId, model: bot.model },
           // Routines run with the bot's own permissions, Supervised unless the owner chose otherwise.
@@ -341,7 +368,51 @@ const make = Effect.gen(function* () {
     },
   );
 
-  return BotDesk.of({ get, writeMemory, deleteMemory, createRoutine, setRules, setPermissions });
+  const startOver: BotDesk["Service"]["startOver"] = Effect.fn("BotDesk.startOver")(
+    function* (projectId) {
+      const bot = yield* findBot(projectId);
+      const { tasks } = yield* scheduledTasks
+        .list()
+        .pipe(Effect.mapError((cause) => new BotOperationError({ operation: "routines", cause })));
+      // Routines follow the bot into its next conversation instead of writing to the archived one.
+      yield* Effect.forEach(
+        tasks.filter(
+          (task) => task.projectId === bot.projectId && task.schedule.type !== "webhook",
+        ),
+        (task) =>
+          scheduledTasks
+            .upsert({
+              id: task.id,
+              requireExisting: true,
+              title: task.title,
+              prompt: task.prompt,
+              enabled: task.enabled,
+              schedule: task.schedule as ScheduledTaskUpsertSchedule,
+              projectId: task.projectId,
+              threadId: null,
+              unbindThread: true,
+              threadMode: "continue",
+              workspaceStrategy: task.workspaceStrategy,
+              modelSelection: task.modelSelection,
+              runtimeMode: task.runtimeMode,
+              interactionMode: task.interactionMode,
+            })
+            .pipe(
+              Effect.mapError((cause) => new BotOperationError({ operation: "routines", cause })),
+            ),
+      );
+    },
+  );
+
+  return BotDesk.of({
+    get,
+    writeMemory,
+    deleteMemory,
+    createRoutine,
+    setRules,
+    setPermissions,
+    startOver,
+  });
 });
 
 export const layer = Layer.effect(BotDesk, make);

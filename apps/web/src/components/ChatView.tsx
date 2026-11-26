@@ -339,7 +339,7 @@ import {
 } from "./chat/PanelLayoutControls";
 import type { ExpandedImagePreview } from "./chat/ExpandedImagePreview";
 import { ThreadDetailsPanel } from "./chat/ThreadDetailsPanel";
-import { BotCompactContext, useBotCompactView } from "./bots/BotChatMode";
+import { BotCompactContext, useBotCompactView, useIsBotProject } from "./bots/BotChatMode";
 import { NoActiveThreadState } from "./NoActiveThreadState";
 import {
   offersWorkspaceModes,
@@ -1921,8 +1921,11 @@ export default function ChatView(props: ChatViewProps) {
           providerSubagentModels,
           reportedModelSelection,
         );
+  // A bot works in its own folder; checkout and branch choices mean nothing to its owner.
+  const isBotThread = useIsBotProject(activeThread?.projectId ?? null);
   const showComposerContextStrip =
     !embedded &&
+    !isBotThread &&
     shouldShowComposerContextStrip({
       isDraftHeroState,
       persistInActiveThreads: settings.persistComposerContextStrip,

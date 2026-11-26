@@ -522,6 +522,7 @@ export const WS_METHODS = {
   botsRoutineCreate: "bots.routine.create",
   botsRulesSet: "bots.rules.set",
   botsPermissionsSet: "bots.permissions.set",
+  botsStartOver: "bots.startOver",
   projectsCreateFromThread: "projects.createFromThread",
 
   shellOpenInEditor: "shell.openInEditor",
@@ -1768,6 +1769,11 @@ const WsBotsPermissionsSetRpc = Rpc.make(WS_METHODS.botsPermissionsSet, {
   error: botRpcError,
 });
 
+const WsBotsStartOverRpc = Rpc.make(WS_METHODS.botsStartOver, {
+  payload: BotGetInput,
+  error: botRpcError,
+});
+
 const WsProjectsCreateFromThreadRpc = Rpc.make(WS_METHODS.projectsCreateFromThread, {
   payload: ProjectCreateFromThreadInput,
   success: ProjectCreateFromThreadResult,
@@ -2736,6 +2742,7 @@ export const WsRpcGroup = RpcGroup.make(
   WsBotsRoutineCreateRpc,
   WsBotsRulesSetRpc,
   WsBotsPermissionsSetRpc,
+  WsBotsStartOverRpc,
   WsProjectsCreateFromThreadRpc,
   WsProjectsWriteFileRpc,
   WsProjectsMutateRpc,

@@ -33,6 +33,10 @@ const shell = (id: ThreadId, waitsOnOwner: boolean) =>
     title: waitsOnOwner ? "Compra pendiente" : "Resumen diario",
     activeRunId: null,
     status: "idle",
+    // The waiting thread is the newer one, so it is the bot's conversation.
+    updatedAt: DateTime.makeUnsafe(
+      waitsOnOwner ? "2026-11-26T12:00:00.000Z" : "2026-11-25T12:00:00.000Z",
+    ),
     lastError: null,
     pendingRuntimeRequest: waitsOnOwner
       ? { id: "request-1", kind: "approval", createdAt: "2026-11-26T12:00:00.000Z" }
@@ -145,6 +149,9 @@ it.layer(NodeServices.layer)("BotDesk", (it) => {
         });
         assert.equal(routine.runsPerDay, 1);
         assert.equal(upserts[0]?.runtimeMode, "approval-required");
+        // Routine runs post into the bot's one conversation.
+        assert.equal(upserts[0]?.threadId, waiting);
+        assert.equal(upserts[0]?.threadMode, "continue");
         assert.deepEqual(upserts[0]?.modelSelection, {
           instanceId: ProviderInstanceId.make("bot-test"),
           model: "maya/inkling-2-mini",
