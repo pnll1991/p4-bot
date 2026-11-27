@@ -1,33 +1,19 @@
 # Remote access
 
-Drive P4 Bot from your phone, browser (`app.t3.codes`), or another desktop app while your agents run on a host computer or server. The host must stay awake and running while you work.
+Drive P4 Bot from your phone, a browser, or another desktop app while your agents run on a host computer or server. The host must stay awake and running while you work.
 
-## T3 Connect (recommended)
-
-T3 Connect links your host to your other devices without router port-forwarding.
-
-- **Desktop host**: Open **Settings → Sharing & access**, sign in, and turn on **T3 Connect** (note: closing the desktop app's last window stops its local server—use the [background service](./background-service.md) for unattended access).
-- **CLI / headless host**: Run `t3 up` (or `t3 connect` / `t3 up --connect --lan --yes` for non-interactive scripts) and complete the printed sign-in link on any device. Check status with `t3 status [--json]`.
-- **Other devices**: Sign in to the same T3 Connect account and pick the environment.
-
-### Approve new devices
-
-By default, any device signed into your T3 Connect account can connect. Turn on **Require approval for new devices** in **Settings → Sharing & access** on the host so new devices must present a short code (valid 10 minutes) that you approve from an existing device or via `t3 auth connect-device approve <code>`. Revoke devices anytime in **Settings → Sharing & access** or `t3 auth connect-device revoke <code>`.
-
-### Machine limit
-
-T3 Connect accounts can link up to **3 host machines** (phones and browsers don't count). Deregister a host you no longer use to free a slot.
+P4 Bot connects directly over a LAN, Tailscale or SSH. It has no hosted tunnel: T3 Connect, T3 Code's relay service, is turned off.
 
 ## Pair over a LAN or private network
 
 - **Desktop host**: Enable **Settings → Sharing & access → Network access** (restarts desktop) and create a one-time pairing link.
 - **CLI host**: Run `t3 up --lan` (background service) or `t3 serve --lan` (foreground), then run `t3 pair` to generate a QR code / pairing URL (`t3code://pair` opens directly in the desktop app).
-- **Hosted web app (`app.t3.codes`)**: Requires an HTTPS endpoint (T3 Connect or Tailscale HTTPS). For plain HTTP on a LAN, open the direct pairing URL in a local browser or pair from the desktop/mobile app. For custom CAs on Android, install the CA certificate in Android security settings.
+- **Browser on another device**: Open the pairing URL directly. Features that need a secure origin, such as live device video, need HTTPS (for example [Tailscale HTTPS](#tailscale-https)). For custom CAs on Android, install the CA certificate in Android security settings.
 - **Session lifetime**: Paired devices stay signed in while active; sessions unused for 30 days must re-pair.
 
 ### Reach one machine several ways
 
-A host can have multiple routes (LAN, Tailscale, VPN, public URL, SSH, T3 Connect). P4 Bot automatically learns LAN and Tailscale routes when network access is enabled, connects over the fastest working route, and switches back to higher-priority routes when you return home. Reorder or add routes in **Settings → Environments** (**Add route**).
+A host can have multiple routes (LAN, Tailscale, VPN, public URL, SSH). P4 Bot automatically learns LAN and Tailscale routes when network access is enabled, connects over the fastest working route, and switches back to higher-priority routes when you return home. Reorder or add routes in **Settings → Environments** (**Add route**).
 
 ### Tailscale HTTPS
 
@@ -42,7 +28,7 @@ On web and desktop with 2+ connected machines, enable **Settings → Environment
 
 ## Desktop-managed SSH
 
-In the desktop app, open **Settings → Environments → Add environment → SSH** and enter a host or SSH alias (e.g. `user@example.com`). P4 Bot downloads its runtime to `~/.t3/runtime` on the Linux or Apple Silicon macOS host, starts or reuses a server, and manages port forwarding automatically.
+In the desktop app, open **Settings → Environments → Add environment → SSH** and enter a host or SSH alias (e.g. `user@example.com`). P4 Bot downloads its runtime to `~/.p4/runtime` on the Linux or Apple Silicon macOS host, starts or reuses a server, and manages port forwarding automatically.
 
 - Provider CLIs must be on a non-interactive login shell's `PATH` (check with `ssh user@example.com 'sh -lc "command -v claude codex"'`).
 - For 2FA/Duo hosts on macOS/Linux, enable SSH `ControlMaster` in `~/.ssh/config` and open a terminal SSH session first.
@@ -67,7 +53,7 @@ The first server browser tab downloads ~120 MB headless Chromium (shared with [H
 sudo t3 browser setup
 ```
 
-This installs an AppArmor profile for Chrome's sandbox plus missing libraries and fonts. Never run the T3 server as root (Chrome's sandbox rejects root); if sandboxing is impossible on your host, set `T3CODE_SERVER_BROWSER_SANDBOX=0` in the server environment and restart.
+This installs an AppArmor profile for Chrome's sandbox plus missing libraries and fonts. Never run the P4 Bot server as root (Chrome's sandbox rejects root); if sandboxing is impossible on your host, set `T3CODE_SERVER_BROWSER_SANDBOX=0` in the server environment and restart.
 
 ## Link another environment
 
@@ -88,8 +74,7 @@ Open a delegated task or thread link on a linked machine to follow it live (read
 
 Manage pairing links and active client sessions in **Settings → Sharing & access** or via `t3 auth --help`.
 
-- **Scoped tokens**: Pass `--scope <scope>` (repeatable) to `t3 pair`, `t3 auth pairing create`, or `t3 auth session issue` to restrict permissions (e.g. `orchestration:read`, `source-control:write`, `filesystem:read`, `filesystem:write`, `terminal:operate`, `relay:configure`). Re-pair with a fresh link to change an existing client's scopes.
-- **Deregister from T3 Connect**: Open your account menu → **T3 Connect → Deregister** (or `t3 connect unlink` / `t3 connect logout` on CLI hosts). Idle tunnels are automatically cleaned up after 5–10 minutes offline and recreated on reconnect (hosts on older versions offline for 7+ days need an update first).
+- **Scoped tokens**: Pass `--scope <scope>` (repeatable) to `t3 pair`, `t3 auth pairing create`, or `t3 auth session issue` to restrict permissions (e.g. `orchestration:read`, `source-control:write`, `filesystem:read`, `filesystem:write`, `terminal:operate`). Re-pair with a fresh link to change an existing client's scopes.
 - Treat pairing URLs and codes as passwords—never paste them into logs or screenshots.
 
 ## Desktop app as a remote only
@@ -98,4 +83,4 @@ Switch off **Settings → Environments → Local environment** in the desktop ap
 
 ## Troubleshooting
 
-See [T3 Connect troubleshooting](./t3-connect-troubleshooting.md) for step-by-step connection diagnostics, and [Outside agents](./outside-agents.md) for MCP connections.
+Open **Settings → Environments**, select the machine, and choose **Details**: the first failed check identifies the cause. See [Outside agents](./outside-agents.md) for MCP connections.

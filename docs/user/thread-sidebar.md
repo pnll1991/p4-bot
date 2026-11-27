@@ -10,10 +10,10 @@ Use a separate thread for each task. Choose **New worktree** when a task needs i
 
 ### Start without a project
 
-Threads don't require a project. Pick **No project** (or press `mod+alt+n` on web/desktop) to start a scratch thread in `~/.t3/scratch/<date>-<slug>-<id>`.
+Threads don't require a project. Pick **No project** (or press `mod+alt+n` on web/desktop) to start a scratch thread in `~/.p4/scratch/<date>-<slug>-<id>`.
 
 - Deleting a scratch thread leaves its folder on disk.
-- Git branch, worktree, and diff controls are hidden (and scratch threads are unavailable if your T3 data directory itself is inside a Git repo).
+- Git branch, worktree, and diff controls are hidden (and scratch threads are unavailable if your P4 Bot data directory itself is inside a Git repo).
 - Choose **Turn into project** from the thread menu to promote the folder into a real project in place, then **Initialize Git** if needed.
 
 ### Start in the background and multi-model runs

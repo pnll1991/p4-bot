@@ -10,4 +10,3 @@ Choose **P4 Bot** in **System Settings → Desktop & Dock → Default web browse
 
 - If the active thread has its browser panel open, the link opens as a new tab there; otherwise P4 Bot opens a new no-project thread with the browser panel maximized so you can ask an agent about the page right away.
 - Pull request links for connected projects open in the PR view (when **Open pull requests in P4 Bot** is enabled).
-- [Prompt links](./prompt-links.md) to `app.t3.codes` open as a draft.

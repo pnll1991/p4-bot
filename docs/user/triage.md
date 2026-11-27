@@ -17,4 +17,4 @@ npx t3 triage --agent codex --model <model-id>
 npx t3 triage --agent antigravity
 ```
 
-Supports Claude Code, Codex, and standalone Antigravity (`agy` on `PATH` with its own sign-in; T3's managed ACP runtime does not include the standalone terminal CLI).
+Supports Claude Code, Codex, and standalone Antigravity (`agy` on `PATH` with its own sign-in; P4 Bot's managed ACP runtime does not include the standalone terminal CLI).

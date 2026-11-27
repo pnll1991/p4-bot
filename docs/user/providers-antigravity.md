@@ -1,6 +1,6 @@
 # Antigravity
 
-P4 Bot runs Google's official Antigravity ACP agent on your selected environment, with a T3-managed CLI installation and sign-in separate from your terminal or IDE.
+P4 Bot runs Google's official Antigravity ACP agent on your selected environment, with a P4 Bot-managed CLI installation and sign-in separate from your terminal or IDE.
 
 ## Set up Antigravity
 

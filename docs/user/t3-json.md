@@ -68,7 +68,7 @@ Import `t3.json` scripts or define local actions in **Settings → Projects → 
 | Field                 | Description                                                                                                                               |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`                | Display name in the actions menu.                                                                                                         |
-| `command`             | Shell command run in a T3 terminal at the project root.                                                                                   |
+| `command`             | Shell command run in a P4 Bot terminal at the project root.                                                                               |
 | `icon`                | `"play"` (default), `"test"`, `"lint"`, `"configure"`, `"build"`, or `"debug"`.                                                           |
 | `runOnWorktreeCreate` | Runs automatically when a new worktree is created. Skipped for agent-initiated worktrees below **Full access**.                           |
 | `async`               | For `runOnWorktreeCreate` only: `true` (default) starts the agent immediately; `false` waits for the script to finish first.              |

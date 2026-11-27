@@ -4,7 +4,7 @@ Welcome to P4 Bot. This guide explains how P4 Bot works, what you need before st
 
 ## How P4 Bot works
 
-P4 Bot is an open-source control plane for coding agents. It gives the coding agents already installed on your computer (or server) one fast, unified interface across **desktop**, **web** (`app.t3.codes` or local), and **mobile** (iOS and Android).
+P4 Bot is an open-source control plane for coding agents. It gives the coding agents already installed on your computer (or server) one fast, unified interface across **desktop**, **web** (served by your own server), and **mobile** (iOS and Android). It is an unofficial fork of the T3 Code source code and is not affiliated with T3 Tools, Inc.
 
 ### Core concepts
 
@@ -18,8 +18,8 @@ P4 Bot is an open-source control plane for coding agents. It gives the coding ag
 ## Prerequisites and expectations
 
 - **Bring your own subscription or API keys**: P4 Bot is free and does not resell tokens. You need at least **one installed, authenticated provider** on the host machine before starting a thread (Codex via ChatGPT and Google Antigravity can install and sign in directly from P4 Bot).
-- **Code stays on your machine**: Your code and prompts go directly from your host machine to your chosen provider—never through P4 Bot servers.
-- **Your host must stay awake**: Your phone and `app.t3.codes` are remote controls. If the host machine sleeps or shuts down, agents pause until it wakes. Use the [background service](./background-service.md) for always-on hosts.
+- **Code stays on your machine**: Your code and prompts go directly from your host machine to your chosen provider. There are no P4 Bot servers.
+- **Your host must stay awake**: Your phone and other browsers are remote controls. If the host machine sleeps or shuts down, agents pause until it wakes. Use the [background service](./background-service.md) for always-on hosts.
 - **Git is optional but unlocks the best features**: Branching, isolated worktrees, turn diffs, and one-click PRs require a Git repository (and a signed-in host CLI or token for PRs/issues).
 - **No local-model focus**: P4 Bot is designed for frontier coding agents (though OpenAI-compatible local endpoints like Ollama can be used for lightweight [text generation](./text-generation.md) like thread titles).
 - **Device vs. server settings**: Appearance, keybinding preferences, and saved PR views live per device; provider configs, thread rules, worktree cleanup, and scheduled tasks live on each server environment (with per-project overrides).
@@ -29,7 +29,7 @@ P4 Bot is an open-source control plane for coding agents. It gives the coding ag
 1. **Install P4 Bot** on the machine where your agents will run ([Install P4 Bot](./install.md)).
 2. **Set up at least one agent** via the [Welcome page](./welcome-page.md) or **Settings → Providers** (for example, `claude auth login` or `codex login`).
 3. **Open or clone a project** and start a thread ([Working with threads](./thread-sidebar.md)).
-4. **Optional — connect your phone or another computer**: Run `t3 up` on the host or enable **T3 Connect** in **Settings → Sharing & access** ([Remote access](./remote-access.md)).
+4. **Optional — connect your phone or another computer**: Run `t3 up --lan` on the host or turn on **Network access** in **Settings → Sharing & access**, then pair ([Remote access](./remote-access.md)).
 
 ---
 
@@ -37,7 +37,7 @@ P4 Bot is an open-source control plane for coding agents. It gives the coding ag
 
 ### Getting started
 
-- [Install P4 Bot](./install.md) — Desktop app, `t3` CLI, mobile app, WSL, and provider setup.
+- [Install P4 Bot](./install.md) — Building from source, the `t3` command, WSL, and provider setup.
 - [Welcome page](./welcome-page.md) — First-run setup and importing existing Claude, Codex, and Pi sessions.
 - [FAQ](./faq.md) — Common questions on pricing, subscriptions, privacy, limits, and troubleshooting.
 - [Threads from older P4 Bot versions](./thread-migration.md) — V1 → V2 database migration and recovery backups.
@@ -51,7 +51,7 @@ P4 Bot is an open-source control plane for coding agents. It gives the coding ag
 - [Diffs and workspace files](./diffs.md) — Turn diffs, branch comparisons, commits view, file editor, and inline review comments.
 - [Source control](./source-control.md) — GitHub, GitLab, Forgejo/Gitea, Bitbucket, Azure DevOps, GitCafe, Cursor Origin, Linear issues, PR review guides, stacks, and PR watching.
 - [Activity log](./activity-log.md) — Inspecting tool calls, hiding work logs / Zen mode, and screen reader announcements.
-- [Subagents and delegation](./subagents.md) — Parallel T3-delegated and provider-native subagents.
+- [Subagents and delegation](./subagents.md) — Parallel P4 Bot-delegated and provider-native subagents.
 - [Context in portable handoffs](./portable-handoffs.md) — How conversation context transfers across provider switches and forks.
 - [Files in question answers](./question-attachments.md) — Attaching files and images when answering agent questions.
 - [Terminal](./terminal.md) — Integrated host terminals, scrollback limits, custom shells, and fish config.
@@ -94,8 +94,7 @@ P4 Bot is an open-source control plane for coding agents. It gives the coding ag
 
 ### Remote, mobile & integrations
 
-- [Remote access](./remote-access.md) — T3 Connect, LAN/Tailscale pairing, desktop SSH, multi-route failover, load balancing, and linked environments.
-- [T3 Connect troubleshooting](./t3-connect-troubleshooting.md) — Diagnosing tunnel, port 7844, DNS, clock, and account errors.
+- [Remote access](./remote-access.md) — LAN/Tailscale pairing, desktop SSH, multi-route failover, load balancing, and linked environments.
 - [Mobile notifications](./mobile-notifications.md) — Push alerts, iOS Live Activities/widgets, and Android Live Updates.
 - [Guest links](./guest-links.md) — Sharing a live thread with a teammate in their browser (no account needed).
 - [Outside agents](./outside-agents.md) — Connecting Claude Code, Codex, ChatGPT, or bots to P4 Bot over MCP, plus `t3 thread` host scripting.

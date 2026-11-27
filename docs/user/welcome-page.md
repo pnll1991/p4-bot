@@ -3,7 +3,6 @@
 The Welcome page runs on a fresh local installation to help you verify an agent, optionally import existing projects and conversations, and connect the mobile app. Only one ready agent is required to start.
 
 - Reopen it anytime from **Settings → About → Welcome page → Open**.
-- Hosted `app.t3.codes` skips this page and prompts you to sign in to T3 Connect and run `t3 connect` on your computer instead.
 
 ## Agents
 
@@ -19,7 +18,7 @@ Click **Start** once at least one agent is ready, or **Start without an agent** 
 
 ## Phone
 
-Select **Set up** to scan the QR code for iOS or Android, then sign in to T3 Connect on both devices. If T3 Connect is unavailable or disabled by policy, pair with a code from **Settings → Sharing & access**.
+Pair the mobile app with a code from **Settings → Sharing & access** (the host needs **Network access** on). There is no published P4 Bot mobile app yet; see [Install](./install.md#build-from-source).
 
 ## Projects and conversation import
 

@@ -45,7 +45,7 @@ An agent running on the same machine as the server in **Full access** mode can r
 
 ## Environment themes
 
-Environment themes come from the server serving your web app or the desktop app's local environment (or local [background service](./background-service.md) when the built-in local environment is off). Hosted `app.t3.codes` and remote connections do not apply them.
+Environment themes come from the server serving your web app or the desktop app's local environment (or local [background service](./background-service.md) when the built-in local environment is off). Remote connections do not apply them.
 
 Select a published theme in **Settings → Appearance** to track server updates, or **Duplicate** it for an independent editable copy.
 
@@ -59,7 +59,7 @@ t3 theme show            # List the default and all published themes
 
 ### Publish a theme
 
-Save an exported theme JSON into `~/.t3/userdata/themes/` on the server (or `themes/` under your custom state directory). The filename sets the theme ID (e.g. `nightfall.json` → `t3 theme set nightfall`). Avoid reserved IDs (`system`, `light`, `dark`, or built-in theme IDs).
+Save an exported theme JSON into `~/.p4/userdata/themes/` on the server (or `themes/` under your custom state directory). The filename sets the theme ID (e.g. `nightfall.json` → `t3 theme set nightfall`). Avoid reserved IDs (`system`, `light`, `dark`, or built-in theme IDs).
 
 You can also use a minimal palette format—P4 Bot generates the remaining tokens:
 

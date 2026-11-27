@@ -4,7 +4,7 @@ P4 Bot includes integrated terminals running on the environment's host machine, 
 
 ## Choose a shell
 
-Set `T3CODE_TERMINAL_SHELL` in the T3 server's environment to an executable name or full path (no quotes or arguments) to override the platform default shell for new terminals. This does not affect agent commands or project setup/settle scripts.
+Set `T3CODE_TERMINAL_SHELL` in the P4 Bot server's environment to an executable name or full path (no quotes or arguments) to override the platform default shell for new terminals. This does not affect agent commands or project setup/settle scripts.
 
 Example for Git Bash on Windows (PowerShell, then fully quit and reopen P4 Bot):
 

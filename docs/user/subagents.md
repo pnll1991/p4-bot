@@ -4,10 +4,10 @@ P4 Bot supports running parallel agents—either spawned natively by a provider 
 
 ## Two kinds of subagents
 
-| Type                         | How it starts                                                                                                                                                        | Interactive?                                | Where approvals go                                       |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------- |
-| **T3-delegated subagent**    | Agent calls `delegate_task` (supports choosing another provider/model, an isolated git worktree, or a [linked machine](./remote-access.md#link-another-environment)) | Yes—has its own composer                    | In the child thread (and surfaced via parent)            |
-| **Provider-native subagent** | Spawned internally by Claude, Codex, Cursor, Antigravity, fx, or Pi                                                                                                  | Read-only—message the parent thread instead | Bubbles up to the parent thread with the subagent's name |
+| Type                          | How it starts                                                                                                                                                        | Interactive?                                | Where approvals go                                       |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------- |
+| **P4 Bot-delegated subagent** | Agent calls `delegate_task` (supports choosing another provider/model, an isolated git worktree, or a [linked machine](./remote-access.md#link-another-environment)) | Yes—has its own composer                    | In the child thread (and surfaced via parent)            |
+| **Provider-native subagent**  | Spawned internally by Claude, Codex, Cursor, Antigravity, fx, or Pi                                                                                                  | Read-only—message the parent thread instead | Bubbles up to the parent thread with the subagent's name |
 
 > Tip: Type `@` and part of a model name (such as `@opus` or `@opus:opencode`) in your prompt to tell the agent which model to delegate to without changing the current thread's model.
 

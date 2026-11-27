@@ -21,7 +21,7 @@ Install Git and authenticate on the machine running your P4 Bot server (for remo
 
 ## Start, clone, or publish a project
 
-- **New project**: Run **New project** from the command palette (`Cmd/Ctrl+K`) or **Add Project** to initialize a new Git repo in `~/.t3/projects/<slug>` with a README, icon, and first commit (optionally creating a private GitHub repo).
+- **New project**: Run **New project** from the command palette (`Cmd/Ctrl+K`) or **Add Project** to initialize a new Git repo in `~/.p4/projects/<slug>` with a README, icon, and first commit (optionally creating a private GitHub repo).
 - **Clone**: Use **Add Project** to pick a host (enable non-GitHub hosts in **Settings → Source control & issues**) or paste a Git URL or web page URL. Cloning runs in the background so you can draft your first prompt immediately; falls back to HTTPS if SSH auth fails. Enable **Clone into host folders** (**Settings → Threads**, or **Source control** on mobile) for `ghq`-style `<host>/<owner>/<repo>` paths.
 - **Publish**: For a local repo without a remote, **Publish Repository** creates the remote, adds `origin`, and pushes commits.
 

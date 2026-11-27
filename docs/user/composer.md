@@ -56,7 +56,7 @@ Slash commands (such as `/compact` or `/context`) wait for the current turn to f
 
 ## Queue messages offline on mobile
 
-Mobile keeps local copies of draft attachments so you can preview them and queue messages offline. Uploads resume on reconnect, and drafts/queued messages survive app restarts and T3 Connect sign-out (restored when signing back into the same account).
+Mobile keeps local copies of draft attachments so you can preview them and queue messages offline. Uploads resume on reconnect, and drafts/queued messages survive app restarts.
 
 ## Custom models and defaults
 

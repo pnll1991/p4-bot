@@ -100,12 +100,11 @@ Key constraints:
 
 When `maxRuntimeMode` is set, users cannot modify provider launch settings (`binaryPath`, `launchArgs`, config home, or env vars)—pin required values (including absolute `binaryPath`s so user `PATH` entries can't shadow them) in `providers.instances`. Leave `acpRegistry` out of `allowedDrivers` if you don't want users adding arbitrary ACP Registry agents.
 
-### Clients and T3 Connect
+### Clients and remote access
 
 `clients` allows any subset of `desktop`, `local-browser`, and `remote` (keep `desktop` on desktop machines).
 
-- Omitting `remote` restricts the server to loopback, revokes paired devices, disables LAN/Tailscale Serve/T3 Connect, and refuses startup if a Tailscale Serve route still forwards to P4 Bot (or if a legacy service has LAN enabled—run `t3 up --no-lan`).
-- Set `"connect": false` to disable T3 Connect while allowing LAN/Tailscale remote access.
+- Omitting `remote` restricts the server to loopback, revokes paired devices, disables LAN/Tailscale Serve, and refuses startup if a Tailscale Serve route still forwards to P4 Bot (or if a legacy service has LAN enabled—run `t3 up --no-lan`).
 
 ### Other capabilities
 
@@ -113,7 +112,7 @@ When `maxRuntimeMode` is set, users cannot modify provider launch settings (`bin
 - `browserCookieImport: false`: Disables importing cookies from other browsers.
 - `previewTunnel: false`: Disables remote `localhost` tunneling and port forwarding (streams tabs instead).
 - `worktreeLayoutCommands: false`: Disables `t3.json` `worktreeLayout` `create`/`remove` commands.
-- `telemetry: false`: Disables product usage data and relay tracing for the server, desktop app, and server-opened browsers (does not control `app.t3.codes` or mobile).
+- `telemetry: false`: Disables product usage data for the server, desktop app, and server-opened browsers (does not control mobile).
 
 ### Providers
 

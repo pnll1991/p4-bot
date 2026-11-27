@@ -1,5 +1,7 @@
 # Guest links
 
+> Guest links need T3 Connect, which P4 Bot turns off, so they are not available in P4 Bot. The rest of this page describes how they work upstream.
+
 Share a single thread with a teammate in their browser—no account required. Guests see messages and agent activity stream live, and any message they send waits for your approval before running.
 
 ## Prerequisites and sharing

@@ -6,7 +6,7 @@ Connect external agents (Claude Code or Codex in your terminal, ChatGPT, or any 
 
 Open the command palette (`Cmd/Ctrl+K`) and run **Use P4 Bot in another app (MCP)** (or open **Settings → Sharing & access**), pick your app, and follow the prompts.
 
-- Cloud assistants (like ChatGPT or Claude) require **T3 Connect** enabled on the environment.
+- Cloud assistants (like ChatGPT or Claude) need a public HTTPS address for the environment. P4 Bot turns off T3 Connect, which provided one, so they only work if you expose the environment over HTTPS yourself.
 - To also reach other machines through the same connection, enable **Settings → Labs → Linked environments** and [link them](./remote-access.md#link-another-environment).
 - To copy the raw MCP endpoint (`https://<environment-address>/mcp`), open an environment's menu in **Settings → Environments → Copy MCP URL**. OAuth requires `https://` or `localhost` (plain `http://` LAN/Tailscale addresses cannot complete OAuth).
 
@@ -26,7 +26,7 @@ Open the command palette (`Cmd/Ctrl+K`) and run **Use P4 Bot in another app (MCP
 
 ## Approve access and permissions
 
-The first time an outside agent connects, approve its sign-in page (via your T3 Connect account, an already-authorized browser, or a one-time pairing code from **Settings → Sharing & access** / `t3 auth pairing create`).
+The first time an outside agent connects, approve its sign-in page (via an already-authorized browser or a one-time pairing code from **Settings → Sharing & access** / `t3 auth pairing create`).
 
 - **Read only**: Inspect projects, threads, providers, and models.
 - **Supervised → Full access**: Also launch, message, and stop threads up to the granted permission mode. Managing [workflow runs](./workflows.md) or using approval-skipping agent modes requires **Full access** (or your policy's maximum mode).

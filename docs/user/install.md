@@ -1,26 +1,22 @@
 # Install P4 Bot
 
-P4 Bot runs coding agents on your computer (or server) and lets you control them from the desktop app, web app, or mobile app. Install P4 Bot on the machine where your agents will run first.
+P4 Bot is an unofficial fork of T3 Code. It runs coding agents on your computer (or server) and lets you control them from the desktop app, web app, or mobile app. Install P4 Bot on the machine where your agents will run first.
 
 ## Requirements
 
 You need at least one installed, authenticated coding agent (provider) before starting a thread. You can launch P4 Bot first and set up providers from the [Welcome page](./welcome-page.md) or **Settings → Providers**.
 
-## Command line
+## Build from source
 
-Install the `t3` command to `~/.local/bin`:
+P4 Bot has no published installer, desktop build or mobile app yet. Run it from a checkout of [pnll1991/p4-bot](https://github.com/pnll1991/p4-bot) with `vp` (setup in the [development runbook](../operations/00_development.md#first-checkout)):
 
 ```bash
-# macOS / Linux
-curl -fsSL https://t3.codes/install.sh | sh
+git clone https://github.com/pnll1991/p4-bot
+cd p4-bot && vp i && vp run build:desktop
+node apps/server/dist/bin.mjs
 ```
 
-```powershell
-# Windows (PowerShell)
-irm https://t3.codes/install.ps1 | iex
-```
-
-Set `T3CODE_CHANNEL=nightly` for nightly builds or `T3CODE_VERSION=<ver>` to pin a version. To try once without installing, run `npx t3@latest` (requires Node.js; always runs the latest stable release).
+The server command is still called `t3`, and P4 Bot keeps its data in `~/.p4`, so it runs side by side with a T3 Code install.
 
 | Task                          | Command                                                                 |
 | ----------------------------- | ----------------------------------------------------------------------- |
@@ -28,53 +24,19 @@ Set `T3CODE_CHANNEL=nightly` for nightly builds or `T3CODE_VERSION=<ver>` to pin
 | Start server without browser  | `t3 serve`                                                              |
 | Set up remote access          | `t3 up` ([Remote access](./remote-access.md))                           |
 | Run in the background         | `t3 service install` ([Background service](./background-service.md))    |
-| Update                        | `t3 update`                                                             |
 | Reclaim database space        | `t3 doctor` ([Details](./background-service.md#reclaim-database-space)) |
 | Uninstall                     | `t3 uninstall`                                                          |
 
 If `t3` reports a server is already running, connect with `t3 pair` or pass a separate `--base-dir`. Run `t3 --help` for all commands.
 
-### Intel Macs
+> Don't run `t3 update` or the in-app server update: they download T3 Code releases, not P4 Bot. Update by pulling the checkout and rebuilding; see [Updating P4 Bot](./updating.md).
 
-There is no standalone `t3` binary for Intel Macs—use the desktop app, or build a server from source with `vp` ([development runbook](../operations/00_development.md#first-checkout)):
-
-```bash
-git clone https://github.com/pingdotgg/t3code
-cd t3code && vp i && vp run build:desktop
-node apps/server/dist/bin.mjs
-```
-
-## Desktop app
-
-Download from [GitHub Releases](https://github.com/pingdotgg/t3code/releases) or install via a package manager:
-
-| Platform                | Command                                                          |
-| ----------------------- | ---------------------------------------------------------------- |
-| macOS                   | `brew install --cask t3-code`                                    |
-| Windows                 | `winget install T3Tools.T3Code` or `scoop install extras/t3code` |
-| Debian / Ubuntu         | `sudo apt install ./T3-Code-*.deb`                               |
-| Arch Linux              | `yay -S t3code-bin` (or `yay -S t3code-nightly-bin`)             |
-| Nix (flakes, Nix 2.30+) | `nix profile add github:NixOS/nixpkgs/nixos-unstable#t3code`     |
-
-- **Linux AppImage**: `chmod +x ./T3-Code-*.AppImage && ./T3-Code-*.AppImage` (x86_64 and ARM64). `.deb` self-updates with a password prompt; update AUR packages via your AUR helper (`yay -Syu`).
-- **NixOS / Home Manager**: Add `pkgs.t3code` to `environment.systemPackages` or `home.packages` (`t3code-desktop` launches the app; `t3` is included). Update via Nix rather than the in-app updater.
-
-### The `t3` command
-
-The desktop app bundles `t3` and sets it up on first launch (manage anytime under **Settings → About → t3 command**). Use **Add to PATH** if needed, then open a new terminal.
-
-- **Open a folder in the running desktop app**: Run `t3 app` (or `t3 app ../my-project`) from a terminal, or drag folders from your file manager onto the desktop sidebar.
+- **Desktop app**: Build it with `vp run dist:desktop:artifact` (see [Desktop artifacts](../operations/00_development.md#desktop-artifacts)). The desktop app bundles `t3` and sets it up on first launch (**Settings → About → t3 command**). Run `t3 app` (or `t3 app ../my-project`) to open a folder in the running desktop app.
+- **Mobile app**: Build it from `apps/mobile` (see the [mobile README](../../apps/mobile/README.md)). It connects to a server on another machine via [remote access](./remote-access.md). If it crashes on launch, open **Settings → Diagnostics** on the next launch to copy recent startup crash reports.
 
 ### Windows Subsystem for Linux
 
 Select a WSL distro in **Settings → Sharing & access** to run agents and projects inside WSL (install provider CLIs inside that distro). P4 Bot manages its own server runtime inside WSL automatically.
-
-## Mobile app
-
-Install from the [App Store](https://apps.apple.com/us/app/t3-code-remote-claude-more/id6787819824) or [Google Play](https://play.google.com/store/apps/details?id=com.t3tools.t3code) (QR codes are also in **Settings → About → Mobile app**). The mobile app connects to a server on another machine via [remote access](./remote-access.md).
-
-- Store builds work with both Stable and Nightly servers. Optional Android beta APKs are under [Android beta releases](https://github.com/pingdotgg/t3code/releases?q=android-beta-).
-- If the mobile app crashes on launch, open **Settings → Diagnostics** on the next launch to copy recent startup crash reports.
 
 ## Providers
 

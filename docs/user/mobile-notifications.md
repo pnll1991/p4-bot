@@ -2,9 +2,10 @@
 
 Get push alerts, Live Activities, and home-screen widgets on iOS and Android when agents finish, fail, or need your approval or input.
 
+> Background push notifications travel through T3 Connect, which P4 Bot turns off, so they are not delivered in P4 Bot.
+
 ## Prerequisites
 
-- Sign in to **T3 Connect** on both your phone and host machine (direct/Tailscale connections alone do not deliver background push notifications).
 - Enable **Publish agent activity** in **Settings → Sharing & access** on the host.
 - Enable **Device Notifications** in **Settings → Notifications** on mobile (Android requires Android 7.0+ and Google Play services).
 
@@ -12,7 +13,7 @@ Get push alerts, Live Activities, and home-screen widgets on iOS and Android whe
 
 - **Live progress**: Enable **Live Activity Updates** (iOS), **Agent Live Updates** (Android 16+, check **Live Update Settings** if missing), or **Ongoing Agent Activity** (older Android). Finished results stay visible for up to 15 minutes.
 - **Silent live updates (Android 8+)**: Keep **Ongoing agent activity** on and disable **Agent alerts** in Android system notification settings.
-- **iOS widget**: Add the **Agent Activity** widget to your Home Screen or Lock Screen (refreshes when you open T3; marks unfinished work stale after 10 minutes).
+- **iOS widget**: Add the **Agent Activity** widget to your Home Screen or Lock Screen (refreshes when you open P4 Bot; marks unfinished work stale after 10 minutes).
 
 ## Notes
 

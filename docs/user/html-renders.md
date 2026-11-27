@@ -12,7 +12,7 @@ Ask an agent for a visual (e.g. "show this as a chart" or "make a collage of the
 
 ## MCP apps
 
-MCP servers supporting the [MCP Apps](https://github.com/modelcontextprotocol/ext-apps) standard render interactive UIs directly below their tool calls (supported on Codex and Claude Code 2.1.301+ on up-to-date T3 servers).
+MCP servers supporting the [MCP Apps](https://github.com/modelcontextprotocol/ext-apps) standard render interactive UIs directly below their tool calls (supported on Codex and Claude Code 2.1.301+ on up-to-date P4 Bot servers).
 
 - **Safety**: P4 Bot asks before an MCP app runs non-read-only server tools, posts messages to the thread, opens links (mobile), or saves files. Navigating away from its own page stops the app.
 - **Session requirement**: Apps remain viewable after a turn ends, but interacting with them requires the thread's agent session to be running.
