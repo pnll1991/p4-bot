@@ -57,7 +57,7 @@ No. P4 Bot focuses on frontier coding agents.
 
 No. Code and prompts go directly from your machine to your chosen provider.
 
-P4 Bot sends basic product usage events (provider, model, token totals—no prompts or file contents) to `ingest.t3.codes`, run by T3 Tools. Disable with `T3CODE_TELEMETRY_ENABLED=false` or `DO_NOT_TRACK=1`. See [Product usage data](./telemetry.md).
+P4 Bot sends no product usage data unless you point it at an ingest of your own. See [Product usage data](./telemetry.md).
 
 ## Worktrees are eating my disk. How do I clean them up?
 

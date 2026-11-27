@@ -1,4 +1,4 @@
-// T3 ingest retains events and deduplicates retries by UUID.
+// The ingest (PostHog-compatible) retains events and deduplicates retries by UUID.
 import * as HostProcess from "@t3tools/shared/HostProcess";
 import { isCiEnvironment, isDoNotTrackSet } from "@t3tools/shared/otelEnvironment";
 import type { ClientOs } from "@t3tools/contracts";
@@ -68,12 +68,10 @@ function retryDelayMs(failures: number, random: number): number {
 }
 
 const TelemetryEnvConfig = Config.all({
-  ingestKey: Config.String("T3CODE_TELEMETRY_KEY").pipe(
-    Config.withDefault("phc_XOWci4oZP4VvLiEyrFqkFjP4CZn55mjYYBMREK5Wd6m"),
-  ),
-  ingestHost: Config.String("T3CODE_TELEMETRY_HOST").pipe(
-    Config.withDefault("https://ingest.t3.codes"),
-  ),
+  // P4 Bot has no ingest of its own, and T3 Tools' is not ours to send our users' events to:
+  // nothing is sent until the operator names one.
+  ingestKey: Config.String("T3CODE_TELEMETRY_KEY").pipe(Config.option),
+  ingestHost: Config.String("T3CODE_TELEMETRY_HOST").pipe(Config.option),
   enabled: Config.Boolean("T3CODE_TELEMETRY_ENABLED").pipe(Config.option),
   flushBatchSize: Config.Number("T3CODE_TELEMETRY_FLUSH_BATCH_SIZE").pipe(Config.withDefault(20)),
   maxBufferedEvents: Config.Number("T3CODE_TELEMETRY_MAX_BUFFERED_EVENTS").pipe(
@@ -133,8 +131,17 @@ export const make = Effect.gen(function* () {
   const policyAllows =
     ManagedPolicy.deniedBy(yield* ManagedPolicy.ManagedPolicy, "telemetry") === undefined;
   // A cached PATH does not establish consent from the current login shell.
+  const ingest = Option.all({
+    host: telemetryConfig.ingestHost,
+    key: telemetryConfig.ingestKey,
+  });
   const telemetryEnabled = Effect.suspend(() => {
-    if (!enabledAtStartup || !policyAllows || isDoNotTrackSet(hostEnvironment))
+    if (
+      Option.isNone(ingest) ||
+      !enabledAtStartup ||
+      !policyAllows ||
+      isDoNotTrackSet(hostEnvironment)
+    )
       return Effect.succeed(false);
     if (!awaitingShellConsent) return Effect.succeed(true);
     if (hostEnvironment.T3CODE_DESKTOP_SHELL_DISCOVERY_PENDING === "1")
@@ -209,10 +216,10 @@ export const make = Effect.gen(function* () {
   const sendBatch = Effect.fn("AnalyticsService.sendBatch")(function* (
     events: ReadonlyArray<BufferedAnalyticsEvent>,
   ) {
-    if (!(yield* telemetryEnabled) || !distinctId) return;
+    if (Option.isNone(ingest) || !(yield* telemetryEnabled) || !distinctId) return;
 
     const payload = {
-      api_key: telemetryConfig.ingestKey,
+      api_key: ingest.value.key,
       batch: events.map((event) => ({
         uuid: event.uuid,
         event: event.event,
@@ -244,7 +251,7 @@ export const make = Effect.gen(function* () {
       })),
     };
 
-    yield* HttpClientRequest.post(`${telemetryConfig.ingestHost}/batch/`).pipe(
+    yield* HttpClientRequest.post(`${ingest.value.host}/batch/`).pipe(
       HttpClientRequest.bodyJson(payload),
       Effect.flatMap(httpClient.execute),
       Effect.flatMap(HttpClientResponse.filterStatusOk),

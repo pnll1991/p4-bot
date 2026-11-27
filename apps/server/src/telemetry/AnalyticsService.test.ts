@@ -120,6 +120,7 @@ const analyticsLayerWith = (
   telemetryEnv: { readonly T3CODE_TELEMETRY_ENABLED?: boolean } = {
     T3CODE_TELEMETRY_ENABLED: true,
   },
+  ingestConfigured = true,
 ) =>
   AnalyticsService.layer.pipe(
     Layer.provideMerge(
@@ -129,8 +130,9 @@ const analyticsLayerWith = (
       ConfigProvider.layer(
         ConfigProvider.fromUnknown({
           ...telemetryEnv,
-          T3CODE_TELEMETRY_KEY: "phc_test_key",
-          T3CODE_TELEMETRY_HOST: "http://localhost",
+          ...(ingestConfigured
+            ? { T3CODE_TELEMETRY_KEY: "phc_test_key", T3CODE_TELEMETRY_HOST: "http://localhost" }
+            : {}),
         }),
       ),
     ),
@@ -159,6 +161,7 @@ const sendFor = (
   > = recordTwentyEvents,
   policy?: ManagedPolicyDocument,
   telemetryEnv?: Parameters<typeof analyticsLayerWith>[2],
+  ingestConfigured?: boolean,
 ) =>
   Effect.gen(function* () {
     const batches: Array<ReadonlyArray<SentEvent>> = [];
@@ -173,7 +176,7 @@ const sendFor = (
         return yield* respond(request);
       }),
     );
-    const runtimeLayer = analyticsLayerWith(client, policy, telemetryEnv);
+    const runtimeLayer = analyticsLayerWith(client, policy, telemetryEnv, ingestConfigured);
 
     yield* Effect.gen(function* () {
       yield* record;
@@ -322,6 +325,23 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("AnalyticsService
         });
         assert.deepEqual(denied, []);
       }),
+  );
+
+  // P4 Bot has no ingest of its own; T3 Tools' is not ours to send its users' events to.
+  it.effect("sends nothing until the operator configures an ingest", () =>
+    Effect.gen(function* () {
+      const batches = yield* sendFor(
+        1,
+        respondWithStatus(204),
+        recordTwentyEvents,
+        undefined,
+        {
+          T3CODE_TELEMETRY_ENABLED: true,
+        },
+        false,
+      );
+      assert.deepEqual(batches, []);
+    }),
   );
 
   it.effect("sends nothing on a CI runner unless the environment opts in", () =>

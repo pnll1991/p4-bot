@@ -1,10 +1,10 @@
 # Product usage data and diagnostics
 
-P4 Bot sends lightweight product usage events to keep the app reliable and fast. Prompts, responses, file contents, and credentials are never included (unless you explicitly approve an [agent feedback](#agent-feedback) card with conversation text attached).
+P4 Bot sends no product usage data by default: it has no ingest of its own. Prompts, responses, file contents, and credentials are never included in any usage event (unless you explicitly approve an [agent feedback](#agent-feedback) card with conversation text attached).
 
 ## Product usage events
 
-The server sends usage events to `ingest.t3.codes`, run by T3 Tools (the T3 Code maintainers), under a hashed random install ID and random client device IDs. Events contain provider, catalog model name (non-catalog models report as custom), reasoning effort, permission mode, turn/request outcome, duration, release channel, and token counts.
+To collect usage events yourself, point the server at a PostHog-compatible ingest with `T3CODE_TELEMETRY_HOST` and `T3CODE_TELEMETRY_KEY`; nothing is sent while either is unset. Events are sent under a hashed random install ID and random client device IDs, and contain provider, catalog model name (non-catalog models report as custom), reasoning effort, permission mode, turn/request outcome, duration, release channel, and token counts.
 
 ## Disable telemetry
 
