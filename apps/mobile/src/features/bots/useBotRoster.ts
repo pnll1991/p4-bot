@@ -69,7 +69,12 @@ export function useBotRoster(): {
         ),
       };
     })
-    .sort((left, right) => (right.lastActivityAt ?? "").localeCompare(left.lastActivityAt ?? ""));
+    // Pinned bots first, as on web; within each, the most recently active.
+    .sort(
+      (left, right) =>
+        Number(right.bot.pinned === true) - Number(left.bot.pinned === true) ||
+        (right.lastActivityAt ?? "").localeCompare(left.lastActivityAt ?? ""),
+    );
 
   return {
     environmentId,

@@ -10,7 +10,7 @@ import {
   type ScopedThreadRef,
   ThreadId,
 } from "@t3tools/contracts";
-import { useNavigation, type StaticScreenProps } from "@react-navigation/native";
+import { StackActions, useNavigation, type StaticScreenProps } from "@react-navigation/native";
 import { T, useGT } from "gt-react-native";
 import * as DateTime from "effect/DateTime";
 import { Atom } from "effect/reactivity";
@@ -63,9 +63,12 @@ export function BotChatScreen({ route }: StaticScreenProps<BotChatParams>) {
   const projectId = ProjectId.make(route.params.projectId);
   const { entries, loading } = useBotRoster();
   const entry = entries.find((candidate) => candidate.bot.projectId === projectId) ?? null;
-  // A chat started here before the roster sees it, or "new" for an empty one.
-  const [chosen, setChosen] = useState<ThreadId | "new" | null>(null);
-  const threadId = chosen === "new" ? null : (chosen ?? entry?.latestThread?.id ?? null);
+  // A chat started here before the roster sees it. Once archived (Start over), it no longer counts.
+  const [started, setStarted] = useState<ThreadId | null>(null);
+  const startedShell = useThreadShell(
+    started === null ? null : { environmentId, threadId: started },
+  );
+  const threadId = entry?.latestThread?.id ?? (startedShell?.archivedAt == null ? started : null);
 
   const onBack = () => {
     if (navigation.canGoBack()) navigation.goBack();
@@ -91,8 +94,15 @@ export function BotChatScreen({ route }: StaticScreenProps<BotChatParams>) {
       bot={entry.bot}
       threadRef={threadId === null ? null : { environmentId, threadId }}
       onBack={onBack}
-      onNewChat={() => setChosen("new")}
-      onThreadStarted={setChosen}
+      onOpenDetails={() =>
+        navigation.dispatch(
+          StackActions.push("BotDetails", {
+            environmentId: route.params.environmentId,
+            projectId: route.params.projectId,
+          }),
+        )
+      }
+      onThreadStarted={setStarted}
     />
   );
 }
@@ -102,7 +112,7 @@ function Conversation(props: {
   readonly bot: BotProfile;
   readonly threadRef: ScopedThreadRef | null;
   readonly onBack: () => void;
-  readonly onNewChat: () => void;
+  readonly onOpenDetails: () => void;
   readonly onThreadStarted: (threadId: ThreadId) => void;
 }) {
   const { environmentId, bot, threadRef } = props;
@@ -137,8 +147,8 @@ function Conversation(props: {
       input: {
         threadId,
         message: { messageId: MessageId.make(uuidv4()), role: "user", text: body, attachments: [] },
-        // Bots always ask before acting; the server's BotGuard screens what reaches the owner.
-        runtimeMode: "approval-required",
+        // A new chat starts with the bot's own permissions, as the web composer does.
+        runtimeMode: bot.runtimeMode ?? "approval-required",
         interactionMode: "default",
         dispatchMode: "auto",
         createdAt,
@@ -150,7 +160,7 @@ function Conversation(props: {
                   projectId: bot.projectId,
                   title: body.slice(0, 60),
                   modelSelection: { instanceId: bot.providerInstanceId, model: bot.model },
-                  runtimeMode: "approval-required",
+                  runtimeMode: bot.runtimeMode ?? "approval-required",
                   interactionMode: "default",
                   branch: null,
                   worktreePath: null,
@@ -177,9 +187,9 @@ function Conversation(props: {
         onBack={props.onBack}
         actions={[
           {
-            accessibilityLabel: gt("New chat"),
-            icon: "square.and.pencil",
-            onPress: props.onNewChat,
+            accessibilityLabel: gt("Bot settings"),
+            icon: "info.circle",
+            onPress: props.onOpenDetails,
           },
         ]}
       />

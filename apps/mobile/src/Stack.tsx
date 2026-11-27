@@ -101,6 +101,7 @@ import { SettingsNavigationRouteScreen } from "./features/settings/SettingsNavig
 import { SettingsAppearanceRouteScreen } from "./features/settings/SettingsAppearanceRouteScreen";
 import { SettingsBotsRouteScreen } from "./features/settings/SettingsBotsRouteScreen";
 import { BotChatScreen } from "./features/bots/BotChatScreen";
+import { BotDetailsScreen } from "./features/bots/BotDetailsScreen";
 import { BotRosterScreen } from "./features/bots/BotRosterScreen";
 import { SettingsClientStorageRouteScreen } from "./features/settings/SettingsClientStorageRouteScreen";
 import { SettingsDiagnosticsRouteScreen } from "./features/diagnostics/SettingsDiagnosticsRouteScreen";
@@ -219,6 +220,7 @@ const ROUTE_TITLES: Readonly<Record<string, string>> = {
   WorkflowRun: msg("Run", { $context: "noun, page title for one workflow run" }),
   Bots: msg("Bots"),
   BotChat: msg("Bot"),
+  BotDetails: msg("Bot settings"),
   SettingsLegal: msg("Legal"),
   ConnectOnboarding: msg("Set up {product}", { product: "T3 Connect" }),
   Connections: msg("Environments"),
@@ -806,6 +808,11 @@ const RootStackConfig = createWorkspaceStackNavigator({
     BotChat: createNativeStackScreen({
       screen: BotChatScreen,
       linking: "bots/:environmentId/:projectId",
+      options: pageRoute(),
+    }),
+    BotDetails: createNativeStackScreen({
+      screen: BotDetailsScreen,
+      linking: "bots/:environmentId/:projectId/details",
       options: pageRoute(),
     }),
     WorkflowRun: createNativeStackScreen({

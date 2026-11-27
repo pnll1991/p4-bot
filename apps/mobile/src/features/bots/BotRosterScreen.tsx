@@ -18,6 +18,9 @@ export function BotRosterScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { environmentId, entries, loading, error } = useBotRoster();
+  // Hidden bots fold to the end, as on web, so they stay one tap away.
+  const shown = entries.filter((entry) => entry.bot.hidden !== true);
+  const hidden = entries.filter((entry) => entry.bot.hidden === true);
 
   return (
     <View className="flex-1 bg-screen">
@@ -55,19 +58,25 @@ export function BotRosterScreen() {
             contentInsetAdjustmentBehavior="automatic"
             contentContainerStyle={{ padding: 12, paddingBottom: insets.bottom + 24 }}
           >
-            {entries.map((entry) => (
-              <BotRosterRow
-                key={entry.bot.projectId}
-                entry={entry}
-                onPress={() =>
-                  navigation.dispatch(
-                    StackActions.push("BotChat", {
-                      environmentId: String(environmentId),
-                      projectId: String(entry.bot.projectId),
-                    }),
-                  )
-                }
-              />
+            {[...shown, ...hidden].map((entry, index) => (
+              <View key={entry.bot.projectId}>
+                {index === shown.length ? (
+                  <Text className="px-2 pb-1 pt-4 text-xs font-t3-medium text-foreground-muted">
+                    {gt("Hidden")}
+                  </Text>
+                ) : null}
+                <BotRosterRow
+                  entry={entry}
+                  onPress={() =>
+                    navigation.dispatch(
+                      StackActions.push("BotChat", {
+                        environmentId: String(environmentId),
+                        projectId: String(entry.bot.projectId),
+                      }),
+                    )
+                  }
+                />
+              </View>
             ))}
           </ScrollView>
         </ScrollViewMarker>
@@ -115,7 +124,9 @@ function BotRosterRow(props: { readonly entry: BotRosterEntry; readonly onPress:
 export function BotStrip() {
   const gt = useGT();
   const navigation = useNavigation();
-  const { environmentId, entries } = useBotRoster();
+  const roster = useBotRoster();
+  const { environmentId } = roster;
+  const entries = roster.entries.filter((entry) => entry.bot.hidden !== true);
   if (environmentId === null || entries.length === 0) return null;
   return (
     <ScrollView
