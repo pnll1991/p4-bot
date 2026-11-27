@@ -1,6 +1,6 @@
 # Triage an issue
 
-Let your own coding agent investigate a P4 Bot problem—reading local logs/state, inspecting the source for your installed version, checking known issues, and helping draft a GitHub issue. The agent always asks before applying fixes or posting anything.
+Let your own coding agent investigate a P4 Bot problem—reading local logs/state, inspecting the source for your installed version, checking known issues, and helping draft a GitHub issue on [pnll1991/p4-bot](https://github.com/pnll1991/p4-bot/issues). The agent always asks before applying fixes or posting anything.
 
 ## In the app
 
@@ -8,13 +8,13 @@ Open the command palette (`Cmd/Ctrl+K`) and run **Triage an issue**. A no-projec
 
 ## In a terminal
 
-If the app won't start or in-app triage fails, run:
+If the app won't start or in-app triage fails, run the `t3` from your P4 Bot build ([Install](./install.md#build-from-source)). Not `npx t3`, which runs T3 Code:
 
 ```sh
-npx t3 triage
+t3 triage
 # Or choose a specific CLI agent and model:
-npx t3 triage --agent codex --model <model-id>
-npx t3 triage --agent antigravity
+t3 triage --agent codex --model <model-id>
+t3 triage --agent antigravity
 ```
 
 Supports Claude Code, Codex, and standalone Antigravity (`agy` on `PATH` with its own sign-in; P4 Bot's managed ACP runtime does not include the standalone terminal CLI).
