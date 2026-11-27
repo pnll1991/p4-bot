@@ -7,7 +7,7 @@ import * as SqlClient from "effect/sql/SqlClient";
 
 import { runMigrations } from "../src/persistence/Migrations.ts";
 import * as NodeSqliteClient from "@t3tools/shared/nodeSqliteClient";
-import { dropResumableFamilies, runMigrateDevDb } from "./migrate-dev-db.ts";
+import { dropResumableFamilies, liveHome, runMigrateDevDb } from "./migrate-dev-db.ts";
 
 const withDatabase = <A, E, R>(
   databasePath: string,
@@ -286,6 +286,17 @@ it.layer(NodeServices.layer)("migrate-dev-db", (it) => {
         "a session the kept stopped-thread still binds stays with it",
       );
       assert.equal(yield* dropResumableFamilies(database, { sharedHome }), 0);
+    }),
+  );
+
+  // Read-only: the refusal comes from comparing paths and file identities, before any write.
+  it.effect("refuses the live P4 Bot database when no shared home is given", () =>
+    Effect.gen(function* () {
+      const path = yield* Path.Path;
+      assert.equal(path.basename(liveHome()), ".p4");
+      const live = path.join(liveHome(), "userdata", "statev2.sqlite");
+      const refused = yield* Effect.flip(dropResumableFamilies(live));
+      assert.equal(refused._tag, "MigrateDevDbSharedHomeError");
     }),
   );
 

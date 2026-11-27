@@ -643,7 +643,8 @@ const prepareFirstStart = Effect.fn("dev-runner.prepareFirstStart")(function* (i
         );
       }
     }
-    const source = path.join(yield* HostProcess.HomeDirectory, ".t3", "userdata", "statev2.sqlite");
+    // The live P4 Bot install, read-only; never ~/.t3, which is a T3 Code install's.
+    const source = path.join(yield* HostProcess.HomeDirectory, ".p4", "userdata", "statev2.sqlite");
     // A V1 state.sqlite counts as data too: the server imports it only while
     // statev2.sqlite is missing, so seeding would hide it.
     if (

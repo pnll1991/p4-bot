@@ -183,7 +183,7 @@ Steps:
 - **Retakes leave debris.** Each failed attempt adds threads and links. Archive them from the
   sidebar's long-press menu; archived threads drop out of an issue's Linked threads. Subagent
   children of a looping attempt can't be archived from the UI; in the staging home only
-  (never `~/.t3`), set `deleted_at` on their `orchestration_v2_projection_threads` rows.
+  (never `~/.p4`), set `deleted_at` on their `orchestration_v2_projection_threads` rows.
 - **Keep `edit` steps idempotent.** A replayed turn finds its `edit` already applied and the
   turn fails; use `write` with the whole file.
 - **Side chats on the fake CLI** show "Could not fork the source conversation natively".

@@ -1,6 +1,6 @@
 # Observability
 
-Server observability has three outputs: pretty stdout logs (not persisted locally, except SSH-managed launches at `~/.t3/ssh-launch/<state>/server.log`), a local NDJSON trace file (always on), and optional OTLP export (traces, metrics, logs).
+Server observability has three outputs: pretty stdout logs (not persisted locally, except SSH-managed launches at `~/.p4/ssh-launch/<state>/server.log`), a local NDJSON trace file (always on), and optional OTLP export (traces, metrics, logs).
 
 ## Local traces and event-loop stalls
 
@@ -8,7 +8,7 @@ Default trace paths (`server.trace.ndjson`):
 
 - Production / explicit `--home-dir` / `T3CODE_HOME`: `<home>/userdata/logs/server.trace.ndjson`
 - Linked worktree dev run: `<worktree>/.t3/userdata/logs/server.trace.ndjson`
-- Non-worktree dev run: `~/.t3/dev/logs/server.trace.ndjson`
+- Non-worktree dev run: `~/.p4/dev/logs/server.trace.ndjson`
 
 Summarize counts, rates, and latency percentiles offline (even while a server is stalled or stopped):
 
