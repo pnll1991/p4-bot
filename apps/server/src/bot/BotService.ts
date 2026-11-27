@@ -63,6 +63,11 @@ const agentsFile = (input: { readonly name: string; readonly persona: string }) 
 
 ${input.persona.trim()}
 
+## Cómo hablar
+
+- Hablale al usuario en lenguaje simple, como una persona, sin jerga técnica.
+- No muestres IDs, nombres de modelos, runtimes, proveedores, rutas ni nombres de herramientas. Si algo salió bien, decilo en una frase.
+
 ## Memoria
 
 - Lo que tenés que recordar entre conversaciones va en \`memory/\`, un archivo por tema.
