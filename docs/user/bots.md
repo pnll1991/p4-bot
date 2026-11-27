@@ -28,6 +28,15 @@ The bot keeps what it should remember between conversations in its `memory/` fol
 
 A routine runs a prompt on a schedule (every few hours, every day or weekdays at a time) or when a webhook event arrives, and posts the result into the bot's conversation. Create one in **Bot settings → Routines**, or ask the bot to do something every day. Routines run Supervised, on the bot's own model, and are limited to 48 runs a day.
 
+## Bots talking to each other
+
+Ask a bot to write to another bot by name, for example "ask Beto what's missing in the fridge". The message lands in the other bot's chat, and its answer comes back to the first bot's chat a little later, so you can read both sides.
+
+- A bot treats a message from another bot as information, not as an order from you.
+- A Supervised bot asks you before it sends a message.
+- A Supervised bot can't message a bot with **Full access**, so it can't get more done through another bot. Message that bot yourself instead.
+- Each bot can send up to 20 messages an hour, so two bots can't keep answering each other forever.
+
 ## Permissions
 
 The **Full access** switch on the side card sets how much the bot may do without asking, for its open chat, new chats and routines. Off is **Supervised**: the bot asks before commands and edits. See [permission modes](./permission-modes.md).
