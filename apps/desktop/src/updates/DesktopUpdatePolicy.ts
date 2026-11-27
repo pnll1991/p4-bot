@@ -36,9 +36,17 @@ export const unmanagedUpdatePolicy: UpdatePolicy = {
   message: null,
 };
 
+// P4 Bot has no releases, and the inherited updater would install T3 Code's, so an unmanaged
+// machine gets updates turned off with that reason.
+const noReleasesUpdatePolicy: UpdatePolicy = {
+  ...unmanagedUpdatePolicy,
+  mode: "off",
+  message: "P4 Bot has no releases yet. Update it by pulling its source and rebuilding.",
+};
+
 function resolveUpdatePolicy(document: ManagedPolicyDocument | undefined): UpdatePolicy {
   const updates = document?.limits?.updates;
-  if (document === undefined || updates === undefined) return unmanagedUpdatePolicy;
+  if (document === undefined || updates === undefined) return noReleasesUpdatePolicy;
   return {
     mode: updates.mode,
     feedUrl: updates.feedUrl,

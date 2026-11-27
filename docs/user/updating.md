@@ -2,7 +2,7 @@
 
 P4 Bot clients and servers can run on different machines and must share a compatible orchestration protocol.
 
-> P4 Bot has no release feed yet. Its built-in app and server updates download T3 Code releases, so don't use them for P4 Bot itself: update every machine by pulling its checkout and rebuilding (`git pull && vp i && vp run build:desktop`). Provider updates are safe.
+> P4 Bot has no releases yet, so its built-in app and server updates find nothing to install: the desktop app shows updates as off, and **Update server** or `t3 update` fail. Update every machine by pulling its checkout and rebuilding (`git pull && vp i && vp run build:desktop`). Provider updates work as usual.
 
 ## Continue threads after restarts
 

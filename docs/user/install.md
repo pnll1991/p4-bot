@@ -29,7 +29,7 @@ The server command is still called `t3`, and P4 Bot keeps its data in `~/.p4`, s
 
 If `t3` reports a server is already running, connect with `t3 pair` or pass a separate `--base-dir`. Run `t3 --help` for all commands.
 
-> Don't run `t3 update` or the in-app server update: they download T3 Code releases, not P4 Bot. Update by pulling the checkout and rebuilding; see [Updating P4 Bot](./updating.md).
+> `t3 update` and the in-app updates look for P4 Bot releases, and there are none yet, so they fail. Update by pulling the checkout and rebuilding; see [Updating P4 Bot](./updating.md).
 
 - **Desktop app**: Build it with `vp run dist:desktop:artifact` (see [Desktop artifacts](../operations/00_development.md#desktop-artifacts)). The desktop app bundles `t3` and sets it up on first launch (**Settings → About → t3 command**). Run `t3 app` (or `t3 app ../my-project`) to open a folder in the running desktop app.
 - **Mobile app**: Build it from `apps/mobile` (see the [mobile README](../../apps/mobile/README.md)). It connects to a server on another machine via [remote access](./remote-access.md). If it crashes on launch, open **Settings → Diagnostics** on the next launch to copy recent startup crash reports.

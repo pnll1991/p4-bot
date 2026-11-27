@@ -2,7 +2,7 @@
 
 The `t3` command runs and manages P4 Bot servers, background services, remote access, threads, workflows, and diagnostics. Run `t3 --help` or `t3 <command> --help` for full flags.
 
-P4 Bot keeps upstream's `t3` command name. See [Install P4 Bot](./install.md#build-from-source) to build it from source. Don't use `t3 update`: it installs T3 Code releases.
+P4 Bot keeps upstream's `t3` command name. See [Install P4 Bot](./install.md#build-from-source) to build it from source. `t3 update` looks for P4 Bot releases, and there are none yet.
 
 ## Running and connecting
 

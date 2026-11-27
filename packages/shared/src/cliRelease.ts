@@ -3,7 +3,9 @@ import * as Schema from "effect/Schema";
 
 import { compareSemverVersions } from "./semver.ts";
 
-const CLI_RELEASE_REPOSITORY = "pingdotgg/t3code";
+// P4 Bot's own repository. It publishes no releases yet, so downloads fail instead of installing
+// T3 Code's releases over P4 Bot.
+const CLI_RELEASE_REPOSITORY = "pnll1991/p4-bot";
 export const CLI_RELEASES_PAGE_URL = `https://github.com/${CLI_RELEASE_REPOSITORY}/releases`;
 export const CLI_RELEASE_CHECKSUMS_FILE = "SHA256SUMS";
 export const CLI_RELEASE_BASE_URL_ENV = "T3CODE_RELEASE_BASE_URL";
