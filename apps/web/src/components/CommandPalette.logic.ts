@@ -592,6 +592,7 @@ export function filterCommandPaletteGroups(
       readonly nestedItems: ReadonlyArray<CommandPaletteActionItem>;
     };
     projectSearchItems: ReadonlyArray<CommandPaletteActionItem>;
+    botSearchItems?: ReadonlyArray<CommandPaletteActionItem>;
     settingsSearchItems?: ReadonlyArray<CommandPaletteActionItem>;
     threadSearchItems: ReadonlyArray<CommandPaletteActionItem>;
     /** Threads whose messages match, best first; threads already listed are skipped. */
@@ -634,14 +635,21 @@ export function filterCommandPaletteGroups(
 
   const searchableGroups = [...baseGroups];
   const searchesEverything = !input.isInSubmenu && !isActionsFilter;
-  // On equal match classes, groups keep this order: threads, what people search
-  // for most, right after commands.
+  // On equal match classes, groups keep this order: bots and threads, what people
+  // search for most, right after commands.
   if (searchesEverything) {
     if (input.allOptions && input.allOptions.nestedItems.length > 0) {
       searchableGroups.push({
         value: "nested-search",
         label: resolve(msg("Suggestions")),
         items: input.allOptions.nestedItems,
+      });
+    }
+    if (input.botSearchItems && input.botSearchItems.length > 0) {
+      searchableGroups.push({
+        value: "bots-search",
+        label: resolve(msg("Bots")),
+        items: input.botSearchItems,
       });
     }
     if (input.threadSearchItems.length > 0) {

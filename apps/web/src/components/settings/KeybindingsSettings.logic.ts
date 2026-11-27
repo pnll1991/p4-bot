@@ -487,6 +487,7 @@ const COMMAND_LABELS: Partial<Record<KeybindingCommand, string>> = {
   "filePicker.toggle": msg("File Picker: Toggle"),
   "projectSearch.toggle": msg("Project Search: Toggle"),
   "usage.open": msg("Usage: Toggle"),
+  "bots.new": msg("Bots: New Bot"),
   "theme.select": msg("Theme: Select"),
   "appearance.cycle": msg("Appearance: Cycle"),
   "themeEditor.toggle": msg("Theme Editor: Toggle"),

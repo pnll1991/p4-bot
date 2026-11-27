@@ -471,6 +471,34 @@ describe("buildThreadActionItems", () => {
     expect(labels("lake")).toEqual(["Threads", "Projects"]);
   });
 
+  it("lists a bot above a thread that matches its name as well", () => {
+    const threadSearchItems = buildThreadActionItems({
+      threads: [makeThread({ title: "Comprador" })],
+      projectByKey: new Map(),
+      icon: null,
+      runThread: async () => undefined,
+    });
+    const botSearchItems = [
+      {
+        kind: "action" as const,
+        value: "bot:project-comprador",
+        searchTerms: ["Comprador"],
+        title: "Comprador",
+        icon: null,
+        run: async () => undefined,
+      },
+    ];
+    const groups = filterCommandPaletteGroups({
+      activeGroups: [],
+      query: "comprador",
+      isInSubmenu: false,
+      projectSearchItems: [],
+      botSearchItems,
+      threadSearchItems,
+    });
+    expect(groups.map((group) => group.label)).toEqual(["Bots", "Threads"]);
+  });
+
   it("keeps a command first over a thread in daily use that matches as well", () => {
     const now = Date.parse("2026-10-23T00:00:00.000Z");
     const threadSearchItems = buildThreadActionItems({

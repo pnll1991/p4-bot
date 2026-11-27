@@ -63,6 +63,7 @@ import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeftIcon,
+  BotIcon,
   BugIcon,
   ChartNoAxesColumnIcon,
   CheckIcon,
@@ -262,6 +263,7 @@ import {
   CommandPaletteThreadQueryContext,
   useCommandPaletteThreadItems,
 } from "./CommandPaletteThreadItems";
+import { useCommandPaletteBotItems } from "./CommandPaletteBotItems";
 import { useCommandPaletteSettingsItems } from "./CommandPaletteSettingsItems";
 import { useCommandPaletteThemeItems } from "./CommandPaletteThemeItems";
 import {
@@ -513,6 +515,9 @@ function OpenCommandPaletteDialog(props: {
   const desktopLocalBootstraps = useDesktopLocalBootstraps();
   const primaryEnvironmentId = usePrimaryEnvironmentId();
   const settingsSearchItems = useCommandPaletteSettingsItems(deferredQuery.trim().length > 0);
+  const { botItems: botSearchItems, isBotProject } = useCommandPaletteBotItems(
+    deferredQuery.trim().length > 0,
+  );
   const { activeDraftThread, activeThread, defaultProjectRef, handleNewThread } =
     useHandleNewThread();
   const paletteRouteTarget = useThreadRouteTarget();
@@ -909,7 +914,9 @@ function OpenCommandPaletteDialog(props: {
   const projectSearchItems = useOrderWhileOpen(
     buildProjectSearchItems(
       {
-        projects: pickerProjects,
+        projects: pickerProjects.filter(
+          (project) => !isBotProject(project.environmentId, project.id),
+        ),
         projectGroupByTargetKey,
         locationByEnvironmentId: projectEnvironmentLocationById,
         runProject: openProjectFromSearch,
@@ -1803,6 +1810,18 @@ function OpenCommandPaletteDialog(props: {
 
   actionItems.push({
     kind: "action",
+    value: "action:new-bot",
+    searchTerms: ["new bot", "create bot", "bot", "agent", "assistant"],
+    title: gt("New bot"),
+    icon: <BotIcon className={ITEM_ICON_CLASS} />,
+    shortcutCommand: "bots.new",
+    run: async () => {
+      await navigate({ to: "/bots" });
+    },
+  });
+
+  actionItems.push({
+    kind: "action",
     value: "action:usage",
     searchTerms: ["usage", "use", "tokens", "cost", "spend", "limits", "stats", "analytics"],
     title: gt("Open usage"),
@@ -1942,6 +1961,7 @@ function OpenCommandPaletteDialog(props: {
           }
         : {}),
       projectSearchItems: projectSearchItems,
+      botSearchItems,
       settingsSearchItems,
       threadSearchItems:
         isLinkedThreadSearch && linkedThreadSearch?.linkedThreads
