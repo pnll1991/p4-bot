@@ -12,6 +12,7 @@ P4 Bot is an open-source control plane for coding agents. It gives the coding ag
 - **P4 Bot is not a harness**: It drives the agent harnesses you already have—Claude Code, Codex, Cursor, Grok Build, Google Antigravity, OpenCode, Kiro, Pi, Muse Code, fx, or any [ACP](./providers-acp.md) agent. You can switch providers or models mid-thread and even let one agent delegate tasks to another.
 - **Projects**: A project points to a folder on an environment (a single Git repo, a [multi-repo folder](./multi-repo-projects.md), or a plain folder). You can also start scratch threads [without a project](./thread-sidebar.md#start-without-a-project).
 - **Threads & Worktrees**: Each task gets its own **thread**. Run a thread in the project's main checkout, or choose **New worktree** to give it an isolated Git branch and working directory so multiple agents can work in parallel without stepping on each other.
+- **Bots**: A [bot](./bots.md) is a persistent agent with its own folder, sign-in, memory, routines and action rules, kept as one ongoing conversation.
 - **Permission modes**: Control per thread whether an agent asks before acting (**Supervised**), auto-approves file edits (**Auto-accept edits**), uses provider auto-review (**Auto**), or runs without prompts (**Full access**).
 
 ## Prerequisites and expectations
@@ -43,6 +44,7 @@ P4 Bot is an open-source control plane for coding agents. It gives the coding ag
 
 ### Everyday workflow
 
+- [Bots](./bots.md) — Persistent agents with their own sign-in, memory, routines, permissions and action rules.
 - [Working with threads](./thread-sidebar.md) — Starting threads, scratch threads, pinning, settling, snoozing, archiving, and side chats.
 - [Messages and context](./composer.md) — Composer formatting, attachments, queueing/steering, `@` threads/models, `#` PRs, `/goal`, stash, and rewind.
 - [Permission modes](./permission-modes.md) — Supervised, Auto-accept edits, Auto, Full access, push-hook prompts, and provider differences.

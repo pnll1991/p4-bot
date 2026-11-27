@@ -64,6 +64,20 @@ provider cannot roll back its conversation, reject the revert before touching th
 Thread settlement is server-owned. Clients render persisted settlement state rather than deriving it
 from local clocks or PR caches.
 
+## Bots
+
+A bot is a managed project plus its own provider instance, turned off everywhere except in that
+project's settings override, so its sign-in cannot be used by other threads and its threads cannot
+use another sign-in. Its profile (`bot.json`: rules, permissions, arrangement) and decision log live
+under the P4 Bot home's `bots/` folder, outside the bot's workspace, so the agent's own work in its
+folder never touches its rules or permissions. Keep them there. Memory lives in the workspace
+(`memory/`) because the agent reads and writes it.
+
+Bot changes are [BotDesk](../../apps/server/src/bot/BotDesk.ts) methods that do every step on the
+server, and profile edits go through one serialized read-and-write. Action rules
+([BotGuard](../../apps/server/src/bot/BotGuard.ts)) only decline approval requests, never approve
+one, so they add nothing in Full access and must not be presented as a sandbox.
+
 ## Desktop process isolation
 
 Native modules never load on the Electron main process startup path. Native capabilities that can

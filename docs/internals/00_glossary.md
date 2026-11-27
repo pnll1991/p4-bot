@@ -40,3 +40,9 @@ Shared vocabulary across P4 Bot. Architecture and lifecycle constraints belong i
 | Runtime mode      | The thread's permission policy. See [permission modes](../user/permission-modes.md).                         |
 | Interaction mode  | How the agent approaches the task, such as planning. Separate from permission policy.                        |
 | Checkpoint        | A saved workspace state used for diffs and restore, stored as a hidden Git ref.                              |
+
+## Bots
+
+| Term | Meaning                                                                                                                                                                                       |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bot  | A persistent agent: a managed project, a provider instance enabled only in that project, and a profile under the P4 Bot home's `bots/` folder. See [architecture](./01_architecture.md#bots). |
