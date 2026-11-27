@@ -293,8 +293,9 @@ it.layer(NodeServices.layer)("migrate-dev-db", (it) => {
   it.effect("refuses the live P4 Bot database when no shared home is given", () =>
     Effect.gen(function* () {
       const path = yield* Path.Path;
-      assert.equal(path.basename(liveHome()), ".p4");
-      const live = path.join(liveHome(), "userdata", "statev2.sqlite");
+      const home = yield* liveHome;
+      assert.equal(path.basename(home), ".p4");
+      const live = path.join(home, "userdata", "statev2.sqlite");
       const refused = yield* Effect.flip(dropResumableFamilies(live));
       assert.equal(refused._tag, "MigrateDevDbSharedHomeError");
     }),
