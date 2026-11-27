@@ -1,4 +1,8 @@
-import { readableApprovalPrompt } from "@t3tools/shared/approvalPrompt";
+import {
+  botMessageRecipient,
+  readableApprovalTitle,
+  readApprovalPrompt,
+} from "@t3tools/shared/approvalPrompt";
 import type {
   EnvironmentId,
   ScopedThreadRef,
@@ -58,6 +62,12 @@ export interface ThreadPendingApproval {
   readonly requestKind: ProviderRequestKind;
   readonly createdAt: string;
   readonly detail?: string;
+  /** `detail` lists a tool's arguments rather than naming the command, file or URL it acts on. */
+  readonly detailIsArgumentList?: true;
+  /** What the provider calls this request, such as "Allow <tool>?". */
+  readonly title?: string;
+  /** Set when a bot asks to write to another bot: that bot's name. */
+  readonly botMessageTo?: string;
   readonly reason?: string;
   readonly fullAccessOverride?: ProviderApprovalFullAccessOverride;
   readonly appName?: string;
@@ -527,13 +537,22 @@ export function derivePendingThreadRequests(
     const item = projection.turnItems.findLast(
       (candidate) => candidate.type === "approval_request" && candidate.requestId === request.id,
     );
+    const prompt =
+      item?.type === "approval_request" && item.prompt ? readApprovalPrompt(item.prompt) : null;
+    const botMessageTo =
+      item?.type === "approval_request" && item.prompt
+        ? botMessageRecipient(item.title, item.prompt)
+        : null;
     approvals.push({
       requestId: request.id,
       requestKind: request.kind,
       createdAt: DateTime.formatIso(request.createdAt),
-      ...(item?.type === "approval_request" && item.prompt
-        ? { detail: readableApprovalPrompt(item.prompt) }
+      ...(prompt ? { detail: prompt.text } : {}),
+      ...(prompt?.argumentList ? { detailIsArgumentList: true as const } : {}),
+      ...(item?.type === "approval_request" && item.title
+        ? { title: readableApprovalTitle(item.title) }
         : {}),
+      ...(botMessageTo === null ? {} : { botMessageTo }),
       ...(item?.type === "approval_request" && item.reason ? { reason: item.reason } : {}),
       ...(item?.type === "approval_request" && item.fullAccessOverride
         ? { fullAccessOverride: item.fullAccessOverride }

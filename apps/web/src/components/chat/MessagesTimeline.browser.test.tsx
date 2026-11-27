@@ -2670,6 +2670,76 @@ it("shows an approval's characters that a screen would not draw, and the beginni
   expect(cut!.textContent).not.toContain("Scroll to read");
 });
 
+it("folds a tool's argument list behind Details and keeps Approve and Decline in view", async () => {
+  setup();
+  const fixture = makeStreamingTimelineFixture();
+  await using screen = await renderElement(
+    <MessagesTimeline
+      {...baseProps()}
+      timelineEntries={[]}
+      pendingApprovals={[
+        {
+          requestId: RuntimeRequestId.make("args"),
+          requestKind: "command",
+          createdAt: fixture.time(6),
+          detail: "name: Anuncios\npersona: a long persona",
+          detailIsArgumentList: true,
+          responseCapability: "live",
+        },
+      ]}
+      canOperateThread
+      onRespondToApproval={async () => {}}
+    />,
+  );
+  const card = screen.getByRole("group", { name: "Command approval" });
+  await expect.element(card.getByRole("button", { name: "Decline" })).toBeVisible();
+  expect(card.element().querySelector("[data-approval-detail]")).toBeNull();
+  expect(card.element().textContent).not.toContain("Waiting for approval");
+
+  await card.getByRole("button", { name: "Details" }).click();
+  await expect.element(card.getByText("name: Anuncios", { exact: false })).toBeVisible();
+  await card.getByRole("button", { name: "Hide details" }).click();
+  await vi.waitFor(() => expect(card.element().querySelector("[data-approval-detail]")).toBeNull());
+});
+
+it("titles a folded approval, naming the bot a bot would message", async () => {
+  setup();
+  const fixture = makeStreamingTimelineFixture();
+  await using screen = await renderElement(
+    <MessagesTimeline
+      {...baseProps()}
+      timelineEntries={[]}
+      pendingApprovals={[
+        {
+          requestId: RuntimeRequestId.make("bot-message"),
+          requestKind: "command",
+          createdAt: fixture.time(6),
+          detail: "message: Le falta leche.\nto: Ana",
+          detailIsArgumentList: true,
+          title: "Allow p4_bot_message?",
+          botMessageTo: "Ana",
+          responseCapability: "live",
+        },
+        {
+          requestId: RuntimeRequestId.make("other-tool"),
+          requestKind: "command",
+          createdAt: fixture.time(7),
+          detail: "title: Bug",
+          detailIsArgumentList: true,
+          title: "Allow create_issue?",
+          responseCapability: "live",
+        },
+      ]}
+      canOperateThread
+      onRespondToApproval={async () => {}}
+    />,
+  );
+  const [botMessage, otherTool] = screen.getByRole("group", { name: "Command approval" }).all();
+  await expect.element(botMessage!.getByText("Message to Ana")).toBeVisible();
+  expect(botMessage!.element().textContent).not.toContain("p4_bot_message");
+  await expect.element(otherTool!.getByText("Allow create_issue?")).toBeVisible();
+});
+
 it("shows a character a screen would not draw at the very end of an approval", async () => {
   setup();
   const fixture = makeStreamingTimelineFixture();

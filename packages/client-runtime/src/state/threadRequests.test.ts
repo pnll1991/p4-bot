@@ -1,4 +1,9 @@
-import { readableApprovalPrompt } from "@t3tools/shared/approvalPrompt";
+import {
+  botMessageRecipient,
+  readApprovalPrompt,
+  readableApprovalPrompt,
+  readableApprovalTitle,
+} from "@t3tools/shared/approvalPrompt";
 import { presentThreadShell } from "./models.ts";
 import { threadKey } from "./entities.ts";
 import {
@@ -967,5 +972,28 @@ describe("readableApprovalPrompt", () => {
   it("leaves prose and malformed JSON as they are", () => {
     expect(readableApprovalPrompt("Allow bash?")).toBe("Allow bash?");
     expect(readableApprovalPrompt("{ not json")).toBe("{ not json");
+  });
+
+  it("says when the text only lists a tool's arguments", () => {
+    expect(readApprovalPrompt('{"name": "Anuncios", "model": "x"}').argumentList).toBe(true);
+    expect(readApprovalPrompt('{"command": "ls", "timeout": 5}').argumentList).toBe(false);
+    expect(readApprovalPrompt("ls -la").argumentList).toBe(false);
+  });
+});
+
+describe("approval titles", () => {
+  it("drops MCP server prefixes from the provider's title", () => {
+    expect(readableApprovalTitle("Allow mcp__t3-code__p4_bot_message?")).toBe(
+      "Allow p4_bot_message?",
+    );
+    expect(readableApprovalTitle("Allow bash?")).toBe("Allow bash?");
+  });
+
+  it("names the bot a p4_bot_message approval writes to, and nothing else", () => {
+    const prompt = '{"message": "Le falta leche.", "to": " Ana "}';
+    expect(botMessageRecipient("Allow mcp__t3-code__p4_bot_message?", prompt)).toBe("Ana");
+    expect(botMessageRecipient("Allow mcp__t3-code__p4_bot_messages?", prompt)).toBeNull();
+    expect(botMessageRecipient("Allow bash?", prompt)).toBeNull();
+    expect(botMessageRecipient("Allow mcp__t3-code__p4_bot_message?", "{ not json")).toBeNull();
   });
 });
