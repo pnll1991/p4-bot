@@ -53,11 +53,9 @@ export const installCli = Effect.fn("cli.install.install")(function* () {
   const runtime = yield* standaloneRuntime;
   const windows = platform === "win32";
   if (Option.isNone(runtime)) {
-    const script = windows
-      ? "irm https://t3.codes/install.ps1 | iex"
-      : "curl -fsSL https://t3.codes/install.sh | sh";
     return yield* new CliInstallError({
-      reason: `Only the standalone t3 can install itself. Use \`${script}\`, or Settings in the desktop app.`,
+      reason:
+        "Only the standalone t3 can install itself. P4 Bot publishes no installer yet: build it from source (https://github.com/pnll1991/p4-bot), or use Settings in the desktop app.",
     });
   }
   const { executable, versionsDir, runtimeDir } = runtime.value;

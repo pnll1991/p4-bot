@@ -350,14 +350,14 @@ function TelemetryNotice({ environmentId }: { readonly environmentId: Environmen
     <p className="mt-auto pt-12 text-2xs leading-relaxed text-muted-foreground/70">
       {telemetryOff === undefined ? (
         <T>
-          P4 Bot collects anonymous usage data to improve the app. To opt out, see the{" "}
+          P4 Bot sends no usage data unless you set up your own collection. See the{" "}
           <a
             className="underline decoration-current/40 underline-offset-2 hover:text-muted-foreground"
             href={PRIVACY_POLICY_URL}
             target="_blank"
             rel="noreferrer noopener"
           >
-            privacy policy
+            usage data page
           </a>
           .
         </T>
@@ -372,7 +372,7 @@ function TelemetryNotice({ environmentId }: { readonly environmentId: Environmen
               target="_blank"
               rel="noreferrer noopener"
             >
-              privacy policy
+              usage data page
             </a>
             .
           </T>

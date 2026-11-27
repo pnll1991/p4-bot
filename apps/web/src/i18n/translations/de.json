@@ -2261,21 +2261,20 @@
   "bc8ab792af1d656f": "Auf deinem Computer ausführen:",
   "0ba14e4e920cfa00": "Oder lade die Desktop-App herunter",
   "0e79b7a6508a6286": "Dann",
-  "363b9991fa23d36b": [
-    "Überspringe die Installation, wenn du ",
+  "21778197e6b46484": [
+    "Überspringe das Bauen, wenn du das ",
     {
       "t": "code",
       "i": 1,
       "c": "t3"
     },
-    " bereits hast. Wenn",
-    " ",
+    " von P4 Bot schon hast. Zum Bauen brauchst du ",
     {
       "t": "code",
       "i": 2,
-      "c": "t3"
+      "c": "vp"
     },
-    " nach der Installation nicht gefunden wird, füge den Ordner, den das Installationsprogramm nennt, zu deinem PATH hinzu."
+    " (Vite+)."
   ],
   "87b24d00c08f54bb": "Tastenkürzel-Datei kann nicht geöffnet werden",
   "0ee16208cbfcdbf4": "Unbekannter Fehler beim Öffnen der Datei.",
@@ -6377,23 +6376,23 @@
   ],
   "216ab7514aea1d61": "Ohne Agenten starten",
   "501ce2d99da8bfd1": "Richte einen Agenten ein, um zu starten.",
-  "c322fd8a785821bb": [
-    "P4 Bot erfasst anonyme Nutzungsdaten, um die App zu verbessern. Wie du widersprichst, steht in der",
+  "63b1de502960ed73": [
+    "P4 Bot sendet keine Nutzungsdaten, außer du richtest deine eigene Erfassung ein. Siehe die",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "Datenschutzerklärung"
+      "c": "Seite zu Nutzungsdaten"
     },
     "."
   ],
-  "b33f35083757b42c": [
-    "Siehe",
+  "8da2ee1d6e248f58": [
+    "Siehe die",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "Datenschutzerklärung"
+      "c": "Seite zu Nutzungsdaten"
     },
     "."
   ],
@@ -9220,10 +9219,8 @@
   "0be6b2546df12f66": "Stoppen",
   "7dbd7e8943e8931f": "Mikrofon wird geöffnet…",
   "efa31f38b611e912": "Diese Aufnahme konnte nicht abgespielt werden. Versuch erneut aufzunehmen.",
-  "0cebac0a2a6bdc99": "iPhone und iPad",
-  "d797c9687a256a50": "Verbinde dich von deinem Smartphone oder Tablet mit deinem Server.",
-  "c21858dee1b62639": "{store}-Link",
-  "cdcdc54a444a3636": "Mit der Kamera deines Smartphones scannen.",
+  "ace8149a4ec83eb1": "Verbinde dich vom Smartphone oder Tablet mit deinem Server. P4 Bot hat noch keine App im Store: baue sie aus dem Quellcode.",
+  "6c51ca24a0ef3c96": "So baust du sie",
   "0c8f65b5375cc7ca": [
     "Wir raten davon ab, mehrere ",
     {
@@ -10426,7 +10423,7 @@
   "c424bee294b9f778": "Diese Umgebung wird von {organization} verwaltet. Einige Einstellungen und Funktionen folgen deren Richtlinie.",
   "82d9538af590f58c": "Sieh deine Agenten, importiere Projekte und richte dein Smartphone ein.",
   "6a48fd0a37e725a1": "Rechtliches",
-  "7516cf4669200cc8": "Wie wir mit deinen Daten umgehen, einschließlich der anonymen Nutzungsdaten, die P4 Bot erfasst.",
+  "c387adbf3adbff80": "Welche Nutzungsdaten P4 Bot senden kann. Es sendet keine, außer du richtest deine eigene Erfassung ein.",
   "e741b1ab9396053a": "Wie wir mit deinen Daten umgehen. {telemetryOff}",
   "cbe6a90600052321": "Hinweise zu Abhängigkeiten, Assets und optionalen Tools, die P4 Bot verwendet.",
   "e39a57514be028e9": "Review",
@@ -10456,7 +10453,7 @@
   "5fe5a45199fa9c07": "Keine Anbieter für Textgenerierung verfügbar.",
   "99ceba64591c9257": "Diagnose anzeigen",
   "eb576a5feda7b535": "Öffnen",
-  "66647e8c8123a51f": "Richtlinie anzeigen",
+  "22b99825e8a1eb24": "Mehr erfahren",
   "6d59e1e516e53d17": "Lizenzen anzeigen",
   "941d08db15f62d17": "Archiviert",
   "e122b2428c0d03a5": "Alle Umgebungen öffnen",
@@ -12109,7 +12106,7 @@
   "dc2a999ca67ccf31": "telefon tablet iPhone iPad iOS Android App Store Google Play QR",
   "6310b97b04ef239f": "Willkommensseite",
   "df9fa3a9cb004b9b": "onboarding einrichtung erster start erste schritte agenten import projekte",
-  "3188bc3b3c4508bc": "Datenschutzerklärung",
+  "7065ed3cb54fd318": "Nutzungsdaten",
   "901a823214edc8c4": "telemetrie analyse nutzungsdaten tracking rechtliches deaktivieren",
   "82136480255a5106": "OTel OTLP telemetrie export endpunkte logs traces metriken Grafana",
   "659d081051faf7ff": "logs traces prozesse ressourcenverlauf fehler spans cpu speicher",

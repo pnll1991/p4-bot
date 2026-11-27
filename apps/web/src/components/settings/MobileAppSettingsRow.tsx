@@ -1,72 +1,28 @@
-import { msg, T, useGT, useMessages, Var } from "gt-react";
+import { T, useGT } from "gt-react";
 
-import { AndroidIcon, AppleIcon } from "../Icons";
+import { MOBILE_APP_URL } from "../../branding";
 import { Button } from "../ui/button";
-import { Popover, PopoverPopup, PopoverTitle, PopoverTrigger } from "../ui/popover";
-import { QRCodeSvg } from "../ui/qr-code";
 import { SettingsRow } from "./settingsLayout";
 import { useSearchableSetting } from "./settingsSearch";
 
-const stores = [
-  {
-    label: msg("iPhone and iPad"),
-    store: "App Store",
-    url: "https://apps.apple.com/us/app/t3-code-remote-claude-more/id6787819824",
-    Icon: AppleIcon,
-  },
-  {
-    label: "Android",
-    store: "Google Play",
-    url: "https://play.google.com/store/apps/details?id=com.t3tools.t3code",
-    Icon: AndroidIcon,
-  },
-];
-
+// P4 Bot publishes no mobile app; the store listings are T3 Code's, so this points at the build.
 export function MobileAppSettingsRow() {
   const searchableSetting = useSearchableSetting();
   const gt = useGT();
-  const m = useMessages();
   return (
     <SettingsRow
       {...searchableSetting("mobile-app")}
-      description={gt("Connect to your server from your phone or tablet.")}
+      description={gt(
+        "Connect to your server from your phone or tablet. P4 Bot has no store app yet: build it from source.",
+      )}
       control={
-        <div className="flex items-center gap-2">
-          {stores.map(({ label, store, url, Icon }) => (
-            <Popover key={store}>
-              <PopoverTrigger render={<Button size="sm" variant="outline" />}>
-                <Icon />
-                {m(label)}
-              </PopoverTrigger>
-              <PopoverPopup align="end">
-                <div className="flex flex-col items-center gap-3">
-                  <PopoverTitle>{store}</PopoverTitle>
-                  <p className="text-xs text-muted-foreground">
-                    <T>Scan with your phone camera.</T>
-                  </p>
-                  <div className="rounded-lg bg-white p-1.5">
-                    <QRCodeSvg
-                      value={url}
-                      size={128}
-                      level="M"
-                      marginSize={1}
-                      title={gt("{store} link", { store })}
-                    />
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    render={<a href={url} target="_blank" rel="noreferrer noopener" />}
-                  >
-                    <T>
-                      Open <Var>{store}</Var>
-                    </T>
-                  </Button>
-                </div>
-              </PopoverPopup>
-            </Popover>
-          ))}
-        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          render={<a href={MOBILE_APP_URL} target="_blank" rel="noreferrer noopener" />}
+        >
+          <T>How to build</T>
+        </Button>
       }
     />
   );

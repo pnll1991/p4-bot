@@ -2261,21 +2261,20 @@
   "bc8ab792af1d656f": "Run on your computer:",
   "0ba14e4e920cfa00": "Or download the desktop app",
   "0e79b7a6508a6286": "Then",
-  "363b9991fa23d36b": [
-    "Skip the install if you already have ",
+  "21778197e6b46484": [
+    "Skip the build if you already have P4 Bot's ",
     {
       "t": "code",
       "i": 1,
       "c": "t3"
     },
-    ". If",
-    " ",
+    ". Building needs ",
     {
       "t": "code",
       "i": 2,
-      "c": "t3"
+      "c": "vp"
     },
-    " is not found after installing, add the folder the installer names to your PATH."
+    " (Vite+)."
   ],
   "87b24d00c08f54bb": "Unable to open keybindings file",
   "0ee16208cbfcdbf4": "Unknown error opening file.",
@@ -6380,23 +6379,23 @@
   ],
   "216ab7514aea1d61": "Start without an agent",
   "501ce2d99da8bfd1": "Set up one agent to start.",
-  "c322fd8a785821bb": [
-    "P4 Bot collects anonymous usage data to improve the app. To opt out, see the",
+  "63b1de502960ed73": [
+    "P4 Bot sends no usage data unless you set up your own collection. See the",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "privacy policy"
+      "c": "usage data page"
     },
     "."
   ],
-  "b33f35083757b42c": [
+  "8da2ee1d6e248f58": [
     "See the",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "privacy policy"
+      "c": "usage data page"
     },
     "."
   ],
@@ -9228,10 +9227,8 @@
   "0be6b2546df12f66": "Stop",
   "7dbd7e8943e8931f": "Opening microphone…",
   "efa31f38b611e912": "Could not play this recording. Try recording again.",
-  "0cebac0a2a6bdc99": "iPhone and iPad",
-  "d797c9687a256a50": "Connect to your server from your phone or tablet.",
-  "c21858dee1b62639": "{store} link",
-  "cdcdc54a444a3636": "Scan with your phone camera.",
+  "ace8149a4ec83eb1": "Connect to your server from your phone or tablet. P4 Bot has no store app yet: build it from source.",
+  "6c51ca24a0ef3c96": "How to build",
   "0c8f65b5375cc7ca": [
     "We do not recommend managing multiple ",
     {
@@ -10435,7 +10432,7 @@
   "c424bee294b9f778": "This environment is managed by {organization}. Some settings and features follow its policy.",
   "82d9538af590f58c": "See your agents, import projects, and set up your phone.",
   "6a48fd0a37e725a1": "Legal",
-  "7516cf4669200cc8": "How we handle your data, including the anonymous usage data P4 Bot collects.",
+  "c387adbf3adbff80": "What usage data P4 Bot can send. It sends none unless you set up your own collection.",
   "e741b1ab9396053a": "How we handle your data. {telemetryOff}",
   "cbe6a90600052321": "Notices for dependencies, assets, and optional tools used by P4 Bot.",
   "e39a57514be028e9": "Review",
@@ -10465,7 +10462,7 @@
   "5fe5a45199fa9c07": "No text generation providers available.",
   "99ceba64591c9257": "View diagnostics",
   "eb576a5feda7b535": "Open",
-  "66647e8c8123a51f": "View policy",
+  "22b99825e8a1eb24": "Learn more",
   "6d59e1e516e53d17": "View licenses",
   "941d08db15f62d17": "Archived",
   "e122b2428c0d03a5": "Open all environments",
@@ -12117,7 +12114,7 @@
   "dc2a999ca67ccf31": "phone tablet iPhone iPad iOS Android App Store Google Play QR",
   "6310b97b04ef239f": "Welcome page",
   "df9fa3a9cb004b9b": "onboarding setup first run getting started agents import projects",
-  "3188bc3b3c4508bc": "Privacy policy",
+  "7065ed3cb54fd318": "Usage data",
   "901a823214edc8c4": "telemetry analytics usage data tracking legal opt out",
   "82136480255a5106": "OTel OTLP telemetry export endpoints logs traces metrics Grafana",
   "659d081051faf7ff": "logs traces processes resource history failures spans cpu memory",

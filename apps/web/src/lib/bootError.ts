@@ -1,8 +1,9 @@
 import type { DesktopBridge, DesktopUpdateState } from "@t3tools/contracts";
 
-const FALLBACK_TRIAGE_COMMAND = "npx t3 triage";
-const DOWNLOAD_URL = "https://t3.codes/download";
-const ISSUE_URL = "https://github.com/pingdotgg/t3code/issues/new";
+const FALLBACK_TRIAGE_COMMAND = "t3 triage";
+const DOWNLOAD_URL =
+  "https://github.com/pnll1991/p4-bot/blob/colmena/main/docs/user/install.md#build-from-source";
+const ISSUE_URL = "https://github.com/pnll1991/p4-bot/issues/new";
 const LAST_FAILURE_KEY = "t3code:boot-failed-at";
 const REPEAT_FAILURE_MS = 5 * 60_000;
 const MAX_CAUSES = 3;

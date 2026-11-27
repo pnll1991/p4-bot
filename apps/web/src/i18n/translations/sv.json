@@ -2261,21 +2261,20 @@
   "bc8ab792af1d656f": "Kör på din dator:",
   "0ba14e4e920cfa00": "Eller ladda ned skrivbordsappen",
   "0e79b7a6508a6286": "Sedan",
-  "363b9991fa23d36b": [
-    "Hoppa över installationen om du redan har ",
+  "21778197e6b46484": [
+    "Hoppa över bygget om du redan har P4 Bots ",
     {
       "t": "code",
       "i": 1,
       "c": "t3"
     },
-    ". Om",
-    " ",
+    ". För att bygga behövs ",
     {
       "t": "code",
       "i": 2,
-      "c": "t3"
+      "c": "vp"
     },
-    " inte hittas efter installationen, lägg till mappen som installationsprogrammet anger i din PATH."
+    " (Vite+)."
   ],
   "87b24d00c08f54bb": "Det gick inte att öppna filen med kortkommandon",
   "0ee16208cbfcdbf4": "Okänt fel när filen öppnades.",
@@ -6379,23 +6378,23 @@
   ],
   "216ab7514aea1d61": "Starta utan agent",
   "501ce2d99da8bfd1": "Konfigurera en agent för att starta.",
-  "c322fd8a785821bb": [
-    "P4 Bot samlar in anonym användningsdata för att förbättra appen. Se",
+  "63b1de502960ed73": [
+    "P4 Bot skickar inga användningsdata om du inte ställer in din egen insamling. Se",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "integritetspolicyn"
+      "c": "sidan om användningsdata"
     },
-    " för att välja bort det."
+    "."
   ],
-  "b33f35083757b42c": [
+  "8da2ee1d6e248f58": [
     "Se",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "integritetspolicyn"
+      "c": "sidan om användningsdata"
     },
     "."
   ],
@@ -9226,10 +9225,8 @@
   "0be6b2546df12f66": "Stoppa",
   "7dbd7e8943e8931f": "Öppnar mikrofonen…",
   "efa31f38b611e912": "Kunde inte spela upp inspelningen. Försök spela in igen.",
-  "0cebac0a2a6bdc99": "iPhone och iPad",
-  "d797c9687a256a50": "Anslut till din server från din telefon eller surfplatta.",
-  "c21858dee1b62639": "Länk till {store}",
-  "cdcdc54a444a3636": "Skanna med telefonens kamera.",
+  "ace8149a4ec83eb1": "Anslut till din server från telefonen eller surfplattan. P4 Bot har ingen app i butikerna än: bygg den från källkoden.",
+  "6c51ca24a0ef3c96": "Så bygger du den",
   "0c8f65b5375cc7ca": [
     "Vi rekommenderar inte att du hanterar flera ",
     {
@@ -10433,7 +10430,7 @@
   "c424bee294b9f778": "Miljön hanteras av {organization}. Vissa inställningar och funktioner följer dess policy.",
   "82d9538af590f58c": "Se dina agenter, importera projekt och konfigurera din telefon.",
   "6a48fd0a37e725a1": "Juridiskt",
-  "7516cf4669200cc8": "Hur vi hanterar dina data, inklusive de anonyma användningsdata som P4 Bot samlar in.",
+  "c387adbf3adbff80": "Vilka användningsdata P4 Bot kan skicka. Den skickar inga om du inte ställer in din egen insamling.",
   "e741b1ab9396053a": "Hur vi hanterar dina data. {telemetryOff}",
   "cbe6a90600052321": "Meddelanden för beroenden, resurser och valfria verktyg som P4 Bot använder.",
   "e39a57514be028e9": "Granska",
@@ -10463,7 +10460,7 @@
   "5fe5a45199fa9c07": "Inga leverantörer för textgenerering tillgängliga.",
   "99ceba64591c9257": "Visa diagnostik",
   "eb576a5feda7b535": "Öppna",
-  "66647e8c8123a51f": "Visa policy",
+  "22b99825e8a1eb24": "Läs mer",
   "6d59e1e516e53d17": "Visa licenser",
   "941d08db15f62d17": "Arkiverat",
   "e122b2428c0d03a5": "Öppna alla miljöer",
@@ -12115,7 +12112,7 @@
   "dc2a999ca67ccf31": "telefon surfplatta iPhone iPad iOS Android App Store Google Play QR",
   "6310b97b04ef239f": "Välkomstsida",
   "df9fa3a9cb004b9b": "introduktion konfiguration första start kom igång agenter importera projekt",
-  "3188bc3b3c4508bc": "Integritetspolicy",
+  "7065ed3cb54fd318": "Användningsdata",
   "901a823214edc8c4": "telemetri analys användningsdata spårning juridiskt avböj",
   "82136480255a5106": "OTel OTLP telemetri export slutpunkter loggar spår mätvärden Grafana",
   "659d081051faf7ff": "loggar spår processer resurshistorik fel spans cpu minne",

@@ -2261,21 +2261,20 @@
   "bc8ab792af1d656f": "Exécutez sur votre ordinateur :",
   "0ba14e4e920cfa00": "Ou téléchargez l’app desktop",
   "0e79b7a6508a6286": "Puis",
-  "363b9991fa23d36b": [
-    "Ignorez l’installation si vous avez déjà ",
+  "21778197e6b46484": [
+    "Passez la compilation si vous avez déjà le ",
     {
       "t": "code",
       "i": 1,
       "c": "t3"
     },
-    ". Si",
-    " ",
+    " de P4 Bot. La compilation nécessite ",
     {
       "t": "code",
       "i": 2,
-      "c": "t3"
+      "c": "vp"
     },
-    " est introuvable après l’installation, ajoutez à votre PATH le dossier indiqué par l’installateur."
+    " (Vite+)."
   ],
   "87b24d00c08f54bb": "Impossible d’ouvrir le fichier des raccourcis clavier",
   "0ee16208cbfcdbf4": "Erreur inconnue à l’ouverture du fichier.",
@@ -6379,23 +6378,23 @@
   ],
   "216ab7514aea1d61": "Commencer sans agent",
   "501ce2d99da8bfd1": "Configurez un agent pour commencer.",
-  "c322fd8a785821bb": [
-    "P4 Bot collecte des données d’utilisation anonymes pour améliorer l’app. Pour vous désinscrire, consultez la",
+  "63b1de502960ed73": [
+    "P4 Bot n'envoie aucune donnée d'utilisation, sauf si vous configurez votre propre collecte. Consultez la",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "politique de confidentialité"
+      "c": "page sur les données d'utilisation"
     },
     "."
   ],
-  "b33f35083757b42c": [
+  "8da2ee1d6e248f58": [
     "Consultez la",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "politique de confidentialité"
+      "c": "page sur les données d'utilisation"
     },
     "."
   ],
@@ -9220,10 +9219,8 @@
   "0be6b2546df12f66": "Arrêter",
   "7dbd7e8943e8931f": "Ouverture du microphone…",
   "efa31f38b611e912": "Impossible de lire cet enregistrement. Essayez de réenregistrer.",
-  "0cebac0a2a6bdc99": "iPhone et iPad",
-  "d797c9687a256a50": "Connectez-vous à votre serveur depuis votre téléphone ou votre tablette.",
-  "c21858dee1b62639": "Lien {store}",
-  "cdcdc54a444a3636": "Scannez avec l’appareil photo de votre téléphone.",
+  "ace8149a4ec83eb1": "Connectez-vous à votre serveur depuis votre téléphone ou tablette. P4 Bot n'a pas encore d'app dans les stores : compilez-la depuis les sources.",
+  "6c51ca24a0ef3c96": "Comment la compiler",
   "0c8f65b5375cc7ca": [
     "Nous déconseillons de gérer plusieurs comptes ",
     {
@@ -10425,7 +10422,7 @@
   "c424bee294b9f778": "Cet environnement est géré par {organization}. Certains paramètres et fonctionnalités suivent sa politique.",
   "82d9538af590f58c": "Voyez vos agents, importez des projets et configurez votre téléphone.",
   "6a48fd0a37e725a1": "Mentions légales",
-  "7516cf4669200cc8": "Comment nous traitons vos données, y compris les données d’utilisation anonymes collectées par P4 Bot.",
+  "c387adbf3adbff80": "Les données d'utilisation que P4 Bot peut envoyer. Il n'en envoie aucune, sauf si vous configurez votre propre collecte.",
   "e741b1ab9396053a": "Comment nous traitons vos données. {telemetryOff}",
   "cbe6a90600052321": "Mentions relatives aux dépendances, ressources et outils facultatifs utilisés par P4 Bot.",
   "e39a57514be028e9": "Consulter",
@@ -10455,7 +10452,7 @@
   "5fe5a45199fa9c07": "Aucun fournisseur de génération de texte disponible.",
   "99ceba64591c9257": "Voir les diagnostics",
   "eb576a5feda7b535": "Ouvrir",
-  "66647e8c8123a51f": "Voir la politique",
+  "22b99825e8a1eb24": "En savoir plus",
   "6d59e1e516e53d17": "Voir les licences",
   "941d08db15f62d17": "Archivé",
   "e122b2428c0d03a5": "Ouvrir tous les environnements",
@@ -12107,7 +12104,7 @@
   "dc2a999ca67ccf31": "téléphone tablette iPhone iPad iOS Android App Store Google Play QR",
   "6310b97b04ef239f": "Page d’accueil",
   "df9fa3a9cb004b9b": "prise en main configuration premier lancement démarrer agents importer projets",
-  "3188bc3b3c4508bc": "Politique de confidentialité",
+  "7065ed3cb54fd318": "Données d'utilisation",
   "901a823214edc8c4": "télémétrie analytique données d’utilisation suivi mentions légales refuser",
   "82136480255a5106": "OTel OTLP télémétrie export points de terminaison journaux traces métriques Grafana",
   "659d081051faf7ff": "journaux traces processus historique des ressources échecs spans cpu mémoire",

@@ -199,7 +199,7 @@ function namedProjectReadme(name: string): string {
     "",
     `# ${name}`,
     "",
-    "Created in [P4 Bot](https://t3.codes).",
+    "Created in [P4 Bot](https://github.com/pnll1991/p4-bot).",
     "",
   ].join("\n");
 }

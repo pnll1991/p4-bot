@@ -151,7 +151,7 @@ export const T3ProjectFile = Schema.Struct({
 }).annotate({
   title: "T3 project file",
   description:
-    "Checked-in project configuration for P4 Bot (t3.json at the repository root). See https://t3.codes for documentation.",
+    "Checked-in project configuration for P4 Bot (t3.json at the repository root). See https://github.com/pnll1991/p4-bot/blob/colmena/main/docs/user/t3-json.md for documentation.",
 });
 export type T3ProjectFile = typeof T3ProjectFile.Type;
 

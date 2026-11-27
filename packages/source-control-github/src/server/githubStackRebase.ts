@@ -73,7 +73,8 @@ export const cascadeRebaseStack = Effect.fn("cascadeRebaseStack")(function* (inp
     GIT_CONFIG_KEY_1: "user.name",
     GIT_CONFIG_VALUE_1: "P4 Bot",
     GIT_CONFIG_KEY_2: "user.email",
-    GIT_CONFIG_VALUE_2: "noreply@t3.codes",
+    // `.invalid` is reserved: the address belongs to no one, unlike a domain P4 Bot does not own.
+    GIT_CONFIG_VALUE_2: "noreply@p4-bot.invalid",
   };
   const git = (args: ReadonlyArray<string>, allowNonZeroExit = false) =>
     process.run({

@@ -1,4 +1,5 @@
-const DEFAULT_MARKETING_SITE_URL = "https://t3.codes";
+// P4 Bot has no website; its repository holds its license, security policy and data notes.
+const DEFAULT_MARKETING_SITE_URL = "https://github.com/pnll1991/p4-bot/blob/colmena/main";
 
 function resolveMarketingSiteUrl(override: string | undefined): URL {
   try {
@@ -22,10 +23,10 @@ function marketingSiteDocumentUrl(path: string): string {
   return new URL(path, MARKETING_SITE_URL).toString();
 }
 
-const PRIVACY_POLICY_URL = marketingSiteDocumentUrl("privacy-policy");
-const SECURITY_POLICY_URL = marketingSiteDocumentUrl("security-policy");
-const TERMS_OF_SERVICE_URL = marketingSiteDocumentUrl("terms-of-service");
-export const LEGAL_URL = marketingSiteDocumentUrl("legal");
+const PRIVACY_POLICY_URL = marketingSiteDocumentUrl("docs/user/telemetry.md");
+const SECURITY_POLICY_URL = marketingSiteDocumentUrl("SECURITY.md");
+const TERMS_OF_SERVICE_URL = marketingSiteDocumentUrl("LICENSE");
+export const LEGAL_URL = marketingSiteDocumentUrl("README.md");
 
 const ALLOWED_LEGAL_DOCUMENT_URLS = [
   LEGAL_URL,

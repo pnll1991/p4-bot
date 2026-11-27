@@ -2261,21 +2261,20 @@
   "bc8ab792af1d656f": "Execute no seu computador:",
   "0ba14e4e920cfa00": "Ou baixe o app para desktop",
   "0e79b7a6508a6286": "Depois",
-  "363b9991fa23d36b": [
-    "Pule a instalação se você já tem o ",
+  "21778197e6b46484": [
+    "Pule a compilação se você já tem o ",
     {
       "t": "code",
       "i": 1,
       "c": "t3"
     },
-    ". Se o",
-    " ",
+    " do P4 Bot. Para compilar é preciso ",
     {
       "t": "code",
       "i": 2,
-      "c": "t3"
+      "c": "vp"
     },
-    " não for encontrado após a instalação, adicione ao seu PATH a pasta indicada pelo instalador."
+    " (Vite+)."
   ],
   "87b24d00c08f54bb": "Não foi possível abrir o arquivo de atalhos de teclado",
   "0ee16208cbfcdbf4": "Erro desconhecido ao abrir o arquivo.",
@@ -6378,23 +6377,23 @@
   ],
   "216ab7514aea1d61": "Começar sem agente",
   "501ce2d99da8bfd1": "Configure um agente para começar.",
-  "c322fd8a785821bb": [
-    "O P4 Bot coleta dados de uso anônimos para melhorar o app. Para recusar, consulte a",
+  "63b1de502960ed73": [
+    "O P4 Bot não envia dados de uso, a menos que você configure sua própria coleta. Veja a",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "política de privacidade"
+      "c": "página de dados de uso"
     },
     "."
   ],
-  "b33f35083757b42c": [
-    "Consulte a",
+  "8da2ee1d6e248f58": [
+    "Veja a",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "política de privacidade"
+      "c": "página de dados de uso"
     },
     "."
   ],
@@ -9219,10 +9218,8 @@
   "0be6b2546df12f66": "Parar",
   "7dbd7e8943e8931f": "Abrindo microfone…",
   "efa31f38b611e912": "Não foi possível reproduzir esta gravação. Tente gravar novamente.",
-  "0cebac0a2a6bdc99": "iPhone e iPad",
-  "d797c9687a256a50": "Conecte-se ao seu servidor pelo celular ou tablet.",
-  "c21858dee1b62639": "Link da {store}",
-  "cdcdc54a444a3636": "Escaneie com a câmera do celular.",
+  "ace8149a4ec83eb1": "Conecte-se ao seu servidor pelo celular ou tablet. O P4 Bot ainda não tem app nas lojas: compile-o a partir do código.",
+  "6c51ca24a0ef3c96": "Como compilar",
   "0c8f65b5375cc7ca": [
     "Não recomendamos gerenciar várias contas ",
     {
@@ -10425,7 +10422,7 @@
   "c424bee294b9f778": "Este ambiente é gerenciado por {organization}. Algumas configurações e recursos seguem a política dela.",
   "82d9538af590f58c": "Veja seus agentes, importe projetos e configure seu celular.",
   "6a48fd0a37e725a1": "Jurídico",
-  "7516cf4669200cc8": "Como tratamos seus dados, incluindo os dados de uso anônimos que o P4 Bot coleta.",
+  "c387adbf3adbff80": "Quais dados de uso o P4 Bot pode enviar. Ele não envia nenhum, a menos que você configure sua própria coleta.",
   "e741b1ab9396053a": "Como tratamos seus dados. {telemetryOff}",
   "cbe6a90600052321": "Avisos de dependências, recursos e ferramentas opcionais usados pelo P4 Bot.",
   "e39a57514be028e9": "Revisar",
@@ -10455,7 +10452,7 @@
   "5fe5a45199fa9c07": "Nenhum provedor de geração de texto disponível.",
   "99ceba64591c9257": "Ver diagnóstico",
   "eb576a5feda7b535": "Abrir",
-  "66647e8c8123a51f": "Ver política",
+  "22b99825e8a1eb24": "Saiba mais",
   "6d59e1e516e53d17": "Ver licenças",
   "941d08db15f62d17": "Arquivado",
   "e122b2428c0d03a5": "Abrir todos os ambientes",
@@ -12107,7 +12104,7 @@
   "dc2a999ca67ccf31": "celular tablet iPhone iPad iOS Android App Store Google Play QR",
   "6310b97b04ef239f": "Página de boas-vindas",
   "df9fa3a9cb004b9b": "integração configuração primeira execução primeiros passos agentes importar projetos",
-  "3188bc3b3c4508bc": "Política de privacidade",
+  "7065ed3cb54fd318": "Dados de uso",
   "901a823214edc8c4": "telemetria analytics dados de uso rastreamento legal desativar",
   "82136480255a5106": "OTel OTLP telemetria exportar endpoints logs traces métricas Grafana",
   "659d081051faf7ff": "logs traces processos histórico de recursos falhas spans cpu memória",

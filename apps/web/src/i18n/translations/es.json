@@ -2261,21 +2261,20 @@
   "bc8ab792af1d656f": "Ejecuta en tu equipo:",
   "0ba14e4e920cfa00": "O descarga la app de escritorio",
   "0e79b7a6508a6286": "Después",
-  "363b9991fa23d36b": [
-    "Omite la instalación si ya tienes ",
+  "21778197e6b46484": [
+    "Omite la compilación si ya tienes el ",
     {
       "t": "code",
       "i": 1,
       "c": "t3"
     },
-    ". Si no se encuentra",
-    " ",
+    " de P4 Bot. Para compilar se necesita ",
     {
       "t": "code",
       "i": 2,
-      "c": "t3"
+      "c": "vp"
     },
-    " después de instalarlo, añade a tu PATH la carpeta que indique el instalador."
+    " (Vite+)."
   ],
   "87b24d00c08f54bb": "No se puede abrir el archivo de atajos de teclado",
   "0ee16208cbfcdbf4": "Error desconocido al abrir el archivo.",
@@ -3397,7 +3396,7 @@
   "dc6a4a20be84a6ac": "When",
   "06db1a9b68cf4f84": "Create routine",
   "0f84e7dce2bfa895": "Action rules",
-  "34b4c65e5e69e646": "Antes de que una acción te llegue, las reglas de este bot la revisan. Si coincide, se rechaza con el motivo, aunque vos la aprobarías; todo lo demás te lo sigue preguntando. Nunca se aprueba nada por vos. Las reglas solo revisan las acciones que el bot te consulta, así que con Acceso total no revisan nada. Detectan las formas habituales de escribir una acción, no todas.",
+  "34b4c65e5e69e646": "Antes de que una acción te llegue, las reglas de este bot la revisan. Si coincide, se rechaza con el motivo, aunque tú la aprobarías; todo lo demás te lo sigue preguntando. Nunca se aprueba nada por ti. Las reglas solo revisan las acciones que el bot te consulta, así que con Acceso total no revisan nada. Detectan las formas habituales de escribir una acción, no todas.",
   "111a44209dc6e701": "Quitar",
   "17894372adb439a9": "Add rule",
   "5ab0fccce1651433": "Recent decisions",
@@ -6378,23 +6377,23 @@
   ],
   "216ab7514aea1d61": "Empezar sin agente",
   "501ce2d99da8bfd1": "Configura un agente para empezar.",
-  "c322fd8a785821bb": [
-    "P4 Bot recopila datos de uso anónimos para mejorar la app. Para desactivarlo, consulta la",
+  "63b1de502960ed73": [
+    "P4 Bot no envía datos de uso salvo que configures tu propia recolección. Consulta la",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "política de privacidad"
+      "c": "página de datos de uso"
     },
     "."
   ],
-  "b33f35083757b42c": [
+  "8da2ee1d6e248f58": [
     "Consulta la",
     " ",
     {
       "t": "a",
       "i": 1,
-      "c": "política de privacidad"
+      "c": "página de datos de uso"
     },
     "."
   ],
@@ -9218,10 +9217,8 @@
   "0be6b2546df12f66": "Detener",
   "7dbd7e8943e8931f": "Abriendo micrófono…",
   "efa31f38b611e912": "No se pudo reproducir esta grabación. Vuelve a grabar.",
-  "0cebac0a2a6bdc99": "iPhone y iPad",
-  "d797c9687a256a50": "Conéctate a tu servidor desde el teléfono o la tableta.",
-  "c21858dee1b62639": "Enlace de {store}",
-  "cdcdc54a444a3636": "Escanéalo con la cámara del teléfono.",
+  "ace8149a4ec83eb1": "Conéctate a tu servidor desde el teléfono o la tableta. P4 Bot todavía no tiene app en las tiendas: compílala desde el código.",
+  "6c51ca24a0ef3c96": "Cómo compilarla",
   "0c8f65b5375cc7ca": [
     "No recomendamos gestionar varias cuentas de ",
     {
@@ -10423,7 +10420,7 @@
   "c424bee294b9f778": "Este entorno lo gestiona {organization}. Algunos ajustes y funciones siguen su política.",
   "82d9538af590f58c": "Consulta tus agentes, importa proyectos y configura tu teléfono.",
   "6a48fd0a37e725a1": "Legal",
-  "7516cf4669200cc8": "Cómo tratamos tus datos, incluidos los datos de uso anónimos que recopila P4 Bot.",
+  "c387adbf3adbff80": "Qué datos de uso puede enviar P4 Bot. No envía ninguno salvo que configures tu propia recolección.",
   "e741b1ab9396053a": "Cómo tratamos tus datos. {telemetryOff}",
   "cbe6a90600052321": "Avisos de las dependencias, recursos y herramientas opcionales que usa P4 Bot.",
   "e39a57514be028e9": "Revisar",
@@ -10453,7 +10450,7 @@
   "5fe5a45199fa9c07": "No hay proveedores de generación de texto disponibles.",
   "99ceba64591c9257": "Ver diagnóstico",
   "eb576a5feda7b535": "Abrir",
-  "66647e8c8123a51f": "Ver política",
+  "22b99825e8a1eb24": "Más información",
   "6d59e1e516e53d17": "Ver licencias",
   "941d08db15f62d17": "Archivado",
   "e122b2428c0d03a5": "Abrir todos los entornos",
@@ -12102,7 +12099,7 @@
   "dc2a999ca67ccf31": "teléfono tableta iPhone iPad iOS Android App Store Google Play QR",
   "6310b97b04ef239f": "Página de bienvenida",
   "df9fa3a9cb004b9b": "bienvenida configuración primer inicio primeros pasos agentes importar proyectos",
-  "3188bc3b3c4508bc": "Política de privacidad",
+  "7065ed3cb54fd318": "Datos de uso",
   "901a823214edc8c4": "telemetría analítica datos de uso seguimiento legal desactivar",
   "82136480255a5106": "OTel OTLP telemetría exportar endpoints registros trazas métricas Grafana",
   "659d081051faf7ff": "registros trazas procesos historial de recursos fallos spans cpu memoria",

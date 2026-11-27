@@ -2587,7 +2587,9 @@ export function AboutSettingsPanel() {
           {...setting("privacy-policy")}
           description={
             telemetryOff === undefined
-              ? gt("How we handle your data, including the anonymous usage data P4 Bot collects.")
+              ? gt(
+                  "What usage data P4 Bot can send. It sends none unless you set up your own collection.",
+                )
               : gt("How we handle your data. {telemetryOff}", { telemetryOff })
           }
           control={
@@ -2596,7 +2598,7 @@ export function AboutSettingsPanel() {
               size="sm"
               variant="outline"
             >
-              <T>View policy</T>
+              <T>Learn more</T>
             </Button>
           }
         />
