@@ -19,6 +19,7 @@ import * as AgentSessionScanner from "../project/AgentSessionScanner.ts";
 import * as ProjectService from "../project/ProjectService.ts";
 import * as ProjectSetupScriptRunner from "../project/ProjectSetupScriptRunner.ts";
 import * as BotDesk from "../bot/BotDesk.ts";
+import * as BotMessages from "../bot/BotMessages.ts";
 import * as BotService from "../bot/BotService.ts";
 import * as ManagedProjectFolders from "../project/ManagedProjectFolders.ts";
 import * as ScratchThreadPromotion from "../project/ScratchThreadPromotion.ts";
@@ -451,6 +452,16 @@ export const layerProduction = Layer.mergeAll(
         layerProjectService,
         layerManagedProjectFoldersProvided,
         layerOrchestratorProvided,
+      ),
+    ),
+  ),
+  BotMessages.layer.pipe(
+    Layer.provide(
+      Layer.mergeAll(
+        BotService.layer.pipe(Layer.provide(layerManagedProjectFoldersProvided)),
+        ProjectionStore.layer,
+        layerThreadManagementProvided,
+        layerThreadLaunchProvided,
       ),
     ),
   ),

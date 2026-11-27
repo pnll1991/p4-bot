@@ -31,6 +31,7 @@ import * as ThreadLaunch from "../orchestration-v2/ThreadLaunchService.ts";
 import * as ThreadManagement from "../orchestration-v2/ThreadManagementService.ts";
 import * as ProviderReplayHarness from "../orchestration-v2/testkit/ProviderReplayHarness.ts";
 import * as SqlitePersistence from "../persistence/Sqlite.ts";
+import * as BotMessages from "../bot/BotMessages.ts";
 import * as BotService from "../bot/BotService.ts";
 import * as ManagedProjectFolders from "../project/ManagedProjectFolders.ts";
 import * as ProjectCloneTracker from "../project/ProjectCloneTracker.ts";
@@ -182,9 +183,10 @@ const layerTools = Layer.mergeAll(
   Layer.provide(Layer.mock(ThreadSearch.ThreadSearch)({})),
   Layer.provide(Layer.mock(RemoteDelegation.RemoteDelegation)({})),
   Layer.provide(
-    Layer.merge(
+    Layer.mergeAll(
       Layer.mock(ManagedProjectFolders.ManagedProjectFolders)({ namedProjectsRoot: "/p" }),
       Layer.mock(BotService.BotService)({}),
+      Layer.mock(BotMessages.BotMessages)({}),
     ),
   ),
   Layer.provide(Layer.mock(GitVcsDriver.GitVcsDriver)({})),

@@ -47,6 +47,8 @@ import * as GitVcsDriver from "../../../vcs/GitVcsDriver.ts";
 import * as VcsProcess from "../../../vcs/VcsProcess.ts";
 import * as McpInvocationContext from "../../McpInvocationContext.ts";
 import * as McpToolAccess from "../../McpToolAccess.ts";
+import { liveThreadShell } from "../../McpToolAccess.testkit.ts";
+import * as BotMessages from "../../../bot/BotMessages.ts";
 import * as ProjectHandlers from "./handlers.ts";
 import { ProjectToolkit } from "./tools.ts";
 
@@ -1467,5 +1469,81 @@ it.effect("a project update or create that is refused tells the agent why", () =
       })
       .pipe(Stream.unwrap, Stream.runCollect, Effect.provide(dependencies));
     expect(dropped.at(-1)?.result).toMatchObject({ code: "invalid_request" });
+  }),
+);
+
+it.effect("a bot's chat messages another bot in its own mode, and a subagent cannot", () =>
+  Effect.gen(function* () {
+    const botChat = ThreadId.make("thread:bot-ana");
+    const sent: Array<BotMessages.BotMessageSendInput> = [];
+    const call = (subagent: boolean, to: string) => {
+      const { dependencies } = clientLaunchHarness({
+        runtimeModeCeiling: "full-access",
+        launched: [],
+      });
+      const threadDependencies = Layer.mergeAll(
+        dependencies,
+        Layer.succeed(McpInvocationContext.McpInvocationContext, {
+          environmentId: EnvironmentId.make("environment"),
+          requestNamespace: "provider:bot-ana",
+          thread: {
+            threadId: botChat,
+            providerSessionId: "provider:bot-ana",
+            // liveThreadShell runs on codex; the caller must own that run.
+            providerInstanceId: ProviderInstanceId.make("codex"),
+            ...(subagent ? { subagent: true } : {}),
+          },
+          client: undefined,
+          capabilities: new Set(["orchestration" as const]),
+          issuedAt: 0,
+        }),
+        Layer.mock(ThreadManagement.ThreadManagementService)({
+          getThreadShell: () =>
+            Effect.succeed(liveThreadShell(botChat, { runtimeMode: "approval-required" })),
+        }),
+        Layer.mock(BotMessages.BotMessages)({
+          send: (input) => {
+            sent.push(input);
+            return input.to === "Carla"
+              ? Effect.fail(
+                  new BotMessages.BotMessageError({
+                    reason: "unknown-bot",
+                    message: 'No bot is called "Carla". Bots: "Beto".',
+                  }),
+                )
+              : Effect.succeed({ to: "Beto", threadId: ThreadId.make("thread:bot-beto") });
+          },
+        }),
+      );
+      return ProjectToolkit.pipe(
+        Effect.flatMap((toolkit) =>
+          toolkit.handle("p4_bot_message", { to, message: "¿Qué compraste?" }),
+        ),
+        Stream.unwrap,
+        Stream.runCollect,
+        Effect.map((parts) => parts.at(-1)?.result),
+        Effect.provide(
+          McpToolAccess.HandlersLayer.layer(ProjectHandlers.layer).pipe(
+            Layer.provideMerge(threadDependencies),
+          ),
+        ),
+      );
+    };
+
+    expect(yield* call(false, "beto")).toMatchObject({ to: "Beto" });
+    expect(sent).toEqual([
+      {
+        fromThreadId: botChat,
+        to: "beto",
+        text: "¿Qué compraste?",
+        maxRuntimeMode: "approval-required",
+      },
+    ]);
+    expect(yield* call(false, "Carla")).toMatchObject({
+      code: "invalid_request",
+      message: expect.stringContaining('"Beto"'),
+    });
+    expect(yield* call(true, "Beto")).toMatchObject({ code: "invalid_request" });
+    expect(sent).toHaveLength(2);
   }),
 );

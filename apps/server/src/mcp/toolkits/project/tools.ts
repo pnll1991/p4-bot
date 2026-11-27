@@ -33,7 +33,8 @@ import * as ThreadLaunchService from "../../../orchestration-v2/ThreadLaunchServ
 import * as Digest from "effect/crypto/Digest";
 import * as SecureRandom from "effect/crypto/SecureRandom";
 import * as Schema from "effect/Schema";
-import { Tool, Toolkit } from "effect/ai";
+import { McpSchema, Tool, Toolkit } from "effect/ai";
+import * as BotMessages from "../../../bot/BotMessages.ts";
 import * as BotService from "../../../bot/BotService.ts";
 import * as ProjectService from "../../../project/ProjectService.ts";
 import * as ProjectCloneTracker from "../../../project/ProjectCloneTracker.ts";
@@ -106,6 +107,24 @@ const BotCreateTool = Tool.make("p4_bot_create", {
   success: BotProfile,
   dependencies: [...shared.dependencies, BotService.BotService],
 }).annotate(Tool.Destructive, true);
+const BotMessageTool = Tool.make("p4_bot_message", {
+  description: `From a bot's chat: write to another bot by its name. The message goes to that bot's chat, where the user sees it, and its answer comes back to your chat as a message later; do not wait for it. An unknown name lists the bots. At most ${BotMessages.MAX_BOT_MESSAGES_PER_HOUR} messages an hour.`,
+  parameters: Schema.Struct({
+    to: TrimmedNonEmptyString.annotate({ description: "The other bot's name." }),
+    message: TrimmedNonEmptyString.check(Schema.isMaxLength(8000)),
+  }),
+  success: Schema.Struct({ to: Schema.String, message: Schema.String }),
+  failure: OrchestratorMcpFailure,
+  failureMode: "return",
+  dependencies: [
+    McpInvocationContext.McpInvocationContext,
+    ThreadManagementService.ThreadManagementService,
+    BotMessages.BotMessages,
+  ],
+})
+  .annotate(Tool.Destructive, false)
+  .annotate(Tool.Idempotent, false)
+  .annotate(McpSchema.EnabledWhen, McpInvocationContext.hiddenFromOutsideClients);
 const ProjectUpdateTool = Tool.make("t3_project_update", {
   ...shared,
   description: "Update one project's settings. Omitted fields are unchanged.",
@@ -216,6 +235,7 @@ export const ProjectToolkit = Toolkit.make(
   ProjectReadTool,
   ProjectCreateTool,
   BotCreateTool,
+  BotMessageTool,
   ProjectUpdateTool,
   ProjectDeleteTool,
   ProjectCloneTool,

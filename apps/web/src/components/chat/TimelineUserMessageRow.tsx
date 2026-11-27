@@ -96,6 +96,7 @@ import {
   userMessageFileLabel,
 } from "./TimelineUserMessageRow.logic";
 import { SharedTooltipTrigger } from "../ui/shared-tooltip";
+import { useBotProfile } from "../bots/BotChatMode";
 
 // Drawn inside the media so dark screenshots keep an edge on the dark background.
 const MEDIA_EDGE_CLASS_NAME =
@@ -501,7 +502,10 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
   const [expanded, setExpanded] = useState(false);
   const revealFoldRef = findRevealRef(() => setExpanded(true));
   const senderShell = useQuietThreadShell(folded ? senderRef : null);
-  const senderTitle = senderShell?.title.trim() || row.message.linkedSender?.title.trim();
+  // A bot writes from its own chat, so it goes by its name rather than that chat's title.
+  const senderBot = useBotProfile(senderShell?.projectId ?? null);
+  const senderTitle =
+    senderBot?.name || senderShell?.title.trim() || row.message.linkedSender?.title.trim();
   const senderLabel =
     senderTitle || gt("Agent", { $context: "sender of a message from another agent" });
   // Only an environment this client is connected to can open the sender's thread there.

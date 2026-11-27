@@ -22,6 +22,7 @@ import { outputRequestProblem } from "../../../orchestration-v2/runOutput.ts";
 import * as ThreadLaunch from "../../../orchestration-v2/ThreadLaunchService.ts";
 import * as ThreadMessageIntake from "../../../orchestration-v2/ThreadMessageIntake.ts";
 import * as Claims from "../../../orchestration-v2/AttachmentClaims.ts";
+import * as BotMessages from "../../../bot/BotMessages.ts";
 import * as BotService from "../../../bot/BotService.ts";
 import * as Project from "../../../project/ProjectService.ts";
 import * as ProjectCloneTracker from "../../../project/ProjectCloneTracker.ts";
@@ -47,7 +48,14 @@ import {
 import * as McpInvocationContext from "../../McpInvocationContext.ts";
 import * as McpToolAccess from "../../McpToolAccess.ts";
 import * as OrchestrationMcp from "../../OrchestratorMcpService.ts";
-import { newCommandId, readCaller, resolveProjectId, unavailable } from "../../threadAccess.ts";
+import { assertNotLinked } from "../../linkOrigin.ts";
+import {
+  loadCaller,
+  newCommandId,
+  readCaller,
+  resolveProjectId,
+  unavailable,
+} from "../../threadAccess.ts";
 import { ProjectToolkit } from "./tools.ts";
 
 const isAboveCeilingError = Schema.is(OrchestratorRuntimeModeAboveCeilingError);
@@ -625,6 +633,35 @@ export const layer = McpToolAccess.toLayer(ProjectToolkit, {
           new OrchestratorMcpFailure({ code: "orchestration_error", message: error.message }),
       ),
     ),
+  ),
+  p4_bot_message: McpToolAccess.actsAsCaller(({ to, message }) =>
+    Effect.gen(function* () {
+      const caller = yield* loadCaller();
+      yield* assertNotLinked(caller, "message this environment's bots");
+      if (caller.caller === undefined || caller.scope.thread?.subagent === true)
+        return yield* new OrchestratorMcpFailure({
+          code: "invalid_request",
+          message: "Only a bot's own chat can message other bots.",
+        });
+      const messages = yield* BotMessages.BotMessages;
+      const sent = yield* messages
+        .send({
+          fromThreadId: caller.caller.id,
+          to,
+          text: message,
+          maxRuntimeMode: caller.limits.runtimeMode,
+        })
+        .pipe(
+          Effect.mapError(
+            (error) =>
+              new OrchestratorMcpFailure({
+                code: error.reason === "delivery" ? "orchestration_error" : "invalid_request",
+                message: error.message,
+              }),
+          ),
+        );
+      return { to: sent.to, message: `Sent to ${sent.to}. Its answer will come to this chat.` };
+    }),
   ),
   t3_project_update: McpToolAccess.writesEnvironment((input) =>
     Effect.gen(function* () {
